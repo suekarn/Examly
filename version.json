@@ -1,8 +1,8 @@
 {
-  "version": "1.2.0",
+  "version": "1.2.1",
   "released": "2026-10-28",
-  "url": "https://github.com/suekarn/Examly/releases/download/v1.2.0/update-1.2.0.zip",
-  "sha256": "HASH_ASLI_64_KARAKTER_DI_SINI",
-  "notes": "Perbaikan login siswa, live score lebih cepat",
+  "url": "https://github.com/suekarn/Examly/releases/download/v1.2.1/update-1.2.1.zip",
+  "sha256": "b6ca415c29c98fbbf9c830dff7a18b9186be0ab03275b690308d7344ce5a4d0c",
+  "notes": "Create ini.php",
   "apk_url": "https://github.com/suekarn/Examly/releases/download/v1.2.0/examly.apk"
 }

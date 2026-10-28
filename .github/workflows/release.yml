@@ -22,16 +22,34 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0   # butuh riwayat dan tag untuk mencari file yang dihapus
 
       - name: Tentukan versi
         id: v
         run: echo "version=1.2.${{ github.run_number }}" >> $GITHUB_OUTPUT
 
+      - name: Buat daftar file yang dihapus
+        run: |
+          mkdir -p _update
+          # Gabungkan file yang dihapus dalam 10 rilis terakhir, supaya server yang melewati beberapa
+          # versi tetap ikut dibersihkan. Tanpa tag lama, seluruh riwayat dipakai.
+          BASE=$(git tag --list 'v1.2.*' --sort=-v:refname | sed -n '10p')
+          if [ -n "$BASE" ]; then RANGE="$BASE..HEAD"; else RANGE="HEAD"; fi
+          git -c core.quotepath=false log "$RANGE" --no-renames --diff-filter=D --name-only --pretty=format: -- \
+            application assets system index.php .htaccess \
+            api_live_score.php ambil_skor.php live_score.php live_skor_api.php \
+            | sed '/^$/d' | sort -u \
+            | while IFS= read -r f; do [ -e "$f" ] || echo "$f"; done \
+            > _update/delete.txt
+          echo "File yang akan dihapus di server ($(wc -l < _update/delete.txt)):"
+          cat _update/delete.txt
+
       - name: Buat zip dan hash
         id: z
         run: |
           VER=${{ steps.v.outputs.version }}
-          zip -r update-$VER.zip application assets system index.php .htaccess \
+          zip -r update-$VER.zip application assets system index.php .htaccess _update \
             api_live_score.php ambil_skor.php live_score.php live_skor_api.php \
             -x "application/config/database.php" "application/config/config.php" \
                "application/cache/*" "application/logs/*"

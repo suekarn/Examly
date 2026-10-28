@@ -1,1 +1,8 @@
-{ "version": "1.0.0", "changelog": "Rilis awal" }
+{
+  "version": "1.2.0",
+  "released": "2026-10-28",
+  "url": "https://github.com/USERNAME/REPO/releases/download/v1.2.0/update-1.2.0.zip",
+  "sha256": "ISI_HASH_ZIP",
+  "notes": "Perbaikan login siswa, live score lebih cepat",
+  "apk_url": "https://github.com/USERNAME/REPO/releases/download/v1.2.0/examly.apk"
+}

@@ -1,8 +1,8 @@
 {
-  "version": "1.2.13",
+  "version": "1.2.14",
   "released": "2026-10-28",
-  "url": "https://github.com/suekarn/Examly/releases/download/v1.2.13/update-1.2.13.zip",
-  "sha256": "b7ee26f4737dd384a95715868954d18f528b0bc03ba6f246903651689cf3b78b",
-  "notes": "Tambah file aplikasi dan rapikan struktur",
+  "url": "https://github.com/suekarn/Examly/releases/download/v1.2.14/update-1.2.14.zip",
+  "sha256": "00463ecf0f5db3f903e2a3821d512156d468103138ddf1fba3771f11755a48cd",
+  "notes": "Hentikan pelacakan file updater",
   "apk_url": "https://github.com/suekarn/Examly/releases/download/v1.2.0/examly.apk"
 }

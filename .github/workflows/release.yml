@@ -1,81 +1,34 @@
-name: Auto Release Update
+#!/bin/bash
+# Pemakaian: ./push.sh "pesan commit"
+# Rilis (tag + zip + version.json) dibuat otomatis oleh GitHub Actions.
 
-on:
-  push:
-    branches: [main]
-    paths:
-      - 'application/**'
-      - 'assets/**'
-      - 'system/**'
-      - 'index.php'
-      - '.htaccess'
-      - 'api_live_score.php'
-      - 'ambil_skor.php'
-      - 'live_score.php'
-      - 'live_skor_api.php'
+set -e
 
-permissions:
-  contents: write
+MSG="${1:-update}"
+BRANCH="main"
 
-jobs:
-  release:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          fetch-depth: 0   # butuh riwayat dan tag untuk mencari file yang dihapus
+# Folder tempat file hasil edit berada. Kosongkan/hapus blok ini
+# jika file sudah kamu edit langsung di dalam repo.
+SRC="/c/Users/NAMA_KAMU/Downloads"
+if [ -d "$SRC" ]; then
+  [ -f "$SRC/updater.php" ]     && cp "$SRC/updater.php"     application/config/updater.php
+  [ -f "$SRC/Updater.php" ]     && cp "$SRC/Updater.php"     application/controllers/Updater.php
+  [ -f "$SRC/App_updater.php" ] && cp "$SRC/App_updater.php" application/libraries/App_updater.php
+fi
 
-      - name: Tentukan versi
-        id: v
-        run: echo "version=1.2.${{ github.run_number }}" >> $GITHUB_OUTPUT
+echo ">> Sinkron dengan GitHub (version.json diubah otomatis oleh Actions)..."
+git pull --rebase --autostash origin $BRANCH
 
-      - name: Buat daftar file yang dihapus
-        run: |
-          mkdir -p _update
-          # Gabungkan file yang dihapus dalam 10 rilis terakhir, supaya server yang melewati beberapa
-          # versi tetap ikut dibersihkan. Tanpa tag lama, seluruh riwayat dipakai.
-          BASE=$(git tag --list 'v1.2.*' --sort=-v:refname | sed -n '10p')
-          if [ -n "$BASE" ]; then RANGE="$BASE..HEAD"; else RANGE="HEAD"; fi
-          git -c core.quotepath=false log "$RANGE" --no-renames --diff-filter=D --name-only --pretty=format: -- \
-            application assets system index.php .htaccess \
-            api_live_score.php ambil_skor.php live_score.php live_skor_api.php \
-            | sed '/^$/d' | sort -u \
-            | while IFS= read -r f; do [ -e "$f" ] || echo "$f"; done \
-            > _update/delete.txt
-          echo "File yang akan dihapus di server ($(wc -l < _update/delete.txt)):"
-          cat _update/delete.txt
+git add application/config/updater.php \
+        application/controllers/Updater.php \
+        application/libraries/App_updater.php
 
-      - name: Buat zip dan hash
-        id: z
-        run: |
-          VER=${{ steps.v.outputs.version }}
-          zip -r update-$VER.zip application assets system index.php .htaccess _update \
-            api_live_score.php ambil_skor.php live_score.php live_skor_api.php \
-            -x "application/config/database.php" "application/config/config.php" \
-               "application/cache/*" "application/logs/*"
-          echo "sha=$(sha256sum update-$VER.zip | cut -d' ' -f1)" >> $GITHUB_OUTPUT
+if git diff --cached --quiet; then
+  echo "Tidak ada perubahan untuk di-commit."
+  exit 0
+fi
 
-      - name: Buat Release
-        uses: softprops/action-gh-release@v2
-        with:
-          tag_name: v${{ steps.v.outputs.version }}
-          files: update-${{ steps.v.outputs.version }}.zip
+git commit -m "$MSG"
+git push origin $BRANCH
 
-      - name: Update version.json
-        env:
-          VER: ${{ steps.v.outputs.version }}
-          SHA: ${{ steps.z.outputs.sha }}
-          MSG: ${{ github.event.head_commit.message }}
-        run: |
-          jq --arg v "$VER" \
-             --arg d "$(date +%F)" \
-             --arg u "https://github.com/${{ github.repository }}/releases/download/v$VER/update-$VER.zip" \
-             --arg s "$SHA" \
-             --arg n "$MSG" \
-             '.version=$v | .released=$d | .url=$u | .sha256=$s | .notes=$n' \
-             version.json > tmp.json && mv tmp.json version.json
-          git config user.name "github-actions"
-          git config user.email "actions@github.com"
-          git add version.json
-          git commit -m "Auto update version.json to $VER"
-          git push
+echo ">> Push berhasil. Cek rilis di: https://github.com/suekarn/Examly/actions"

@@ -1,8 +1,8 @@
 {
-  "version": "1.2.14",
+  "version": "1.2.15",
   "released": "2026-10-28",
-  "url": "https://github.com/suekarn/Examly/releases/download/v1.2.14/update-1.2.14.zip",
-  "sha256": "00463ecf0f5db3f903e2a3821d512156d468103138ddf1fba3771f11755a48cd",
-  "notes": "Hentikan pelacakan file updater",
+  "url": "https://github.com/suekarn/Examly/releases/download/v1.2.15/update-1.2.15.zip",
+  "sha256": "685764a216d5ef31fbe39c170cdb1633341879d5bc61737707c65527d42e142e",
+  "notes": "update login siswa dan fitur ujian",
   "apk_url": "https://github.com/suekarn/Examly/releases/download/v1.2.0/examly.apk"
 }

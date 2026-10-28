@@ -43,3 +43,5 @@ VERSION
 application/updater_data/
 application/config/version.php
 *.md
+htdocs.zip
+application/application.zip

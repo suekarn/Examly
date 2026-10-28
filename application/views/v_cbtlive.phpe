@@ -1,0 +1,121 @@
+<div class="content-wrapper bg-white">
+    <section class="content-header p-0 d-flex align-items-end"
+             style="height: 380px; background: url('<?= base_url('assets/img/wall32.png') ?>') no-repeat center; background-size: cover;">
+        <div class="container-fluid pl-3 pr-3 pb-0 pt-0" style="background-color: rgba(255,255,255,0.1); width: 100%;">
+            <div class="row m-0 position-relative" style="top: -240px; z-index: 10; margin-bottom: -220px;">
+                <?php if (isset($info_box) && !empty($info_box)) : ?>
+                    <?php foreach ($info_box as $info) : ?>
+                        <div class="col-md-2 col-6 mb-3">
+                            <div class="shadow-lg small-box bg-<?= $info->box ?> h-100 mb-0">
+                                <div class="inner">
+                                    <h5 class="mb-0"><b><?= $info->total; ?></b></h5>
+                                    <span><?= $info->title; ?></span>
+                                </div>
+                                <div class="icon"><i class="fa fa-<?= $info->icon ?>" style="top: 5px"></i></div>
+                                <a href="<?= base_url() . $info->url ?>" class="small-box-footer">
+                                    Detail <i class="fa fa-arrow-circle-right"></i>
+                                </a>
+                            </div>
+                        </div>
+                    <?php endforeach; ?>
+                <?php endif; ?>
+            </div>
+        </div>
+    </section>
+    
+    <section class="content position-relative" style="margin-top: -190px; z-index: 5;">
+        <div class="container-fluid">
+            
+            <div class="card shadow mb-4" style="border-radius: 8px;">
+                <div class="card-body p-3">
+                    <?= form_open('#', array('id' => 'form-filter-live', 'class' => 'form-inline d-flex flex-wrap justify-content-center m-0')); ?>
+                        
+                        <div class="input-group mr-3 mb-2 mb-sm-0 shadow-sm" style="border-radius: 6px; overflow: hidden; border: 1px solid #ced4da;">
+                            <div class="input-group-prepend">
+                                <span class="input-group-text font-weight-bold px-3" style="border: none; background-color: #eef2f5; color: #2c3e50;">Kelas</span>
+                            </div>
+                            <select name="kelas" id="kelas" class="form-control" style="min-width: 160px; height: 38px; border: none; border-left: 1px solid #ced4da;">
+                                <option value="">Semua Kelas</option>
+                                <?php if(isset($kelas) && !empty($kelas)): ?>
+                                    <?php foreach ($kelas as $k) : ?>
+                                        <option value="<?= $k->id_kelas; ?>"><?= $k->nama_kelas; ?></option>
+                                    <?php endforeach; ?>
+                                <?php endif; ?>
+                            </select>
+                        </div>
+
+                        <div class="input-group mr-3 mb-2 mb-sm-0 shadow-sm" style="border-radius: 6px; overflow: hidden; border: 1px solid #ced4da;">
+                            <div class="input-group-prepend">
+                                <span class="input-group-text font-weight-bold px-3" style="border: none; background-color: #eef2f5; color: #2c3e50;">Jadwal</span>
+                            </div>
+                            <select name="jadwal" id="jadwal" class="form-control" style="min-width: 220px; height: 38px; border: none; border-left: 1px solid #ced4da;">
+                                <option value="">Semua Jadwal Ujian</option>
+                                <?php if(isset($jadwal) && !empty($jadwal)): ?>
+                                    <?php foreach ($jadwal as $j) : 
+                                        $nama_tampil = isset($j->nama_ujian) ? $j->nama_ujian : (isset($j->nama_kegiatan) ? $j->nama_kegiatan : (isset($j->nama_jadwal) ? $j->nama_jadwal : 'Ujian'));
+                                        ?>
+                                        <option value="<?= $j->id_jadwal; ?>"><?= strip_tags($nama_tampil); ?></option>
+                                    <?php endforeach; ?>
+                                <?php endif; ?>
+                            </select>
+                        </div>
+                    <?= form_close(); ?>
+                </div>
+            </div>
+
+            <div class="card card-teal card-outline shadow">
+                <div class="card-header border-transparent d-flex justify-content-center align-items-center">
+                    <h3 class="card-title m-0 text-center" style="width:100%">
+                        <i class="fa fa-circle text-success mr-2" id="lampu-indikator"></i> <b>Live Score Siswa Ujian</b>
+                    </h3>
+                </div>
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <div id="wadah-tabel-live">
+                            <?php $this->load->view('live_tabel'); ?>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </section>
+</div>
+
+<script src="<?= base_url() ?>/assets/plugins/jquery/jquery.min.js"></script>
+<script>
+    $(document).ready(function() {
+        // Beri efek berkedip manis pada lampu indikator live score
+        $('head').append('<style>@keyframes kdip{0%{opacity:.3}50%{opacity:1}100%{opacity:.3}}#lampu-indikator{animation:kdip 1s infinite}</style>');
+
+        function perbaruiTabelSecaraMurni() {
+            var kelasTerpilih  = $('#kelas').val() || "";
+            var jadwalTerpilih = $('#jadwal').val() || "";
+            var csrfName = $('input[name^="csrf_"]').attr('name');
+            var csrfHash = $('input[name^="csrf_"]').val();
+            
+            var dataKirim = { kelas: kelasTerpilih, jadwal: jadwalTerpilih };
+            if(csrfName && csrfHash) { dataKirim[csrfName] = csrfHash; }
+
+            $.ajax({
+                url: window.location.href, 
+                type: "POST",
+                data: dataKirim,
+                cache: false,
+                success: function(htmlRaw) {
+                    var tabelTerbaru = $(htmlRaw).find('#wadah-tabel-live').html();
+                    if(tabelTerbaru && tabelTerbaru.trim() !== "") {
+                        $('#wadah-tabel-live').html(tabelTerbaru);
+                    }
+                    var newCsrfHash = $(htmlRaw).find('input[name^="csrf_"]').val();
+                    if(newCsrfHash) { $('input[name^="csrf_"]').val(newCsrfHash); }
+                }
+            });
+        }
+
+        // Lakukan sinkronisasi otomatis refresh halaman setiap 5 detik sekali
+        setInterval(perbaruiTabelSecaraMurni, 5000);
+        // Jalankan refresh instan saat user memilih dropdown kelas/jadwal
+        $('#kelas, #jadwal').on('change', function() { perbaruiTabelSecaraMurni(); });
+    });
+</script>

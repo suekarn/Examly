@@ -1,0 +1,428 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Syestem</title>
+
+    <!-- Semua aset dimuat dari server sendiri (tanpa internet), supaya halaman cepat muncul di jaringan LAN -->
+    <link rel="stylesheet" href="<?= base_url('assets/plugins/bootstrap/css/bootstrap.min.css') ?>">
+    <link rel="stylesheet" href="<?= base_url('assets/plugins/fontawesome-free/css/all.min.css') ?>">
+
+    <style>
+        body {
+            background-color: #f8fafc;
+            font-family: 'Segoe UI', Roboto, sans-serif;
+            margin: 0;
+        }
+
+        .header-top {
+            background: #326698;
+            height: 150px;
+            display: flex;
+            align-items: flex-start;
+            padding-top: 15px;
+            color: white;
+            position: fixed;
+            top: 0; left: 0; right: 0;
+            z-index: 5;
+            padding-left: 50px;
+        }
+
+        .header-logo img { height: 70px; margin-right: 15px; }
+
+        .login-wrapper {
+            margin-top: 140px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: flex-start;
+            min-height: calc(100vh - 80px);
+            position: relative;
+            z-index: 10;
+            padding: 0 15px;
+        }
+
+        /* 1. KOTAK SELAMAT DATANG BERBENTUK OVAL/ROUNDED LUAS */
+        .welcome-card {
+            background: #ffffff;
+            width: 100%;
+            max-width: 350px;
+            border-radius: 30px; /* Sudut melengkung oval */
+            box-shadow: 0 10px 30px rgba(0,0,0,0.06);
+            border: none;
+            padding: 22px;
+            text-align: center;
+            margin-bottom: 15px;
+        }
+        .welcome-card h2 {
+            font-weight: 700;
+            font-size: 1.25rem;
+            color: #2d3436;
+            margin-bottom: 4px;
+        }
+        .welcome-card p {
+            font-size: 0.82rem;
+            color: #636e72;
+            margin-bottom: 0;
+        }
+
+        /* 2. KOTAK UTAMA FORM BERBENTUK OVAL/ROUNDED LUAS */
+        .login-card {
+            background: #ffffff;
+            width: 100%;
+            max-width: 350px;
+            border-radius: 35px; /* Sudut melengkung oval besar seimbang */
+            box-shadow: 0 20px 50px rgba(0,0,0,0.1);
+            border: none;
+            overflow: hidden;
+        }
+
+        .login-card-body {
+            padding: 30px 25px;
+        }
+
+        /* 3. INPUT GROUP (USERNAME & PASSWORD) OVAL KAPSUL */
+        .input-group-custom {
+            position: relative;
+            margin-bottom: 18px;
+            display: flex;
+            align-items: center;
+            background: #ffffff;
+            border-radius: 50px; /* Oval sempurna */
+            padding: 6px 20px;
+            border: 1px solid #e2e8f0;
+            transition: all 0.3s ease;
+        }
+
+        .input-group-custom:focus-within {
+            background: #ffffff;
+            border-color: #007bff;
+            box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.15);
+        }
+
+        .input-group-custom i {
+            color: #636e72;
+            margin-right: 10px;
+            width: 16px;
+            text-align: center;
+            font-size: 0.9rem;
+        }
+
+        .input-group-custom .form-control {
+            border: none !important;
+            box-shadow: none !important;
+            padding: 6px 0;
+            height: auto;
+            background: transparent;
+            font-size: 1.07rem;
+            color: #334155;
+        }
+
+        /* DROPDOWN MATA PELAJARAN OVAL */
+        .input-group-custom select.form-control {
+            -webkit-appearance: none;
+            -moz-appearance: none;
+            appearance: none;
+            cursor: pointer;
+            text-align: center;
+            text-align-last: center;
+            padding-right: 20px;
+        }
+
+        .input-group-custom select.form-control option {
+            text-align: center;
+            direction: ltr;
+        }
+
+        .select-custom::after {
+            content: '\f107';
+            font-family: 'Font Awesome 5 Free';
+            font-weight: 900;
+            position: absolute;
+            right: 20px;
+            color: #636e72;
+            pointer-events: none;
+            font-size: 0.9rem;
+        }
+
+        /* 4. TOMBOL LOGIN OVAL KAPSUL */
+        .btn-login {
+            width: 100%;
+            height: 46px;
+            background: #007bff !important;
+            border: none;
+            color: white !important;
+            font-weight: 600;
+            font-size: 0.95rem;
+            border-radius: 50px; /* Oval sempurna */
+            margin-top: 10px;
+            box-shadow: 0 8px 20px rgba(0, 123, 255, 0.15);
+            transition: 0.3s;
+            display: block !important;
+            visibility: visible !important;
+            opacity: 1 !important;
+        }
+        .btn-login.admin-mode { background: #dc3545 !important; box-shadow: 0 8px 20px rgba(220, 53, 69, 0.15); }
+
+        .role-link-wrapper {
+            display: flex;
+            justify-content: flex-end;
+            margin-top: 15px;
+        }
+        .role-link-wrapper a {
+            color: #636e72;
+            font-size: 0.78rem;
+            text-decoration: none;
+            transition: 0.2s;
+            font-weight: 700;
+        }
+        .role-link-wrapper a:hover {
+            color: #007bff;
+        }
+
+        /* NOTIFIKASI PERINGATAN OVAL */
+        .alert-custom-warning {
+            background-color: #fff3cd;
+            border: 1px solid #ffeeba;
+            color: #856404;
+            padding: 10px 15px;
+            border-radius: 50px; /* Oval sempurna */
+            font-size: 0.8rem;
+            text-align: center;
+            margin-bottom: 20px;
+            font-weight: 500;
+        }
+
+    </style>
+</head>
+<body>
+
+<header class="header-top">
+    <div class="header-logo">
+        <img style="margin:-10px; height:70px;" src="<?= base_url('assets/img/wall212.png') ?>" alt="Logo Aplikasi">
+    </div>
+    <div class="header-text" style="margin-left: 25px; margin-top: -5px;">
+        <b style="font-size: 1.3rem;">Application</b>
+        <small style="display: block; opacity: 0.8; margin-top: -2px;"></small>
+    </div>
+</header>
+
+<div class="login-wrapper">
+
+    <div class="welcome-card">
+        <h3 id="login-title">Selamat Datang</h3>
+        <p id="login-desc"></p>
+    </div>
+
+    <div class="login-card">
+        <div class="login-card-body">
+            <div id="infoMessage">
+                <?= isset($message) ? $message : ''; ?>
+            </div>
+
+            <?php
+            $options_html = '';
+            $is_jadwal_aktif = false;
+            // Default halaman login = SISWA. Admin/guru lewat link "Login Admin" atau URL ?role=admin
+            $role_awal = ($this->input->get('role') === 'admin') ? 'admin' : 'siswa';
+            $this->load->helper('jam_ujian'); // pastikan helper jam ujian termuat
+
+            try {
+                // Hanya jadwal yang tanggal & jamnya sedang berlangsung (diatur di menu Jadwal)
+                $jadwal_list = jadwal_aktif_sekarang();
+
+                if (!empty($jadwal_list)) {
+                    $is_jadwal_aktif = true;
+
+                    // Ambil kode bank soal untuk SEMUA jadwal sekaligus (1 query, memakai koneksi CI yang sudah terbuka).
+                    // Dulu: 1 koneksi PDO baru + 1 query per jadwal di setiap pemuatan halaman login.
+                    $ids_bank = array_values(array_unique(array_filter(array_column($jadwal_list, 'id_bank'))));
+                    $kode_bank = [];
+                    if (!empty($ids_bank)) {
+                        $rows_bank = $this->db->select('id_bank, bank_kode')
+                                              ->where_in('id_bank', $ids_bank)
+                                              ->get('cbt_bank_soal')->result_array();
+                        foreach ($rows_bank as $b) {
+                            $kode_bank[$b['id_bank']] = $b['bank_kode'];
+                        }
+                    }
+
+                    foreach ($jadwal_list as $row) {
+                        $id_jadwal = $row['id_jadwal'];
+                        $id_bank = $row['id_bank'];
+                        $text_tampil = "Ujian Aktif";
+
+                        if (!empty($id_bank) && !empty($kode_bank[$id_bank])) {
+                            $kode_soal = strtoupper($kode_bank[$id_bank]);
+
+                            switch ($kode_soal) {
+                                case 'AGA': $text_tampil = "Pendidikan Agama Islam"; break;
+                                case 'PJOK': $text_tampil = "Pendidikan Jasmani Olahraga & Kesehatan"; break;
+                                case 'IPA': $text_tampil = "Ilmu Pengetahuan Alam (IPA)"; break;
+                                case 'MTK': $text_tampil = "Matematika"; break;
+                                case 'BIN':
+                                case 'INDO': $text_tampil = "Bahasa Indonesia"; break;
+                                case 'BIG':
+                                case 'ING': $text_tampil = "Bahasa Inggris"; break;
+                                default: $text_tampil = $kode_soal; break;
+                            }
+                        }
+                        $options_html .= '<option value="' . htmlspecialchars($id_jadwal) . '" style="text-align: center;">' . htmlspecialchars($text_tampil) . '</option>';
+                    }
+                }
+            } catch (Throwable $e) {
+                $options_html = '<option value="" disabled style="text-align: center;">Gagal memuat daftar ujian</option>';
+            }
+            ?>
+
+            <?= form_open("auth/cek_login", array('id' => 'login')); ?>
+
+                <!-- ROLE AWAL: siswa (default) atau admin (?role=admin) -->
+                <input type="hidden" name="role_akses" id="role_akses" value="<?= $role_awal ?>">
+
+                <div class="input-group-custom">
+                    <i class="fas fa-user-circle"></i>
+                    <?= form_input($identity, '', 'required class="form-control" placeholder="Username" autocomplete="off"'); ?>
+                </div>
+
+                <div class="input-group-custom">
+                    <i class="fas fa-lock"></i>
+                    <?= form_password($password, '', 'required class="form-control" id="password" placeholder="Password"'); ?>
+                    <i id="toggle-password" class="fas fa-eye" style="cursor:pointer; color:#aaa; margin-left: 5px;"></i>
+                </div>
+
+                <!-- DROPDOWN MAPEL: tampil di mode siswa, disembunyikan di mode admin -->
+                <div class="input-group-custom select-custom" id="mapel-wrapper" style="<?= ($role_awal === 'siswa' && $is_jadwal_aktif) ? '' : 'display: none;' ?>">
+                    <i class="fas fa-book"></i>
+                    <select name="id_ujian" id="id_ujian" class="form-control" <?= ($role_awal === 'siswa' && $is_jadwal_aktif) ? 'required' : '' ?>>
+                        <?php if ($is_jadwal_aktif): ?>
+                            <option value="" disabled selected style="text-align: center;">-- Pilih Mata Pelajaran --</option>
+                            <?= $options_html; ?>
+                        <?php else: ?>
+                            <option value="" disabled selected style="text-align: center;">Belum Ada Ujian Aktif</option>
+                        <?php endif; ?>
+                    </select>
+                </div>
+
+                <!-- TOMBOL: biru untuk siswa, merah untuk admin -->
+                <button type="submit" id="submit" class="btn btn-login<?= $role_awal === 'admin' ? ' admin-mode' : '' ?>">
+                    <?= $role_awal === 'admin' ? 'Login' : 'Login Siswa' ?>
+                </button>
+
+                <div class="role-link-wrapper">
+                    <a href="#" id="btn-switch-role" onclick="switchRole(event)">
+                        <?php if ($role_awal === 'admin'): ?>
+                            <i class="fas fa-graduation-cap"></i> Login Siswa
+                        <?php else: ?>
+                            <i class="fas fa-user-shield"></i> Login Admin
+                        <?php endif; ?>
+                    </a>
+                </div>
+
+                <a href="download/aplikasi.apk" download class="btn-download">
+                    Unduh Aplikasi Ujian
+                </a>
+            <?= form_close(); ?>
+        </div>
+
+    </div>
+</div>
+
+<script src="<?= base_url('assets/plugins/jquery/jquery.min.js') ?>"></script>
+<script>
+    // ROLE AWAL DITENTUKAN SERVER (default: siswa)
+    var currentRole = "<?= $role_awal ?>";
+    var isJadwalAktifServer = <?= $is_jadwal_aktif ? 'true' : 'false'; ?>;
+
+    function switchRole(e) {
+        if(e) e.preventDefault();
+        var title = $('#login-title');
+        var desc = $('#login-desc');
+        var mapel = $('#mapel-wrapper');
+        var mapelSelect = $('#id_ujian');
+        var submitBtn = $('#submit');
+        var switchLink = $('#btn-switch-role');
+        var alertBox = $('#db-alert-box');
+
+        $('#infoMessage').html('');
+
+        if (currentRole === "siswa") {
+            currentRole = "admin";
+            $('#role_akses').val('admin');
+
+            title.text("Selamat Datang");
+            desc.text("");
+
+            mapel.hide();
+            if(alertBox.length) { alertBox.hide(); }
+
+            mapelSelect.removeAttr('required').val('');
+            submitBtn.addClass('admin-mode').text('Login');
+            switchLink.html('<i class="fas fa-graduation-cap mr-1"></i> Login Siswa');
+        } else {
+            currentRole = "siswa";
+            $('#role_akses').val('siswa');
+
+            title.text("Selamat Datang");
+            desc.text("");
+
+            if (isJadwalAktifServer) {
+                mapel.show();
+                mapelSelect.attr('required', 'required');
+            } else {
+                mapel.hide();
+                mapelSelect.removeAttr('required');
+            }
+
+            submitBtn.removeClass('admin-mode').text('Login Siswa');
+            switchLink.html('<i class="fas fa-user-shield mr-1"></i> Login Admin');
+        }
+    }
+
+    $(document).ready(function(){
+        $('#toggle-password').on('click', function () {
+            const field = $('#password');
+            const type = field.attr('type') === 'password' ? 'text' : 'password';
+            field.attr('type', type);
+            $(this).toggleClass('fa-eye fa-eye-slash');
+        });
+
+        $('form#login').on('submit', function(e){
+            e.preventDefault();
+            var infobox = $('#infoMessage');
+            var btn = $('#submit');
+            var textDefault = (currentRole === "siswa") ? "Login Siswa" : "Login";
+
+            infobox.html('<div class="alert alert-info">Memeriksa data...</div>');
+            btn.attr('disabled', 'disabled').text('Tunggu...');
+
+            $.ajax({
+                url: $(this).attr('action'),
+                type: 'POST',
+                data: $(this).serialize(),
+                success: function(data){
+                    btn.removeAttr('disabled').text(textDefault);
+                    try {
+                        var res = (typeof data === 'object') ? data : JSON.parse(data);
+                        if(res.status){
+                            infobox.html('<div class="alert alert-success">Login Berhasil</div>');
+                            window.location.href = '<?= base_url() ?>' + res.url;
+                        } else {
+                            infobox.html('<div class="alert alert-danger">' + (res.failed ? res.failed : 'Username atau Password Salah!') + '</div>');
+                        }
+                    } catch (e) {
+                        infobox.html('<div class="alert alert-warning">Terjadi kesalahan pada respon server.</div>');
+                    }
+                },
+                error: function() {
+                    btn.removeAttr('disabled').text(textDefault);
+                    infobox.html('<div class="alert alert-danger">Gagal terhubung ke server. Cek koneksi Anda.</div>');
+                }
+            });
+        });
+    });
+</script>
+
+</body>
+</html>

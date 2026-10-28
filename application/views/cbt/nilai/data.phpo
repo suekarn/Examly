@@ -1,0 +1,645 @@
+<?php
+/**
+ * Created by IntelliJ IDEA.
+ * User: multazam
+ * Date: 07/07/20
+ * Time: 17:20
+ */
+
+$XA = isset($convert) ? $convert['xa'] : 0; 
+$XB = isset($convert) ? $convert['xb'] : 20;  
+$YA = isset($convert) ? $convert['ya'] : 100; 
+$YB = isset($convert) ? $convert['yb'] : 60;  
+
+$colWidth = '';
+$cols_name = ["PG", "PK", "JOD", "IS", "ES"];
+?>
+
+<style>
+    .my-shadow {
+        box-shadow: 0 8px 30px rgba(0, 0, 0, 0.04) !important;
+        border: 1px solid #f1f3f9 !important;
+        border-radius: 16px !important;
+        background: #ffffff;
+    }
+    .card-header {
+        background: #ffffff !important;
+        border-bottom: 1px solid #f1f3f9 !important;
+        padding: 20px 24px !important;
+    }
+    .info-card {
+        border-radius: 12px;
+        background: #f8fafc;
+        border: 1px solid #edf2f7;
+        padding: 20px !important;
+    }
+    .info-table td {
+        padding: 6px 12px;
+        border: none !important;
+        color: #4a5568;
+    }
+    .main-table {
+        border-collapse: separate !important;
+        border-spacing: 0 !important;
+        border: none !important;
+    }
+    .main-table thead th {
+        background-color: #1e293b !important; 
+        color: #f8fafc !important;
+        font-weight: 600 !important;
+        font-size: 0.72rem !important;
+        letter-spacing: 0.05em;
+        text-transform: uppercase;
+        padding: 14px 10px !important;
+        vertical-align: middle !important;
+        text-align: center;
+        border: none !important;
+    }
+    .main-table thead tr:first-child th:first-child { border-top-left-radius: 10px !important; }
+    .main-table thead tr:first-child th:last-child { border-top-right-radius: 10px !important; }
+    
+    .main-table tbody td {
+        padding: 14px 12px !important;
+        vertical-align: middle !important;
+        font-size: 0.85rem;
+        color: #334155;
+        border-bottom: 1px solid #f1f5f9 !important;
+    }
+    .main-table tbody tr {
+        transition: all 0.2s ease;
+    }
+    .main-table tbody tr:hover {
+        background-color: #f8fafc !important;
+    }
+    .col-benar-soft { background-color: #f0fdf4 !important; color: #16a34a !important; font-weight: 700; }
+    .col-salah-soft { background-color: #fef2f2 !important; color: #dc2626 !important; font-weight: 700; }
+    .col-skor-soft { background-color: #f0f9ff !important; color: #0284c7 !important; font-weight: 700; }
+    .col-asli-soft { background-color: #f8fafc !important; color: #1e293b !important; font-weight: 700; }
+    .col-katrol-soft { background-color: #fffbeb !important; color: #d97706 !important; font-weight: 700; }
+
+    .badge-modern {
+        border-radius: 8px;
+        padding: 6px 12px;
+        font-weight: 600;
+        font-size: 0.75rem;
+    }
+    .badge-live {
+        animation: pulse 2.5s infinite;
+        border-radius: 50px;
+        font-size: 0.72rem;
+    }
+    @keyframes pulse {
+        0% { opacity: 0.7; transform: scale(1); }
+        50% { opacity: 1; transform: scale(1.02); }
+        100% { opacity: 0.7; transform: scale(1); }
+    }
+</style>
+
+<div class="content-wrapper bg-white">
+    <section class="content-header pt-4">
+        <div class="container-fluid">
+            <div class="row mb-2">
+                <div class="col-sm-6 d-flex align-items-center" id="live-header-badge">
+                    <h1 class="font-weight-bold text-dark mb-0 mr-3" style="font-size: 1.6rem; letter-spacing: -0.5px;"><?= $judul ?></h1>
+                    <?php if (count($siswas) > 0) : ?>
+                        <span class="badge badge-danger badge-live px-3 py-2 font-weight-bold shadow-sm"><i class="fa fa-circle mr-1" style="font-size: 8px;"></i> LIVE RUNNING</span>
+                    <?php endif; ?>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="content">
+        <div class="container-fluid">
+            <div class="card card-default my-shadow mb-4">
+                <div class="card-header">
+                    <h6 class="card-title font-weight-bold text-secondary mb-0" style="font-size: 0.95rem;">
+                        <i class="fa fa-sliders mr-2 text-primary"></i>Konfigurasi & Parameter Data
+                    </h6>
+                </div>
+                <div class="card-body p-4">
+                    <div class="row align-items-end">
+                        <?php $dnone = $kelas_selected == null ? 'class="d-none"' : ''; ?>
+                        <div class="col-md-4 mb-3" id="by-kelas">
+                            <label class="font-weight-bold text-muted small mb-2" style="letter-spacing: 0.5px;">KELAS PARAMETER</label>
+                            <div class="input-group">
+                                <div class="input-group-prepend">
+                                    <span class="input-group-text bg-light border-right-0"><i class="fa fa-graduation-cap text-muted"></i></span>
+                                </div>
+                                <?php echo form_dropdown('kelas', $kelas, $kelas_selected, 'id="kelas" class="form-control"'); ?>
+                            </div>
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <label class="font-weight-bold text-muted small mb-2" style="letter-spacing: 0.5px;">JADWAL PILIHAN</label>
+                            <div class="input-group">
+                                <div class="input-group-prepend">
+                                    <span class="input-group-text bg-light border-right-0"><i class="fa fa-calendar text-muted"></i></span>
+                                </div>
+                                <?php echo form_dropdown('jadwal', $jadwal, $jadwal_selected, 'id="jadwal" class="form-control"'); ?>
+                            </div>
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <div class="row">
+                                <div class="col-6">
+                                    <button type="button" id="import-essai" class="btn btn-info btn-block btn-disabled font-weight-bold" style="border-radius: 8px; height: 42px;" data-toggle="tooltip" title="Input nilai manual">
+                                        <i class="fa fa-pencil mr-1"></i> Input Nilai
+                                    </button>
+                                </div>
+                                <div class="col-6">
+                                    <button type="button" id="mark-all" class="btn btn-success btn-block btn-disabled font-weight-bold shadow-sm" style="border-radius: 8px; height: 42px;" data-toggle="tooltip" title="Tandai semua siswa sudah dikoreksi" disabled>
+                                        <i class="fa fa-check mr-1"></i> Tandai semua
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <hr class="my-3">
+
+                    <div id="live-container">
+                        <?php if (count($siswas) > 0) : ?>
+                            <div class="d-flex justify-content-between align-items-center flex-wrap mb-4 <?= $dnone ?>" id="group-export">
+                                <div class="d-flex align-items-center mb-2 mb-md-0">
+                                    <?php if (isset($convert)) : ?>
+                                        <button type="button" id="rollback" class="btn btn-warning font-weight-bold text-white mr-3 shadow-sm" style="border-radius: 8px;">
+                                            <i class="fa fa-undo mr-1"></i> Nilai Asli
+                                        </button>
+                                    <?php else: ?>
+                                        <button type="button" class="btn btn-danger font-weight-bold mr-3 shadow-sm" style="border-radius: 8px;" data-toggle="modal" data-target="#perbaikanModal">
+                                            <i class="fa fa-balance-scale mr-1"></i> Katrol
+                                        </button>
+                                    <?php endif; ?>
+                                    
+                                    <div class="custom-control custom-checkbox d-flex align-items-center">
+                                        <input style="width: 20px; height: 20px; cursor: pointer;" class="mr-2" id="nilai-detail" type="checkbox" checked>
+                                        <label for="nilai-detail" class="font-weight-bold text-secondary mb-0" style="cursor:pointer; user-select:none;">Detail</label>
+                                    </div>
+                                </div>
+                                <div>
+                                    <button type="button" id="download-excel" class="btn btn-success font-weight-bold px-3" style="border-radius: 8px;" data-toggle="tooltip" title="Download Excel">
+                                        <i class="fa fa-file-excel mr-1"></i> Ekspor Excel
+                                    </button>
+                                </div>
+                            </div>
+
+                            <?php
+                            $nilaiTertinggi = 0;
+                            $nilaiTerrendah = -1;
+                            $cols = [$info->tampil_pg, $info->tampil_kompleks, $info->tampil_jodohkan, $info->tampil_isian, $info->tampil_esai];
+                            $cols = array_filter($cols);
+                            $rows = count($cols) > 1 ? 1 : 2;
+
+                            $colWidth = '5,15,35,15,10,10,10';
+                            for ($s = 0; $s < $info->tampil_pg; $s++) {
+                                $colWidth .= ',4';
+                            }
+                            $colWidth .= ',10,10,10';
+
+                            $totalSoal = $info->tampil_pg + $info->tampil_kompleks + $info->tampil_jodohkan + $info->tampil_isian + $info->tampil_esai;
+                            ?>
+                            <div class="d-none" id="info">
+                                <div id="info-ujian"></div>
+                            </div>
+
+                            <div class="card info-card mb-4 <?= $dnone ?>">
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <table class="table-sm info-table w-100">
+                                            <tr><td class="font-weight-bold text-muted small" width="150">MATA PELAJARAN</td><td class="text-dark font-weight-bold">: &nbsp;<?= $info->nama_mapel ?></td></tr>
+                                            <tr><td class="font-weight-bold text-muted small">KELAS</td><td class="text-secondary font-weight-bold">: &nbsp;<?= $kelas[$kelas_selected] ?></td></tr>
+                                            <tr><td class="font-weight-bold text-muted small">GURU PENGAMPU</td><td class="text-secondary">: &nbsp;<?= $info->nama_guru ?></td></tr>
+                                        </table>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <table class="table-sm info-table w-100">
+                                            <tr>
+                                                <td class="font-weight-bold text-muted small" width="150">KODE BANK SOAL</td>
+                                                <td class="d-flex align-items-center" style="gap: 8px;">
+                                                    : &nbsp;<span class="badge badge-secondary font-weight-bold px-2 py-1" style="border-radius:6px;"><?= $info->bank_kode ?></span>
+                                                    <a href="<?= base_url() ?>cbtbanksoal/buatsoal/<?= $info->id_bank ?>" class="btn btn-xs btn-warning font-weight-bold text-white px-2 py-1 shadow-sm d-inline-flex align-items-center" style="border-radius: 6px; font-size: 0.75rem;">
+                                                        <i class="fa fa-pencil mr-1"></i> Edit Soal
+                                                    </a>
+                                                </td>
+                                            </tr>
+                                            <tr><td class="font-weight-bold text-muted small">JUMLAH SOAL</td><td class="text-primary font-weight-bold">: &nbsp;<?= $totalSoal ?> Butir</td></tr>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div <?= $dnone ?> class="table-responsive">
+                                <?= form_open('', array('id' => 'koreksi-semua')) ?>
+                                <table class="table main-table w-100" id="table-status" data-cols-width="<?= $colWidth ?>">
+                                    <thead>
+                                        <tr>
+                                            <th rowspan="2" class="align-middle" width="50">No.</th>
+                                            <th rowspan="2" class="align-middle" width="110">No. Peserta</th>
+                                            <th rowspan="2" class="align-middle text-left" width="220">Nama</th>
+                                            <th rowspan="2" class="align-middle" width="70">Sesi</th>
+                                            <th rowspan="2" class="align-middle" width="90">Ruang</th>
+                                            <th rowspan="2" class="align-middle" width="80">Mulai</th>
+                                            <th rowspan="2" class="align-middle" width="80">Durasi</th>
+                                            
+                                            <?php if ($info->tampil_pg > 0) : ?>
+                                                <th id="no-soal-tile" colspan="<?= $info->tampil_pg ?>" class="align-middle d-none">Nomor Soal PG</th>
+                                                <th colspan="2" class="align-middle" style="background-color: #2e3a4e !important;">PG</th>
+                                            <?php endif; ?>
+
+                                            <th colspan="<?= count($cols) ?>" rowspan="<?= $rows ?>" class="align-middle">
+                                                Skor <?= count($cols) > 1 ? "" : $cols_name[array_key_first($cols)] ?>
+                                            </th>
+                                            <th colspan="2" class="align-middle" style="background-color: #b45309 !important;">Nilai</th>
+                                            <th rowspan="2" class="align-middle" data-exclude="true" width="130">Aksi</th>
+                                        </tr>
+                                        <tr>
+                                            <?php for ($js = 0; $js < $info->tampil_pg; $js++) : ?>
+                                                <th class="no-soal align-middle p-1 d-none font-weight-normal" style="background-color: #2e3a4e !important;"><?= $js + 1 ?></th>
+                                            <?php endfor; ?>
+                                            <?php if ($info->tampil_pg > 0) : ?>
+                                                <th class="align-middle font-weight-bold" style="background-color: #15803d !important; width: 45px;">B</th>
+                                                <th class="align-middle font-weight-bold" style="background-color: #b91c1c !important; width: 45px;">S</th>
+                                            <?php endif; ?>
+                                            <?php
+                                            if ($rows == 1) :
+                                                if ($info->tampil_pg > 0) : ?>
+                                                    <th class="align-middle p-1">PG</th>
+                                                <?php endif;
+                                                if ($info->tampil_kompleks > 0) :?>
+                                                    <th class="align-middle">PK</th>
+                                                <?php endif;
+                                                if ($info->tampil_jodohkan > 0) :?>
+                                                    <th class="align-middle">JO</th>
+                                                <?php endif;
+                                                if ($info->tampil_isian > 0) :?>
+                                                    <th class="align-middle">IS</th>
+                                                <?php endif;
+                                                if ($info->tampil_esai > 0) :?>
+                                                    <th class="align-middle">ES</th>
+                                                <?php endif;
+                                            endif;
+                                            ?>
+                                            <th class="align-middle" style="background-color: #334155 !important; width: 60px;">Asli</th>
+                                            <th class="align-middle" style="background-color: #d97706 !important; width: 60px;">Katrol</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="live-table-body">
+                                        <?php
+                                        $no = 1;
+                                        foreach ($siswas as $siswa) :
+                                            $idSiswa = $siswa->id_siswa;
+                                            $disable = strpos($siswa->mulai_ujian, '-') !== false;
+                                            $disabled = $disable ? 'disabled' : '';
+                                            ?>
+                                            <tr id="row-siswa-<?= $idSiswa ?>">
+                                                <td class="text-center align-middle font-weight-bold text-muted small"><?= $no ?></td>
+                                                <td class="text-center align-middle font-weight-bold text-secondary small"><?= $siswa->nomor_peserta ?></td>
+                                                <td class="align-middle font-weight-bold text-dark" style="font-size: 0.9rem;"><?= $siswa->nama ?></td>
+                                                <td class="text-center align-middle"><span class="badge badge-light border text-muted badge-modern"><?= $siswa->kode_sesi ?></span></td>
+                                                <td class="text-center align-middle"><span class="badge badge-light border text-muted badge-modern"><?= $siswa->kode_ruang ?></span></td>
+                                                <td class="text-center align-middle text-secondary small cell-mulai"><?= $siswa->mulai_ujian ?></td>
+                                                <td class="text-center align-middle"><span class="badge badge-slate badge-modern bg-light text-dark border cell-durasi" style="font-weight: 500;"><i class="fa fa-clock-o mr-1 text-muted"></i><?= $siswa->lama_ujian ?></span></td>
+                                                
+                                                <?php
+                                                $benar_pg = 0;
+                                                $salah_pg = 0;
+                                                foreach ($siswa->jawaban_pg as $num => $jwb) :
+                                                    if ($jwb['benar']) {
+                                                        $bg = 'class="no-soal-siswa d-none table-success text-success text-center align-middle font-weight-bold"';
+                                                        $benar_pg++;
+                                                    } else {
+                                                        $bg = 'class="no-soal-siswa d-none table-danger text-danger text-center align-middle font-weight-bold"';
+                                                        $salah_pg++;
+                                                    }
+                                                    if (round($siswa->skor_total, 2) > $nilaiTertinggi) {
+                                                        $nilaiTertinggi = round($siswa->skor_total, 2);
+                                                    }
+                                                    if (round($siswa->skor_total, 2) > 0 && $siswa->skor_total < $nilaiTerrendah) {
+                                                        $nilaiTerrendah = round($siswa->skor_total, 2);
+                                                    }
+                                                    ?>
+                                                    <td <?= $bg ?>><?= $jwb['jawaban'] ?></td>
+                                                <?php endforeach; ?>
+
+                                                <?php if ($info->tampil_pg > 0) : ?>
+                                                    <td class="text-center align-middle col-benar-soft cell-benar"><?= $disable ? '' : $benar_pg ?></td>
+                                                    <td class="text-center align-middle col-salah-soft cell-salah"><?= $disable ? '' : $salah_pg ?></td>
+                                                    <td class="text-center align-middle col-skor-soft cell-skor-pg"><?= $disable ? '' : $siswa->skor_pg ?></td>
+                                                <?php endif;
+                                                if ($info->tampil_kompleks > 0) : ?>
+                                                    <td class="text-center align-middle font-weight-bold text-dark cell-skor-kompleks"><?= $disable ? '' : $siswa->skor_kompleks ?></td>
+                                                <?php endif;
+                                                if ($info->tampil_jodohkan > 0) : ?>
+                                                    <td class="text-center align-middle font-weight-bold text-dark cell-skor-jodohkan"><?= $disable ? '' : $siswa->skor_jodohkan ?></td>
+                                                <?php endif;
+                                                if ($info->tampil_isian > 0) : ?>
+                                                    <td class="text-center align-middle font-weight-bold text-dark cell-skor-isian"><?= $disable ? '' : $siswa->skor_isian ?></td>
+                                                <?php endif;
+                                                if ($info->tampil_esai > 0) : ?>
+                                                    <td class="text-center align-middle font-weight-bold text-dark cell-skor-essai"><?= $disable ? '' : $siswa->skor_essai ?></td>
+                                                <?php endif; ?>
+
+                                                <td class="text-center align-middle col-asli-soft cell-skor-total"><?= $disable ? '' : round($siswa->skor_total, 2) ?></td>
+                                                <td class="text-center align-middle col-katrol-soft cell-skor-katrol"><?= $disable ? '' : ($siswa->skor_katrol == '' ? '' : round($siswa->skor_katrol, 2)) ?></td>
+                                                
+                                                <td class="text-center align-middle" data-exclude="true">
+                                                    <button type="button" class="btn btn-xs btn-success mb-1 action-koreksi <?= $disabled ?>" onclick="lihatJawaban(<?= $siswa->id_siswa ?>)" data-toggle="tooltip" title="Detail Jawaban Siswa" <?= $disabled ?>>
+                                                        Koreksi
+                                                    </button>
+                                                    <span class="status-koreksi-icon">
+                                                        <?php if (isset($siswa->dikoreksi) && $siswa->dikoreksi === '1') : ?>
+                                                            <i title="Sudah dikoreksi" class="fa fa-check-circle text-success ml-1"></i>
+                                                        <?php else: ?>
+                                                            <i title="Belum dikoreksi" class="fa fa-warning text-warning ml-1"></i>
+                                                        <?php endif; ?>
+                                                    </span>
+                                                    <input type="hidden" name="ids[<?= $idSiswa ?>]" value="<?= $disabled ? '2' : (isset($siswa->dikoreksi) && $siswa->dikoreksi ? '1' : '0') ?>">
+                                                </td>
+                                            </tr>
+                                        <?php $no++; endforeach; ?>
+                                    </tbody>
+                                </table>
+                                <?= form_close() ?>
+                            </div>
+                        <?php else: ?>
+                            <div class="text-center py-5">
+                                <img src="https://cdn-icons-png.flaticon.com/512/7486/7486744.png" style="width: 120px; opacity: 0.6;" class="mb-3" alt="No Exam">
+                                <h5 class="font-weight-bold text-muted">Tidak Ada Ujian Berlangsung</h5>
+                                <p class="text-secondary small">Tabel live score otomatis akan muncul ketika sistem mendeteksi ada jadwal ujian yang aktif.</p>
+                            </div>
+                        <?php endif; ?>
+                    </div> </div>
+
+                <div class="overlay d-none" id="loading">
+                    <div class="spinner-grow text-primary"></div>
+                </div>
+            </div>
+        </div>
+    </section>
+</div>
+
+<?= form_open('update', array('id' => 'perbaikan-nilai')) ?>
+<div class="modal fade" id="perbaikanModal" tabindex="-1" role="dialog" aria-labelledby="perbaikanModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered" role="document">
+        <div class="modal-content" style="border-radius: 12px; border: none;">
+            <div class="modal-header bg-dark text-white py-3" style="background-color: #1e293b !important;">
+                <h5 class="modal-title font-weight-bold" id="perbaikanModalLabel"><i class="fa fa-balance-scale mr-2 text-warning"></i>Perbaikan Nilai</h5>
+                <button type="button" class="close text-white" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body p-4">
+                <div class="form-group row mb-3">
+                    <label class="col-md-4 col-form-label font-weight-bold text-secondary">Nilai Tertinggi</label>
+                    <div class="col-md-8">
+                        <input type="text" class="form-control" name="ya" value="<?= $YA ?>" placeholder="Nilai tertinggi yang diinginkan" required>
+                        <small class="text-muted">diisi nilai puluhan maksimal 100, misal 80 sampai 100</small>
+                    </div>
+                </div>
+                <div class="form-group row mb-2">
+                    <label class="col-md-4 col-form-label font-weight-bold text-secondary">Nilai Terrendah</label>
+                    <div class="col-md-8">
+                        <input type="text" class="form-control" name="yb" value="<?= $YB ?>" placeholder="Nilai terrendah yang diinginkan" required>
+                        <small class="text-muted">diisi nilai puluhan dibawah nilai tertinggi, misal 60</small>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer bg-light">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Batal</button>
+                <button type="submit" class="btn btn-primary font-weight-bold" id="convert">Katrol <i class="fa fa-arrow-right ml-1"></i></button>
+            </div>
+        </div>
+    </div>
+</div>
+<?= form_close() ?>
+
+<script type="text/javascript" src="<?= base_url() ?>/assets/app/js/tableToExcel.js"></script>
+
+<script>
+    var colWidthMin = '5,15,35,15,10,10,10,10,10,10';
+    var colWidth = '<?= $colWidth ?>';
+
+    var idJadwal = '<?=$jadwal_selected?>';
+    var idKelas = '<?=$kelas_selected?>';
+    const arrSiswa = <?= json_encode($siswas) ?>;
+    var isSelected = <?= count($siswas) > 0 ? 1 : 0?>;
+    var namaMapel = '<?=isset($info) ? $info->kode : ''?>';
+    var jenisUjian = '<?=isset($info) ? $info->kode_jenis : ''?>';
+
+    var nilai_max = <?=$XA?>;
+    var nilai_min = <?=$XB?>;
+    var hasil_max = <?=$YA?>;
+    var hasil_min = <?=$YB?>;
+
+    function lihatJawaban(idSiswa) {
+        window.location.href = base_url + 'cbtnilai/detail?siswa=' + idSiswa + '&jadwal=' + idJadwal;
+    }
+
+    function getKelasJadwal(idKelas) {
+        $.ajax({
+            type: "GET",
+            url: base_url + "cbtstatus/getjadwalujianbykelas?id_kelas=" + idKelas,
+            cache: false,
+            success: function (response) {
+                var selJadwal = $('#jadwal');
+                selJadwal.html('');
+                selJadwal.append('<option value="">Pilih Jadwal</option>');
+                $.each(response, function (k, v) {
+                    if (v != null) {
+                        selJadwal.append('<option value="' + k + '">' + v + '</option>');
+                    }
+                });
+                const enb = isSelected && $("#jadwal").val() === "<?= $jadwal_selected ?>"
+                $('#import-essai').attr('disabled', !enb).toggleClass('btn-disabled', !enb);
+            }
+        });
+    }
+
+    $(document).ready(function () {
+        ajaxcsrf();
+
+        const loading = $('#loading');
+        var opsiJadwal = $("#jadwal");
+        var opsiKelas = $("#kelas");
+
+        var selected = isSelected === 0 ? "selected='selected'" : "";
+        opsiJadwal.prepend("<option value='' " + selected + " disabled>Pilih Jadwal</option>");
+        opsiKelas.prepend("<option value='' " + selected + " disabled>Pilih Kelas</option>");
+        $('#import-essai').attr('disabled', !isSelected).toggleClass('btn-disabled', !isSelected);
+        $('#mark-all').attr('disabled', !isSelected).toggleClass('btn-disabled', !isSelected);
+
+        // --- CORE LIVE SCORE REALTIME ENGINE ---
+        // Menjalankan background worker setiap 5 detik jika kelas & jadwal dipilih
+        setInterval(function() {
+            if (opsiKelas.val() && opsiJadwal.val()) {
+                $.ajax({
+                    type: "GET",
+                    url: window.location.href,
+                    cache: false,
+                    dataType: "html",
+                    success: function(data) {
+                        var freshHtml = $(data);
+                        
+                        var currentContainer = $('#live-container');
+                        var freshContainerContent = freshHtml.find('#live-container').html();
+                        
+                        // Deteksi jumlah baris tabel (Jumlah siswa yang ikut ujian)
+                        var currentRows = currentContainer.find('#live-table-body tr').length;
+                        var freshRows = freshHtml.find('#live-table-body tr').length;
+
+                        // JIKA STATUS BERUBAH (Dari tidak ada ujian menjadi ada ujian / sebaliknya)
+                        if (currentRows !== freshRows || currentRows === 0 || freshRows === 0) {
+                            // Ganti seluruh container, otomatis memunculkan/menyembunyikan tabel secara instan
+                            currentContainer.html(freshContainerContent);
+                            
+                            // Update badge header 'LIVE RUNNING'
+                            $('#live-header-badge').html(freshHtml.find('#live-header-badge').html());
+                            
+                            // Atur status tombol aksi
+                            var hasData = freshRows > 0;
+                            $('#import-essai, #mark-all').attr('disabled', !hasData).toggleClass('btn-disabled', !hasData);
+                        } else {
+                            // JIKA HANYA UPDATE NILAI (Live update berjalan sel per sel agar tidak berkedip)
+                            currentContainer.find('#live-table-body tr').each(function() {
+                                var rowId = $(this).attr('id');
+                                if (rowId) {
+                                    var targetRow = freshHtml.find('#' + rowId);
+                                    if (targetRow.length) {
+                                        var selectors = [
+                                            '.cell-mulai', '.cell-durasi', '.cell-benar', 
+                                            '.cell-salah', '.cell-skor-pg', '.cell-skor-kompleks', 
+                                            '.cell-skor-jodohkan', '.cell-skor-isian', '.cell-skor-essai', 
+                                            '.cell-skor-total', '.cell-skor-katrol', '.status-koreksi-icon'
+                                        ];
+
+                                        selectors.forEach(function(selector) {
+                                            var currentElem = $('#' + rowId + ' ' + selector);
+                                            var freshContent = targetRow.find(selector).html();
+                                            
+                                            if (currentElem.html() !== freshContent) {
+                                                if(selector.includes('cell-skor') || selector.includes('cell-benar')) {
+                                                    // Efek highlight stabilizer kuning saat nilai berubah realtime
+                                                    currentElem.html(freshContent).css('background-color', '#fff9db');
+                                                    setTimeout(function() {
+                                                        currentElem.css('background-color', '');
+                                                    }, 1000);
+                                                } else {
+                                                    currentElem.html(freshContent);
+                                                }
+                                            }
+                                        });
+
+                                        var btnKoreksi = $('#' + rowId + ' .action-koreksi');
+                                        var targetBtn = targetRow.find('.action-koreksi');
+                                        if (targetBtn.length && !targetBtn.prop('disabled') && btnKoreksi.prop('disabled')) {
+                                            btnKoreksi.removeAttr('disabled').removeClass('disabled');
+                                        }
+                                    }
+                                }
+                            });
+                        }
+                    }
+                });
+            }
+        }, 5000); // interval refresh 5 detik
+
+        function loadSiswaKelas(kelas, jadwal) {
+            if (jadwal !== null) {
+                loading.removeClass('d-none');
+                window.location.href = base_url + 'cbtnilai?kelas=' + kelas + '&jadwal=' + jadwal;
+            }
+        }
+
+        // Event Delegation binding untuk komponen di dalam container AJAX agar tombol tidak macet
+        $(document).on('click', '#download-excel', function () {
+            var table = document.querySelector("#table-status");
+            if (table != null) {
+                TableToExcel.convert(table, {
+                    name: `Nilai ${jenisUjian} ${$("#kelas option:selected").text()} ${namaMapel}.xlsx`,
+                    sheet: { name: "Sheet 1" }
+                });
+            } else {
+                Swal.fire({ title: "ERROR", text: "Isi JADWAL dan KELAS terlebih dulu", icon: "error" });
+            }
+        });
+
+        $(document).on('change', '#nilai-detail', function () {
+            var exluded = this.checked;
+            $('#no-soal-tile').attr('data-exclude', '' + !exluded);
+            $('.no-soal').attr('data-exclude', '' + !exluded);
+            $('.no-soal-siswa').attr('data-exclude', '' + !exluded);
+            var width = $('#table-status').attr('data-cols-width');
+            $('#table-status').attr('data-cols-width', width == colWidth ? colWidthMin : colWidth)
+        });
+
+        $(document).on('click', '#rollback', function () {
+            loadSiswaKelas(opsiKelas.val(), opsiJadwal.val())
+        });
+
+        opsiKelas.change(function () {
+            getKelasJadwal($(this).val());
+        });
+
+        opsiJadwal.change(function () {
+            loadSiswaKelas(opsiKelas.val(), $(this).val())
+        });
+
+        $('#perbaikan-nilai').on('submit', function (e) {
+            e.preventDefault();
+            if (document.querySelector("#table-status") != null) {
+                var values = {};
+                $('#perbaikan-nilai :input').each(function () { values[this.name] = $(this).val(); });
+                hasil_max = values['ya'];
+                hasil_min = values['yb'];
+                $('#perbaikanModal').modal('hide');
+                loading.removeClass('d-none');
+                window.location.href = base_url + 'cbtnilai?kelas=' + opsiKelas.val() + '&jadwal=' + opsiJadwal.val() +
+                    '&xa=' + nilai_max + '&xb=' + nilai_min + '&ya=' + hasil_max + '&yb=' + hasil_min;
+            } else {
+                $('#perbaikanModal').modal('hide');
+                Swal.fire({ title: "ERROR", text: "Isi JADWAL dan KELAS terlebih dulu", icon: "error" });
+            }
+        });
+
+        $("#import-essai").on("click", function () {
+            if (opsiKelas.val() != null && opsiJadwal.val() != null) {
+                window.location.href = base_url + 'cbtnilai/inputessai?kelas=' + opsiKelas.val() + '&jadwal=' + opsiJadwal.val();
+            }
+        });
+
+        $('#mark-all').on('click', function () {
+            let dataPost = new FormData($('#koreksi-semua')[0]);
+            dataPost.append('id_jadwal', idJadwal);
+            loading.removeClass('d-none');
+            swal.fire({
+                text: "Silahkan tunggu....",
+                button: false,
+                allowOutsideClick: false,
+                onOpen: () => { swal.showLoading(); }
+            });
+            $.ajax({
+                url: base_url + "cbtnilai/tandaisemua",
+                type: "POST",
+                data: dataPost,
+                processData: false,
+                contentType: false,
+                success: function (data) {
+                    if (data.success > 0) {
+                        swal.fire({ title: "Berhasil", text: "Koreksi nilai berhasil disimpan", icon: "success" }).then(result => {
+                            if (result.value) { window.location.reload(); }
+                        });
+                    } else {
+                        loading.addClass('d-none');
+                        swal.fire({ title: "Gagal", text: 'Tidak ada nilai yang disimpan', icon: "error" });
+                    }
+                }, error: function (xhr) {
+                    loading.addClass('d-none');
+                    const err = JSON.parse(xhr.responseText);
+                    swal.fire({ title: "Error", text: err.Message, icon: "error" });
+                }
+            });
+        });
+
+        opsiKelas.select2({theme: 'bootstrap4'});
+        opsiJadwal.select2({theme: 'bootstrap4'});
+    });
+</script>

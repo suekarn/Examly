@@ -1,0 +1,158 @@
+<?php
+defined('BASEPATH') OR exit('No direct script access allowed');
+
+class Cbtlive extends CI_Controller {
+
+    public function __construct() {
+        parent::__construct();
+        if (!$this->ion_auth->logged_in()) {
+            if ($this->input->is_ajax_request()) {
+                exit(json_encode(['status' => 'expired']));
+            } else {
+                redirect('auth');
+            }
+        }
+    }
+
+    /**
+     * 1. Halaman Utama Monitor Live Score
+     */
+    public function index() {
+        $prefix_bawaan = $this->db->dbprefix;
+
+        // --- 1. AMBIL MASTER KELAS DAN BUAT MAPPING ARRAY ---
+        $this->db->set_dbprefix('');
+        $tabel_kelas = $this->db->table_exists('master_kelas') ? 'master_kelas' : 'cbt_kelas';
+        $kelas_raw = $this->db->table_exists($tabel_kelas) ? $this->db->get($tabel_kelas)->result() : array();
+        $data['kelas'] = $kelas_raw;
+
+        $map_kelas = array();
+        foreach ($kelas_raw as $k) {
+            $map_kelas[$k->id_kelas] = $k->nama_kelas;
+        }
+
+        // --- 2. AMBIL MASTER JADWAL DAN BUAT MAPPING ARRAY ---
+        $tabel_jadwal = $this->db->table_exists('master_jadwal') ? 'master_jadwal' : 'cbt_jadwal';
+        $jadwal_raw = $this->db->table_exists($tabel_jadwal) ? $this->db->get($tabel_jadwal)->result() : array();
+        $data['jadwal'] = $jadwal_raw;
+
+        $map_jadwal = array();
+        foreach ($jadwal_raw as $j) {
+            $nama_kegiatan = isset($j->nama_ujian) ? $j->nama_ujian : (isset($j->nama_kegiatan) ? $j->nama_kegiatan : (isset($j->nama_jadwal) ? $j->nama_jadwal : 'Ujian'));
+            $map_jadwal[$j->id_jadwal] = $nama_kegiatan;
+        }
+
+        $this->db->set_dbprefix($prefix_bawaan);
+        $data['info_box'] = array();
+
+        $kelas_filter  = $this->input->post('kelas');
+        $jadwal_filter = $this->input->post('jadwal');
+
+        // --- 3. AMBIL DATA UTAMA SISWA UJIAN (TANPA JOIN KELAS & JADWAL AGAR TIDAK ERROR) ---
+        $tabel_siswa = $this->db->table_exists('master_siswa') ? 'master_siswa' : 'cbt_siswa';
+        
+        if(strpos($tabel_siswa, 'master_') !== false) { $this->db->set_dbprefix(''); }
+
+        $this->db->select('a.*, b.nama as nama_siswa, b.*');
+        $this->db->from('cbt_durasi_siswa a');
+        $this->db->join($tabel_siswa . ' b', 'a.id_siswa = b.id_siswa', 'left');
+
+        if (!empty($jadwal_filter)) {
+            $this->db->where('a.id_jadwal', $jadwal_filter);
+        }
+
+        $this->db->order_by('a.id_durasi', 'DESC');
+        $siswa_ujian_raw = $this->db->get()->result();
+
+        // --- 4. COCOKKAN NAMA KELAS DAN JADWAL DI SINI SECARA AMAN ---
+        foreach ($siswa_ujian_raw as $su) {
+            // Deteksi otomatis kolom ID kelas yang ada di tabel siswa Anda
+            $id_kelas_siswa = '';
+            if (isset($su->id_kelas_siswa)) { $id_kelas_siswa = $su->id_kelas_siswa; }
+            elseif (isset($su->kelas_id)) { $id_kelas_siswa = $su->kelas_id; }
+            elseif (isset($su->id_kelas)) { $id_kelas_siswa = $su->id_kelas; }
+            elseif (isset($su->kelas)) { $id_kelas_siswa = $su->kelas; }
+
+            // Tempelkan nama kelas & nama jadwal ke objek hasil kueri
+            $su->nama_kelas = isset($map_kelas[$id_kelas_siswa]) ? $map_kelas[$id_kelas_siswa] : '-';
+            $su->nama_jadwal = isset($map_jadwal[$su->id_jadwal]) ? $map_jadwal[$su->id_jadwal] : '-';
+        }
+
+        // Jalankan filter kelas lewat array PHP jika user memilih kelas tertentu
+        if (!empty($kelas_filter)) {
+            $siswa_ujian_raw = array_filter($siswa_ujian_raw, function($item) use ($kelas_filter, $map_kelas) {
+                $id_k = isset($item->id_kelas_siswa) ? $item->id_kelas_siswa : (isset($item->kelas_id) ? $item->kelas_id : (isset($item->id_kelas) ? $item->id_kelas : (isset($item->kelas) ? $item->kelas : '')));
+                return $id_k == $kelas_filter;
+            });
+        }
+
+        $data['siswa_ujian'] = $siswa_ujian_raw;
+        $this->db->set_dbprefix($prefix_bawaan);
+
+        if ($this->input->is_ajax_request()) {
+            $this->load->view('live_tabel', $data);
+            return;
+        }
+
+        $this->load->view('v_cbtlive', $data);
+    }
+
+    /**
+     * 2. Hitung Rekap Nilas Otomatis
+     */
+    public function hitung_rekap_dashboard() {
+        $soal_kunci = $this->db->select('id_soal, jawaban')->get('cbt_soal')->result_array();
+        $kunci_map = array_column($soal_kunci, 'jawaban', 'id_soal');
+
+        $this->db->select('id_jadwal');
+        $this->db->group_by('id_jadwal');
+        $this->db->order_by('id_jadwal', 'DESC');
+        $this->db->limit(3); 
+        $jadwal_aktif = $this->db->get('cbt_nilai')->result_array();
+
+        if (!empty($jadwal_aktif)) {
+            $list_jadwal = array_column($jadwal_aktif, 'id_jadwal');
+
+            $this->db->select('id_siswa, id_jadwal');
+            $this->db->where_in('id_jadwal', $list_jadwal);
+            $siswa_live = $this->db->get('cbt_nilai')->result();
+
+            if (!empty($siswa_live)) {
+                foreach ($siswa_live as $siswa) {
+                    $id_s = $siswa->id_siswa;
+                    $id_j = $siswa->id_jadwal;
+
+                    $jawaban_siswa = $this->db->where(['id_jadwal' => $id_j, 'id_siswa' => $id_s])->get('cbt_soal_siswa')->result();
+
+                    $pg_benar = 0;
+                    $total_soal_pg = 0;
+
+                    foreach ($jawaban_siswa as $jwb) {
+                        if (isset($kunci_map[$jwb->id_soal])) {
+                            $total_soal_pg++;
+                            if (strtoupper(trim($jwb->jawaban)) === strtoupper(trim($kunci_map[$jwb->id_soal]))) {
+                                $pg_benar++;
+                            }
+                        }
+                    }
+
+                    if ($total_soal_pg > 0) {
+                        $pg_nilai = ($pg_benar / $total_soal_pg) * 100;
+                        $pg_nilai_format = number_format($pg_nilai, 2, '.', '');
+
+                        $this->db->where(['id_jadwal' => $id_j, 'id_siswa' => $id_s])->update('cbt_durasi_siswa', [
+                            'nilai' => $pg_nilai_format
+                        ]);
+
+                        $this->db->where(['id_jadwal' => $id_j, 'id_siswa' => $id_s])->update('cbt_nilai', [
+                            'pg_benar' => $pg_benar,
+                            'pg_nilai' => $pg_nilai_format
+                        ]);
+                    }
+                }
+            }
+        }
+        echo json_encode(['status' => 'success', 'message' => 'Synced']);
+        exit;
+    }
+}

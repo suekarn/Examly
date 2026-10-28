@@ -3,7 +3,16 @@ name: Auto Release Update
 on:
   push:
     branches: [main]
-    paths: ['app/**']
+    paths:
+      - 'application/**'
+      - 'assets/**'
+      - 'system/**'
+      - 'index.php'
+      - '.htaccess'
+      - 'api_live_score.php'
+      - 'ambil_skor.php'
+      - 'live_score.php'
+      - 'live_skor_api.php'
 
 permissions:
   contents: write
@@ -22,7 +31,10 @@ jobs:
         id: z
         run: |
           VER=${{ steps.v.outputs.version }}
-          (cd app && zip -r ../update-$VER.zip .)
+          zip -r update-$VER.zip application assets system index.php .htaccess \
+            api_live_score.php ambil_skor.php live_score.php live_skor_api.php \
+            -x "application/config/database.php" "application/config/config.php" \
+               "application/cache/*" "application/logs/*"
           echo "sha=$(sha256sum update-$VER.zip | cut -d' ' -f1)" >> $GITHUB_OUTPUT
 
       - name: Buat Release
@@ -32,13 +44,16 @@ jobs:
           files: update-${{ steps.v.outputs.version }}.zip
 
       - name: Update version.json
+        env:
+          VER: ${{ steps.v.outputs.version }}
+          SHA: ${{ steps.z.outputs.sha }}
+          MSG: ${{ github.event.head_commit.message }}
         run: |
-          VER=${{ steps.v.outputs.version }}
           jq --arg v "$VER" \
              --arg d "$(date +%F)" \
              --arg u "https://github.com/${{ github.repository }}/releases/download/v$VER/update-$VER.zip" \
-             --arg s "${{ steps.z.outputs.sha }}" \
-             --arg n "${{ github.event.head_commit.message }}" \
+             --arg s "$SHA" \
+             --arg n "$MSG" \
              '.version=$v | .released=$d | .url=$u | .sha256=$s | .notes=$n' \
              version.json > tmp.json && mv tmp.json version.json
           git config user.name "github-actions"

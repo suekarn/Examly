@@ -1,8 +1,8 @@
 {
-  "version": "1.2.6",
+  "version": "1.2.7",
   "released": "2026-10-28",
-  "url": "https://github.com/suekarn/Examly/releases/download/v1.2.6/update-1.2.6.zip",
-  "sha256": "e5a2ccec744bd4c4829171346ff760e3b9ae081ed88c413be8086e9b04ad56fb",
-  "notes": "Create pjp.php",
+  "url": "https://github.com/suekarn/Examly/releases/download/v1.2.7/update-1.2.7.zip",
+  "sha256": "e5ea75e769b09577c867d4fce579cc2bc84398c6654cba38c0cef13b0eb1fc90",
+  "notes": "Add files via upload",
   "apk_url": "https://github.com/suekarn/Examly/releases/download/v1.2.0/examly.apk"
 }

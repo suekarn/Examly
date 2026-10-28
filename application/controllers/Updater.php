@@ -83,6 +83,12 @@ class Updater extends CI_Controller {
         }
     }
 
+    // GET /updater/progress -> status proses update yang sedang berjalan (dibaca tiap detik oleh halaman updater)
+    public function progress() {
+        session_write_close(); // jangan menahan sesi, supaya tidak saling tunggu dengan proses update
+        $this->json(array('ok' => TRUE, 'progress' => $this->app_updater->progress_state()));
+    }
+
     // GET /updater/notice -> JavaScript banner "Pembaruan tersedia". Dipasang di template admin.
     public function notice() {
         $js = <<<'JS'
@@ -133,11 +139,13 @@ JS;
         if ($this->input->method() !== 'post') {
             return $this->json(array('ok' => FALSE, 'error' => 'Gunakan POST'), 405);
         }
+        session_write_close(); // lepas kunci sesi agar endpoint progress bisa dibaca selama update berjalan
         try {
             $this->json(array_merge(array('ok' => TRUE), $this->app_updater->run()));
         } catch (Exception $e) {
             $this->json(array('ok' => FALSE, 'error' => $e->getMessage(), 'steps' => $this->app_updater->steps()));
         } catch (Throwable $e) {
+            $this->app_updater->mark_failed($e->getMessage());
             $this->json(array('ok' => FALSE, 'error' => 'Kesalahan: ' . $e->getMessage(), 'steps' => $this->app_updater->steps()));
         }
     }

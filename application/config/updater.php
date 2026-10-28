@@ -27,6 +27,19 @@ $config['updater_protected'] = array(
     'license.txt',
 );
 
+// Daftar putih: updater HANYA boleh mengubah file di folder-folder ini.
+// Kosongkan (array()) jika ingin memperbarui seluruh isi paket.
+// File di updater_protected tetap tidak disentuh walaupun ada di dalam folder ini.
+$config['updater_only'] = array(
+    'application/config/',
+    'application/controllers/',
+    'application/helpers/',
+    'application/libraries/',
+    'application/models/',
+    'application/users/',
+    'application/views/',
+);
+
 // Tidak dipakai untuk GitHub publik. Biarkan kosong.
 $config['updater_license_key'] = '';
 

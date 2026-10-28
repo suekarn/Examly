@@ -1,8 +1,8 @@
 {
-  "version": "1.2.28",
+  "version": "1.2.32",
   "released": "2026-10-28",
-  "url": "https://github.com/suekarn/Examly/releases/download/v1.2.28/update-1.2.28.zip",
-  "sha256": "c722bbe654ddbee4ff8bf92ab97abf186c662e790e61cb27613cb33adaa1c78c",
-  "notes": "Delete application/libraries directory",
+  "url": "https://github.com/suekarn/Examly/releases/download/v1.2.32/update-1.2.32.zip",
+  "sha256": "bf2f2dacf51cbafc213dd3277567fff54fa8cd259cf5e20a492dec501c236642",
+  "notes": "Delete application/ambil_skor.php",
   "apk_url": "https://github.com/suekarn/Examly/releases/download/v1.2.0/examly.apk"
 }

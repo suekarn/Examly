@@ -40,4 +40,6 @@ fix_jadwal.php
 zya.zip
 options.json
 VERSION
+application/updater_data/
+application/config/version.php
 *.md

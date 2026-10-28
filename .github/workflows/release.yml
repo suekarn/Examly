@@ -1,0 +1,48 @@
+name: Auto Release Update
+
+on:
+  push:
+    branches: [main]
+    paths: ['app/**']
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Tentukan versi
+        id: v
+        run: echo "version=1.2.${{ github.run_number }}" >> $GITHUB_OUTPUT
+
+      - name: Buat zip dan hash
+        id: z
+        run: |
+          VER=${{ steps.v.outputs.version }}
+          (cd app && zip -r ../update-$VER.zip .)
+          echo "sha=$(sha256sum update-$VER.zip | cut -d' ' -f1)" >> $GITHUB_OUTPUT
+
+      - name: Buat Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: v${{ steps.v.outputs.version }}
+          files: update-${{ steps.v.outputs.version }}.zip
+
+      - name: Update version.json
+        run: |
+          VER=${{ steps.v.outputs.version }}
+          jq --arg v "$VER" \
+             --arg d "$(date +%F)" \
+             --arg u "https://github.com/${{ github.repository }}/releases/download/v$VER/update-$VER.zip" \
+             --arg s "${{ steps.z.outputs.sha }}" \
+             --arg n "${{ github.event.head_commit.message }}" \
+             '.version=$v | .released=$d | .url=$u | .sha256=$s | .notes=$n' \
+             version.json > tmp.json && mv tmp.json version.json
+          git config user.name "github-actions"
+          git config user.email "actions@github.com"
+          git add version.json
+          git commit -m "Auto update version.json to $VER"
+          git push

@@ -47,7 +47,7 @@ if (!headers_sent()) {
             padding: 15px 20px 0 50px;
             color: #fff;
         }
-        .header-logo img { height: 70px; width: auto; display: block; }
+        .header-logo img { height: 110px; width: auto; display: block; }
         .header-text { margin-left: 15px; margin-top: 5px; }
         .header-text b { font-size: 1.3rem; }
 
@@ -197,7 +197,7 @@ if (!headers_sent()) {
 
         @media (max-width: 480px) {
             .header-top { padding-left: 20px; height: 140px; }
-            .header-logo img { height: 56px; }
+            .header-logo img { height: 88px; }
             .header-text b { font-size: 1.15rem; }
         }
 

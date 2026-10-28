@@ -1,34 +1,88 @@
-#!/bin/bash
-# Pemakaian: ./push.sh "pesan commit"
-# Rilis (tag + zip + version.json) dibuat otomatis oleh GitHub Actions.
+name: Auto Release Update
 
-set -e
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - 'application/**'
+      - 'assets/**'
+      - 'system/**'
+      - 'index.php'
+      - '.htaccess'
 
-MSG="${1:-update}"
-BRANCH="main"
+permissions:
+  contents: write
 
-# Folder tempat file hasil edit berada. Kosongkan/hapus blok ini
-# jika file sudah kamu edit langsung di dalam repo.
-SRC="/c/Users/NAMA_KAMU/Downloads"
-if [ -d "$SRC" ]; then
-  [ -f "$SRC/updater.php" ]     && cp "$SRC/updater.php"     application/config/updater.php
-  [ -f "$SRC/Updater.php" ]     && cp "$SRC/Updater.php"     application/controllers/Updater.php
-  [ -f "$SRC/App_updater.php" ] && cp "$SRC/App_updater.php" application/libraries/App_updater.php
-fi
+concurrency:
+  group: auto-release
+  cancel-in-progress: false
 
-echo ">> Sinkron dengan GitHub (version.json diubah otomatis oleh Actions)..."
-git pull --rebase --autostash origin $BRANCH
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
-git add application/config/updater.php \
-        application/controllers/Updater.php \
-        application/libraries/App_updater.php
+      - name: Tentukan versi
+        id: v
+        run: echo "version=1.2.${{ github.run_number }}" >> $GITHUB_OUTPUT
 
-if git diff --cached --quiet; then
-  echo "Tidak ada perubahan untuk di-commit."
-  exit 0
-fi
+      - name: Buat daftar file yang dihapus
+        run: |
+          mkdir -p _update
+          BASE=$(git tag --list 'v1.2.*' --sort=-v:refname | sed -n '10p' || true)
+          if [ -n "$BASE" ]; then RANGE="$BASE..HEAD"; else RANGE="HEAD"; fi
+          git -c core.quotepath=false log "$RANGE" --no-renames --diff-filter=D --name-only --pretty=format: -- \
+            application assets system index.php .htaccess \
+            | sed '/^$/d' | sort -u \
+            | while IFS= read -r f; do if [ ! -e "$f" ]; then echo "$f"; fi; done \
+            > _update/delete.txt || true
+          echo "File yang akan dihapus di server ($(wc -l < _update/delete.txt)):"
+          cat _update/delete.txt
 
-git commit -m "$MSG"
-git push origin $BRANCH
+      - name: Buat zip dan hash
+        id: z
+        run: |
+          VER=${{ steps.v.outputs.version }}
+          FILES=""
+          for p in application assets system index.php .htaccess _update; do
+            if [ -e "$p" ]; then FILES="$FILES $p"; fi
+          done
+          zip -r update-$VER.zip $FILES \
+            -x "application/config/database.php" "application/config/config.php" \
+               "application/cache/*" "application/logs/*"
+          echo "sha=$(sha256sum update-$VER.zip | cut -d' ' -f1)" >> $GITHUB_OUTPUT
 
-echo ">> Push berhasil. Cek rilis di: https://github.com/suekarn/Examly/actions"
+      - name: Buat Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: v${{ steps.v.outputs.version }}
+          files: update-${{ steps.v.outputs.version }}.zip
+
+      - name: Update version.json
+        env:
+          VER: ${{ steps.v.outputs.version }}
+          SHA: ${{ steps.z.outputs.sha }}
+          MSG: ${{ github.event.head_commit.message || 'Pembaruan aplikasi' }}
+        run: |
+          git pull --rebase origin main
+          jq --arg v "$VER" \
+             --arg d "$(date +%F)" \
+             --arg u "https://github.com/${{ github.repository }}/releases/download/v$VER/update-$VER.zip" \
+             --arg s "$SHA" \
+             --arg n "$MSG" \
+             '.version=$v | .released=$d | .url=$u | .sha256=$s | .notes=$n' \
+             version.json > tmp.json && mv tmp.json version.json
+          git config user.name "github-actions"
+          git config user.email "actions@github.com"
+          git add version.json
+          git commit -m "Auto update version.json to $VER"
+          for i in 1 2 3; do
+            git push && exit 0
+            git pull --rebase origin main
+            sleep 3
+          done
+          exit 1

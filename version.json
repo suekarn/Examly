@@ -1,8 +1,8 @@
 {
-  "version": "1.2.26",
+  "version": "1.2.28",
   "released": "2026-10-28",
-  "url": "https://github.com/suekarn/Examly/releases/download/v1.2.26/update-1.2.26.zip",
-  "sha256": "426c6aaf3a10e0d1a058a53938dcf5cebc9bb03f5031b98d9456e97c5bf0cd68",
-  "notes": "Delete application/language directory",
+  "url": "https://github.com/suekarn/Examly/releases/download/v1.2.28/update-1.2.28.zip",
+  "sha256": "c722bbe654ddbee4ff8bf92ab97abf186c662e790e61cb27613cb33adaa1c78c",
+  "notes": "Delete application/libraries directory",
   "apk_url": "https://github.com/suekarn/Examly/releases/download/v1.2.0/examly.apk"
 }

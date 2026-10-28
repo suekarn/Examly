@@ -1,8 +1,8 @@
 {
-  "version": "1.2.2",
+  "version": "1.2.3",
   "released": "2026-10-28",
-  "url": "https://github.com/suekarn/Examly/releases/download/v1.2.2/update-1.2.2.zip",
-  "sha256": "7f6f77c4a87d2f1cee13660b168551bc26b46fa6996c53edf171c207a69b9a65",
-  "notes": "Create konfirmasi.php",
+  "url": "https://github.com/suekarn/Examly/releases/download/v1.2.3/update-1.2.3.zip",
+  "sha256": "992d6288d43d666edc3e6059450c8ddee3aea0a60340af8ba1d72605c1c017ca",
+  "notes": "Update konfirmasi.php",
   "apk_url": "https://github.com/suekarn/Examly/releases/download/v1.2.0/examly.apk"
 }

@@ -12,6 +12,9 @@ class Aiimport extends CI_Controller
     /** Ekstensi yang ditangani importer PDF/foto (Ai_converter_pdf). Selain ini (docx/txt) memakai Ai_converter. */
     const EKS_PDF = ['pdf', 'png', 'jpg', 'jpeg', 'webp'];
 
+    /** Berkas cache aiimport_* yang lebih tua dari ini (dalam jam) dihapus otomatis. */
+    const CACHE_JAM = 24;
+
     /** Mesin konversi yang sedang dipakai pada request ini (untuk log, gambar, dll). */
     private $mesin;
     private $prompt_ulang = '';   // teks lanjutan untuk membaca ulang opsi yang masih bertanda [CEK] (mode PDF/foto)
@@ -47,6 +50,7 @@ class Aiimport extends CI_Controller
 
     public function index()
     {
+        $this->bersihkan_cache();
         $data['templates'] = $this->db->get('ai_template')->result();
         $data['providers'] = $this->db->order_by('prioritas')->get('ai_provider')->result();
         $data['csrf_name'] = $this->security->get_csrf_token_name();
@@ -100,6 +104,7 @@ class Aiimport extends CI_Controller
     public function ekstrak()
     {
         header('Content-Type: application/json');
+        $this->bersihkan_cache();
         try {
             $tpl = $this->ambil_template();
             $files = $this->kumpulkan_berkas();
@@ -235,6 +240,21 @@ class Aiimport extends CI_Controller
 
     /* ================= util ================= */
 
+    /**
+     * Hapus otomatis berkas sementara di application/cache yang sudah lebih tua dari CACHE_JAM jam:
+     * aiimport_*.docx, aiimport_*.docx.nama, dan aiimport_img_*.dat.
+     * Berkas lain di folder cache (index.html, .htaccess, cache CI lain) tidak disentuh.
+     */
+    private function bersihkan_cache()
+    {
+        $batas = time() - (self::CACHE_JAM * 3600);
+        $daftar = glob(APPPATH . 'cache/aiimport_*');
+        if (!$daftar) return;
+        foreach ($daftar as $f) {
+            if (is_file($f) && @filemtime($f) < $batas) @unlink($f);
+        }
+    }
+
     private function ambil_template()
     {
         $tpl = $this->db->get_where('ai_template', ['id' => (int)$this->input->post('id_template')])->row();
@@ -316,7 +336,12 @@ class Aiimport extends CI_Controller
         if (!is_file($path)) show_404();
         $this->load->helper('download');
         $asal = is_file($path . '.nama') ? trim((string)@file_get_contents($path . '.nama')) : '';
-        force_download(($asal !== '' ? $asal : 'Soal_Siap_Import_' . date('Ymd_His')) . '.docx', file_get_contents($path));
+        // Baca ke memori, lalu hapus berkas di cache SEBELUM dikirim (force_download memanggil exit).
+        // Jadi hasil hanya bisa diunduh sekali dan tidak menumpuk di folder cache.
+        $isi = file_get_contents($path);
+        @unlink($path);
+        @unlink($path . '.nama');
+        force_download(($asal !== '' ? $asal : 'Soal_Siap_Import_' . date('Ymd_His')) . '.docx', $isi);
     }
 
     /* ================= pengaturan provider & template ================= */

@@ -364,14 +364,14 @@ try {
     .select-live-dropdown:focus { border-color: #3b82f6; box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1); }
     
     .btn-proyektor-live {
-        background-color: #0f172a !important; color: #ffffff !important; font-weight: 700 !important; padding: 0 !important; width: 42px !important; height: 38px !important; border-radius: 6px !important; border: none !important;
-        font-size: 16px !important; display: inline-flex !important; align-items: center !important; justify-content: center !important; gap: 0 !important; cursor: pointer !important; transition: all 0.2s ease !important; margin-left: auto;
+        background-color: #0f172a !important; color: #ffffff !important; font-weight: 700 !important; width: 42px !important; height: 38px !important; padding: 0 !important; justify-content: center !important; font-size: 16px !important; border-radius: 6px !important; border: none !important;
+        display: inline-flex !important; align-items: center !important; gap: 8px !important; cursor: pointer !important; transition: all 0.2s ease !important; text-transform: uppercase !important; margin-left: auto;
     }
     .btn-proyektor-live:hover { background-color: #1e293b !important; transform: translateY(-1px); }
 
     .btn-export-nilai-live {
-        background-color: #16a34a !important; color: #ffffff !important; font-weight: 700 !important; padding: 9px 18px !important; border-radius: 6px !important; border: none !important;
-        font-size: 13px !important; display: inline-flex !important; align-items: center !important; gap: 8px !important; cursor: pointer !important; transition: all 0.2s ease !important; text-transform: uppercase !important;
+        background-color: #16a34a !important; color: #ffffff !important; font-weight: 700 !important; width: 42px !important; height: 38px !important; padding: 0 !important; justify-content: center !important; font-size: 16px !important; border-radius: 6px !important; border: none !important;
+        display: inline-flex !important; align-items: center !important; gap: 8px !important; cursor: pointer !important; transition: all 0.2s ease !important; text-transform: uppercase !important;
     }
     .btn-export-nilai-live:hover { background-color: #15803d !important; transform: translateY(-1px); }
 
@@ -671,10 +671,10 @@ if ($CI->db->table_exists('master_kelas') && $CI->db->field_exists('login_aktif'
         <button type="button" id="btn-hapus-ujian" class="btn-hapus-ujian" title="Hapus data ujian untuk Kelas dan Mapel yang dipilih" aria-label="Hapus data ujian kelas dan mapel yang dipilih"><i class="fa fa-trash"></i></button>
 
         <button type="button" id="btn-trigger-proyektor" class="btn-proyektor-live" title="Mode Proyektor" aria-label="Mode Proyektor">
-            <i class="fa fa-television"></i>
+            <i class="fa fa-television"></i> <span id="text-btn-proyektor" style="position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;">Mode Proyektor</span>
         </button>
-        <button type="button" id="btn-export-nilai" class="btn-export-nilai-live">
-            <i class="fa fa-file-excel-o"></i> <span>Export Nilai</span>
+        <button type="button" id="btn-export-nilai" class="btn-export-nilai-live" title="Export Nilai" aria-label="Export Nilai">
+            <i class="fa fa-file-excel-o"></i> <span style="position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;">Export Nilai</span>
         </button>
 
         <?php if (!empty($daftar_login_kelas)) : ?>
@@ -1167,7 +1167,7 @@ $(document).ready(function() {
         list.textContent = '';
         wrap.classList.add('mode-proyektor-aktif');
         document.body.style.overflow = 'hidden';
-        if (byId('btn-trigger-proyektor')) { byId('btn-trigger-proyektor').title = 'Keluar Mode Proyektor'; }
+        setText(byId('text-btn-proyektor'), 'Keluar Mode'); byId('btn-trigger-proyektor').title = 'Keluar Mode';
         var f = wrap.requestFullscreen || wrap.webkitRequestFullscreen || wrap.mozRequestFullScreen || wrap.msRequestFullscreen;
         if (f) { try { var p = f.call(wrap); if (p && p.catch) { p.catch(function () {}); } } catch (e) {} }
         render();
@@ -1181,7 +1181,7 @@ $(document).ready(function() {
         cancelAnimationFrame(st.raf);
         wrap.classList.remove('mode-proyektor-aktif');
         document.body.style.overflow = '';
-        if (byId('btn-trigger-proyektor')) { byId('btn-trigger-proyektor').title = 'Mode Proyektor'; }
+        setText(byId('text-btn-proyektor'), 'Mode Proyektor'); byId('btn-trigger-proyektor').title = 'Mode Proyektor';
         if (fsElement()) {
             var x = document.exitFullscreen || document.webkitExitFullscreen || document.mozCancelFullScreen || document.msExitFullscreen;
             if (x) { try { var p = x.call(document); if (p && p.catch) { p.catch(function () {}); } } catch (e) {} }

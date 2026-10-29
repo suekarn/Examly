@@ -1,0 +1,68 @@
+/* ==========================================================================
+   TEMA COMFORT DARK MODEREN BY GEMINI
+   ========================================================================== */
+body, .content-wrapper, .main-footer { 
+    background-color: #14161d !important; 
+    color: #abb2bf !important; 
+}
+.main-sidebar, .sidebar-dark-primary, .brand-link, .sidebar { 
+    background-color: #0d0f13 !important; 
+    border-right: 1px solid #1e222b !important; 
+}
+.nav-sidebar .nav-item>.nav-link { 
+    color: #9aa5b5 !important; 
+}
+.nav-sidebar .nav-item:hover>.nav-link { 
+    background-color: #1e222b !important; 
+    color: #61afef !important; 
+    border-radius: 8px; 
+}
+.nav-sidebar .nav-item>.nav-link.active { 
+    background-color: #242b35 !important; 
+    color: #56b6c2 !important; 
+    border-radius: 8px; 
+}
+.main-header.navbar { 
+    background-color: #14161d !important; 
+    border-bottom: 1px solid #1e222b !important; 
+}
+.main-header.navbar .nav-link { 
+    color: #abb2bf !important; 
+}
+.card, .info-box, .small-box, .modal-content { 
+    background-color: #1a1d24 !important; 
+    border: 1px solid #252a34 !important; 
+    border-radius: 12px !important; 
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2) !important; 
+    color: #cbd5e1 !important; 
+}
+.card-header { 
+    background-color: #1e222b !important; 
+    border-bottom: 1px solid #252a34 !important; 
+    color: #ffffff !important; 
+}
+h1, h2, h3, h4, h5, h6, .card-title, th, strong { 
+    color: #ffffff !important; 
+}
+.table { 
+    color: #cbd5e1 !important; 
+}
+.table-bordered, .table-bordered td, .table-bordered th { 
+    border: 1px solid #252a34 !important; 
+}
+.table-hover tbody tr:hover { 
+    background-color: #20252f !important; 
+    color: #ffffff !important; 
+}
+.btn { 
+    border-radius: 8px !important; 
+}
+.btn-primary { 
+    background-color: #3b82f6 !important; 
+    border-color: #3b82f6 !important; 
+}
+.form-control, .custom-select { 
+    background-color: #14161d !important; 
+    border: 1px solid #252a34 !important; 
+    color: #ffffff !important; 
+}

@@ -141,6 +141,16 @@ class App_updater {
 
     protected function is_protected($path) {
         $path = str_replace('\\', '/', $path);
+        // Daftar putih: jika updater_only diisi, hanya path yang diawali salah satu isinya yang boleh diubah
+        $only = (array) $this->cfg('updater_only', array());
+        if ($only) {
+            $allowed = false;
+            foreach ($only as $pre) {
+                $pre = str_replace('\\', '/', $pre);
+                if ($pre !== '' && stripos($path, $pre) === 0) { $allowed = true; break; }
+            }
+            if (!$allowed) return true;
+        }
         foreach ((array) $this->cfg('updater_protected', array()) as $ex) {
             $ex = str_replace('\\', '/', $ex);
             if (substr($ex, -1) === '/') {
@@ -511,7 +521,10 @@ class App_updater {
             $plan = $this->plan($zip);
             $this->say(count($plan['write']) . ' file akan diperbarui, ' . count($plan['delete']) . ' file dihapus'
                 . ($plan['sql'] !== '' ? ', ada migrasi database.' : '.'));
-            if ($plan['skipped']) $this->say('Dilewati (dilindungi): ' . implode(', ', $plan['skipped']));
+            if ($plan['skipped']) {
+                $sk = $plan['skipped'];
+                $this->say('Dilewati (di luar daftar update atau dilindungi): ' . count($sk) . ' file' . (count($sk) <= 8 ? ' (' . implode(', ', $sk) . ')' : ''));
+            }
             $this->state['phase'] = 'backup';
             $this->state['has_sql'] = ($plan['sql'] !== '');
             $this->pct(42);

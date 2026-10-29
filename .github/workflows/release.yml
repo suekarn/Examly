@@ -35,6 +35,9 @@ jobs:
             api_live_score.php ambil_skor.php live_score.php live_skor_api.php \
             -x "application/config/database.php" "application/config/config.php" \
                "application/cache/*" "application/logs/*"
+               "application/config/database.php" "application/config/config.php" \
+               "application/config/version.php" "application/config/updater.php" \
+               "application/updater_data/*" "application/cache/*" "application/logs/*"
           echo "sha=$(sha256sum update-$VER.zip | cut -d' ' -f1)" >> $GITHUB_OUTPUT
 
       - name: Buat Release

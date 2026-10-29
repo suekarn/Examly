@@ -1,45 +1,43 @@
+# ==========================================================
+# .gitignore Examly
+# Hanya folder application/ yang dibagikan lewat GitHub.
+# Semua file dan folder lain di folder utama (htdocs) diabaikan.
+# ==========================================================
+
+# --- Abaikan SEMUA di folder utama, kecuali yang diizinkan ---
+/*
+!/.gitignore
+!/.github/
+!/version.json
+!/application/
+
+# --- Di dalam application/: file khusus tiap komputer (JANGAN dibagikan) ---
+/application/config/database.php
+/application/config/config.php
+/application/config/version.php
+/application/updater_data/
+
+# --- Cache dan log (boleh ada folder & index.html, isinya diabaikan) ---
+/application/cache/*
+!/application/cache/index.html
+!/application/cache/.htaccess
+/application/logs/*
+!/application/logs/index.html
+!/application/logs/.htaccess
 */config/development
 */logs/log-*.php
-!*/logs/index.html
-*/cache/*
-!*/cache/index.html
-!*/cache/.htaccess
 
-user_guide_src/build/*
-user_guide_src/cilexer/build/*
-user_guide_src/cilexer/dist/*
-user_guide_src/cilexer/pycilexer.egg-info/*
+# --- File arsip, cadangan, dan sementara (di mana pun lokasinya) ---
+*.zip
+*.7z
+*.rar
+*.apk
+*.bak
+*.log
+*.sql
 
-#codeigniter 3
-application/logs/*
-!application/logs/index.html
-!application/logs/.htaccess
-/backups/
-/orm/
-#/vendor/
-/nbproject/private/
-
+# --- File editor ---
 .idea/
 *.iml
-*.7z
-*.apk
-backups/
-uploads/
-docs/
-installer/
-developer-tools/
-license-server/
-examly/
-system/cache/
-application/cache/*
-application/logs/*
-application/config/database.php
-application/config/config.php
-lgtest.php
-fix_jadwal.php
-zya.zip
-options.json
-VERSION
-application/updater_data/
-application/config/version.php
-*.md
+.vscode/
+Thumbs.db

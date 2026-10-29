@@ -1,7 +1,6 @@
 name: Auto Release Update
 
 on:
-  workflow_dispatch:
   push:
     branches: [main]
     paths:
@@ -10,48 +9,30 @@ on:
       - 'system/**'
       - 'index.php'
       - '.htaccess'
+      - 'api_live_score.php'
+      - 'ambil_skor.php'
+      - 'live_score.php'
+      - 'live_skor_api.php'
 
 permissions:
   contents: write
-
-concurrency:
-  group: auto-release
-  cancel-in-progress: false
 
 jobs:
   release:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
 
       - name: Tentukan versi
         id: v
         run: echo "version=1.2.${{ github.run_number }}" >> $GITHUB_OUTPUT
 
-      - name: Buat daftar file yang dihapus
-        run: |
-          mkdir -p _update
-          BASE=$(git tag --list 'v1.2.*' --sort=-v:refname | sed -n '10p' || true)
-          if [ -n "$BASE" ]; then RANGE="$BASE..HEAD"; else RANGE="HEAD"; fi
-          git -c core.quotepath=false log "$RANGE" --no-renames --diff-filter=D --name-only --pretty=format: -- \
-            application assets system index.php .htaccess \
-            | sed '/^$/d' | sort -u \
-            | while IFS= read -r f; do if [ ! -e "$f" ]; then echo "$f"; fi; done \
-            > _update/delete.txt || true
-          echo "File yang akan dihapus di server ($(wc -l < _update/delete.txt)):"
-          cat _update/delete.txt
-
       - name: Buat zip dan hash
         id: z
         run: |
           VER=${{ steps.v.outputs.version }}
-          FILES=""
-          for p in application assets system index.php .htaccess _update; do
-            if [ -e "$p" ]; then FILES="$FILES $p"; fi
-          done
-          zip -r update-$VER.zip $FILES \
+          zip -r update-$VER.zip application assets system index.php .htaccess \
+            api_live_score.php ambil_skor.php live_score.php live_skor_api.php \
             -x "application/config/database.php" "application/config/config.php" \
                "application/cache/*" "application/logs/*"
           echo "sha=$(sha256sum update-$VER.zip | cut -d' ' -f1)" >> $GITHUB_OUTPUT
@@ -66,9 +47,8 @@ jobs:
         env:
           VER: ${{ steps.v.outputs.version }}
           SHA: ${{ steps.z.outputs.sha }}
-          MSG: ${{ github.event.head_commit.message || 'Pembaruan aplikasi' }}
+          MSG: ${{ github.event.head_commit.message }}
         run: |
-          git pull --rebase origin main
           jq --arg v "$VER" \
              --arg d "$(date +%F)" \
              --arg u "https://github.com/${{ github.repository }}/releases/download/v$VER/update-$VER.zip" \
@@ -80,9 +60,4 @@ jobs:
           git config user.email "actions@github.com"
           git add version.json
           git commit -m "Auto update version.json to $VER"
-          for i in 1 2 3; do
-            git push && exit 0
-            git pull --rebase origin main
-            sleep 3
-          done
-          exit 1
+          git push

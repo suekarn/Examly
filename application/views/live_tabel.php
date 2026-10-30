@@ -374,6 +374,35 @@ try {
         display: inline-flex !important; align-items: center !important; gap: 8px !important; cursor: pointer !important; transition: all 0.2s ease !important; text-transform: uppercase !important;
     }
     .btn-export-nilai-live:hover { background-color: #15803d !important; transform: translateY(-1px); }
+    /* Premium export button */
+    .btn-export-nilai-live {
+        background-image: linear-gradient(145deg, #22c55e 0%, #15803d 55%, #14532d 100%) !important;
+        box-shadow: inset 0 1px 0 rgba(255,255,255,.35), inset 0 -2px 0 rgba(0,0,0,.18), 0 4px 10px rgba(21,128,61,.35) !important;
+        position: relative;
+    }
+    .btn-export-nilai-live:hover {
+        background-image: linear-gradient(145deg, #4ade80 0%, #16a34a 55%, #166534 100%) !important;
+        box-shadow: inset 0 1px 0 rgba(255,255,255,.45), inset 0 -2px 0 rgba(0,0,0,.18), 0 6px 14px rgba(21,128,61,.45) !important;
+    }
+    .btn-export-nilai-live:active { transform: translateY(0) scale(.97); }
+    .btn-export-nilai-live .icon-export-premium { display: block; filter: drop-shadow(0 1px 1.5px rgba(0,0,0,.35)); transition: transform .2s ease; }
+    .btn-export-nilai-live:hover .icon-export-premium { transform: scale(1.08); }
+    /* Premium icons (sprite) */
+    .pi { width: 16px; height: 16px; display: inline-block; vertical-align: middle; filter: drop-shadow(0 1px 1px rgba(0,0,0,.3)); transition: transform .2s ease; }
+    .pi-title { width: 20px; height: 20px; margin-right: 2px; }
+    .btn-hapus-ujian .pi, .btn-proyektor-live .pi { width: 26px; height: 26px; display: block; filter: drop-shadow(0 1px 1.5px rgba(0,0,0,.35)); }
+    .btn-hapus-ujian:hover .pi, .btn-proyektor-live:hover .pi { transform: scale(1.08); }
+    .btn-hapus-ujian { background-image: linear-gradient(145deg, #f87171 0%, #dc2626 55%, #7f1d1d 100%);
+        box-shadow: inset 0 1px 0 rgba(255,255,255,.35), inset 0 -2px 0 rgba(0,0,0,.2), 0 4px 10px rgba(185,28,28,.35); }
+    .btn-hapus-ujian:hover { background-image: linear-gradient(145deg, #fca5a5 0%, #ef4444 55%, #991b1b 100%);
+        box-shadow: inset 0 1px 0 rgba(255,255,255,.45), inset 0 -2px 0 rgba(0,0,0,.2), 0 6px 14px rgba(185,28,28,.45); }
+    .btn-proyektor-live { background-image: linear-gradient(145deg, #475569 0%, #0f172a 55%, #020617 100%) !important;
+        box-shadow: inset 0 1px 0 rgba(255,255,255,.22), inset 0 -2px 0 rgba(0,0,0,.35), 0 4px 10px rgba(15,23,42,.4) !important; }
+    .btn-proyektor-live:hover { background-image: linear-gradient(145deg, #64748b 0%, #1e293b 55%, #0f172a 100%) !important; }
+    .btn-hapus-ujian:active, .btn-proyektor-live:active { transform: translateY(0) scale(.97); }
+    .center-btn-group .btn-xs { background-image: linear-gradient(180deg, rgba(255,255,255,.24), rgba(255,255,255,0) 60%);
+        box-shadow: inset 0 1px 0 rgba(255,255,255,.3), 0 2px 5px rgba(0,0,0,.18); border-radius: 6px; line-height: 1; }
+    .center-btn-group .btn-xs:hover .pi { transform: scale(1.15); }
 
     #wrapper-tabel-bypass table.table-premium-live { width: 100% !important; border-collapse: collapse !important; }
     #wrapper-tabel-bypass table.table-premium-live th {
@@ -488,6 +517,19 @@ try {
     .btn-login-on:hover  { background-color: #15803d !important; transform: translateY(-1px); }
     .btn-login-off { background-color: #dc2626 !important; }
     .btn-login-off:hover { background-color: #b91c1c !important; transform: translateY(-1px); }
+    /* Premium login buttons */
+    .btn-login-on, .btn-login-off { position: relative; }
+    .btn-login-on  { background-image: linear-gradient(145deg, #22c55e 0%, #15803d 55%, #14532d 100%) !important;
+        box-shadow: inset 0 1px 0 rgba(255,255,255,.35), inset 0 -2px 0 rgba(0,0,0,.18), 0 4px 10px rgba(21,128,61,.35) !important; }
+    .btn-login-on:hover  { background-image: linear-gradient(145deg, #4ade80 0%, #16a34a 55%, #166534 100%) !important;
+        box-shadow: inset 0 1px 0 rgba(255,255,255,.45), inset 0 -2px 0 rgba(0,0,0,.18), 0 6px 14px rgba(21,128,61,.45) !important; }
+    .btn-login-off { background-image: linear-gradient(145deg, #f87171 0%, #dc2626 55%, #7f1d1d 100%) !important;
+        box-shadow: inset 0 1px 0 rgba(255,255,255,.35), inset 0 -2px 0 rgba(0,0,0,.2), 0 4px 10px rgba(185,28,28,.35) !important; }
+    .btn-login-off:hover { background-image: linear-gradient(145deg, #fca5a5 0%, #ef4444 55%, #991b1b 100%) !important;
+        box-shadow: inset 0 1px 0 rgba(255,255,255,.45), inset 0 -2px 0 rgba(0,0,0,.2), 0 6px 14px rgba(185,28,28,.45) !important; }
+    .btn-login-on:active, .btn-login-off:active { transform: translateY(0) scale(.97) !important; }
+    .icon-login-premium { display: block; filter: drop-shadow(0 1px 1.5px rgba(0,0,0,.35)); transition: transform .2s ease; }
+    .btn-login-on:hover .icon-login-premium, .btn-login-off:hover .icon-login-premium { transform: scale(1.08); }
     .login-ctrl-hint { flex: 1 1 220px; font-size: 12px; color: #94a3b8; line-height: 1.4; }
 
     /* =================================================================================== */
@@ -668,18 +710,19 @@ if ($CI->db->table_exists('master_kelas') && $CI->db->field_exists('login_aktif'
             </select>
         </div>
 
-        <button type="button" id="btn-hapus-ujian" class="btn-hapus-ujian" title="Hapus data ujian untuk Kelas dan Mapel yang dipilih" aria-label="Hapus data ujian kelas dan mapel yang dipilih"><i class="fa fa-trash"></i></button>
+        <svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false" xmlns="http://www.w3.org/2000/svg"><defs><linearGradient id="pi-white" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffffff"/><stop offset="1" stop-color="#e2e8f0"/></linearGradient><linearGradient id="pi-silver" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#ffffff"/><stop offset=".5" stop-color="#cbd5e1"/><stop offset="1" stop-color="#64748b"/></linearGradient><linearGradient id="pi-gold" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#fde68a"/><stop offset=".5" stop-color="#f59e0b"/><stop offset="1" stop-color="#b45309"/></linearGradient><linearGradient id="pi-pink" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fbcfe8"/><stop offset="1" stop-color="#ec4899"/></linearGradient><linearGradient id="pi-iris" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#93c5fd"/><stop offset=".5" stop-color="#2563eb"/><stop offset="1" stop-color="#1e3a8a"/></linearGradient><linearGradient id="pi-screen" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#38bdf8"/><stop offset=".6" stop-color="#2563eb"/><stop offset="1" stop-color="#1e1b4b"/></linearGradient></defs><symbol id="pi-trash" viewBox="0 0 32 32"><path d="M12.3 7.2V5.8A1.8 1.8 0 0 1 14.1 4h3.8a1.8 1.8 0 0 1 1.8 1.8v1.4" fill="none" stroke="url(#pi-silver)" stroke-width="2.2" stroke-linecap="round"/><rect x="5.5" y="7" width="21" height="4" rx="1.8" fill="url(#pi-silver)" stroke="#450a0a" stroke-opacity=".35" stroke-width=".8"/><path d="M7.8 12h16.4l-1.3 14.6a2.6 2.6 0 0 1-2.6 2.4H11.7a2.6 2.6 0 0 1-2.6-2.4z" fill="url(#pi-white)" stroke="#450a0a" stroke-opacity=".4" stroke-width=".8"/><path d="M12.6 15.5v10M16 15.5v10M19.4 15.5v10" stroke="#b91c1c" stroke-opacity=".7" stroke-width="1.8" stroke-linecap="round"/></symbol><symbol id="pi-tv" viewBox="0 0 32 32"><rect x="2.5" y="4.5" width="27" height="18" rx="3" fill="url(#pi-silver)" stroke="#020617" stroke-opacity=".45" stroke-width=".8"/><rect x="4.6" y="6.6" width="22.8" height="13.8" rx="1.7" fill="url(#pi-screen)"/><path d="M4.6 8.3a1.7 1.7 0 0 1 1.7-1.7H17L9 20.4H6.3a1.7 1.7 0 0 1-1.7-1.7z" fill="#ffffff" fill-opacity=".2"/><path d="M13.6 10.6v6.2l5.6-3.1z" fill="#ffffff"/><path d="M13 22.5h6l1.2 3.6h-8.4z" fill="url(#pi-silver)"/><rect x="8.5" y="26" width="15" height="2.6" rx="1.3" fill="url(#pi-silver)" stroke="#020617" stroke-opacity=".35" stroke-width=".7"/></symbol><symbol id="pi-lock" viewBox="0 0 32 32"><path d="M10.5 14V10a5.5 5.5 0 0 1 11 0V14" fill="none" stroke="#0f172a" stroke-opacity=".3" stroke-width="4.2" stroke-linecap="round"/><path d="M10.5 14V10a5.5 5.5 0 0 1 11 0V14" fill="none" stroke="url(#pi-silver)" stroke-width="3" stroke-linecap="round"/><rect x="5" y="14" width="22" height="15" rx="3.4" fill="url(#pi-gold)" stroke="#78350f" stroke-opacity=".55" stroke-width=".9"/><rect x="5.9" y="14.9" width="20.2" height="5" rx="2.5" fill="#ffffff" fill-opacity=".45"/><circle cx="16" cy="21" r="2.4" fill="#78350f"/><path d="M14.9 22.2h2.2l.6 4.2h-3.4z" fill="#78350f"/></symbol><symbol id="pi-pencil" viewBox="0 0 32 32"><g transform="rotate(135 16 16)"><rect x="3" y="12.3" width="5" height="7.4" rx="1.6" fill="url(#pi-pink)" stroke="#831843" stroke-opacity=".45" stroke-width=".7"/><rect x="8" y="12.3" width="3.6" height="7.4" fill="url(#pi-silver)" stroke="#334155" stroke-opacity=".5" stroke-width=".7"/><rect x="11.6" y="12.3" width="11.6" height="7.4" fill="url(#pi-gold)" stroke="#78350f" stroke-opacity=".55" stroke-width=".7"/><rect x="11.6" y="13" width="11.6" height="2" fill="#ffffff" fill-opacity=".45"/><path d="M23.2 12.3L30 16l-6.8 3.7z" fill="#fde7c3" stroke="#92400e" stroke-opacity=".5" stroke-width=".7" stroke-linejoin="round"/><path d="M27.6 14.9L30 16l-2.4 1.1z" fill="#1e293b"/></g></symbol><symbol id="pi-eye" viewBox="0 0 32 32"><path d="M2 16C6 9.5 10.5 7 16 7s10 2.5 14 9c-4 6.5-8.5 9-14 9S6 22.5 2 16z" fill="url(#pi-white)" stroke="#1e3a8a" stroke-opacity=".5" stroke-width=".9" stroke-linejoin="round"/><circle cx="16" cy="16" r="6" fill="url(#pi-iris)" stroke="#172554" stroke-opacity=".6" stroke-width=".8"/><circle cx="16" cy="16" r="2.7" fill="#0f172a"/><circle cx="14" cy="13.9" r="1.5" fill="#ffffff"/></symbol><symbol id="pi-signout" viewBox="0 0 32 32"><rect x="3.5" y="3.5" width="15" height="25" rx="2.6" fill="url(#pi-white)" stroke="#78350f" stroke-opacity=".5" stroke-width=".9"/><rect x="5.5" y="5.5" width="11" height="21" rx="1.6" fill="#fde68a" fill-opacity=".35"/><circle cx="14" cy="16" r="1.3" fill="url(#pi-gold)" stroke="#78350f" stroke-opacity=".6" stroke-width=".5"/><path d="M14.5 16h13.5M22.5 10.5l5.5 5.5-5.5 5.5" fill="none" stroke="#78350f" stroke-opacity=".55" stroke-width="5.2" stroke-linecap="round" stroke-linejoin="round"/><path d="M14.5 16h13.5M22.5 10.5l5.5 5.5-5.5 5.5" fill="none" stroke="#ffffff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></symbol><symbol id="pi-check" viewBox="0 0 32 32"><circle cx="16" cy="16" r="12.5" fill="url(#pi-white)" stroke="#052e16" stroke-opacity=".4" stroke-width=".9"/><path d="M9.8 16.6l4.3 4.4 8.1-9.3" fill="none" stroke="#15803d" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"/></symbol></svg>
+        <button type="button" id="btn-hapus-ujian" class="btn-hapus-ujian" title="Hapus data ujian untuk Kelas dan Mapel yang dipilih" aria-label="Hapus data ujian kelas dan mapel yang dipilih"><svg class="pi" viewBox="0 0 32 32" aria-hidden="true" focusable="false"><use href="#pi-trash"/></svg></button>
 
         <button type="button" id="btn-trigger-proyektor" class="btn-proyektor-live" title="Mode Proyektor" aria-label="Mode Proyektor">
-            <i class="fa fa-television"></i> <span id="text-btn-proyektor" style="position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;">Mode Proyektor</span>
+            <svg class="pi" viewBox="0 0 32 32" aria-hidden="true" focusable="false"><use href="#pi-tv"/></svg> <span id="text-btn-proyektor" style="position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;">Mode Proyektor</span>
         </button>
         <button type="button" id="btn-export-nilai" class="btn-export-nilai-live" title="Export Nilai" aria-label="Export Nilai">
-            <i class="fa fa-file-excel-o"></i> <span style="position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;">Export Nilai</span>
+            <svg class="icon-export-premium" viewBox="0 0 32 32" width="26" height="26" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false"><defs><linearGradient id="xpSheet" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffffff"/><stop offset="1" stop-color="#d1fae5"/></linearGradient><linearGradient id="xpTile" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#34d399"/><stop offset="0.5" stop-color="#059669"/><stop offset="1" stop-color="#064e3b"/></linearGradient><linearGradient id="xpGold" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#fde68a"/><stop offset="0.5" stop-color="#f59e0b"/><stop offset="1" stop-color="#b45309"/></linearGradient></defs><path d="M11 2.5h12.2L29.5 9v18.5a2 2 0 0 1-2 2H11a2 2 0 0 1-2-2v-23a2 2 0 0 1 2-2z" fill="url(#xpSheet)" stroke="#065f46" stroke-opacity=".35" stroke-width=".8"/><path d="M23.2 2.5V7a2 2 0 0 0 2 2h4.3z" fill="#6ee7b7" stroke="#065f46" stroke-opacity=".35" stroke-width=".8" stroke-linejoin="round"/><g stroke="#059669" stroke-opacity=".55" stroke-width="1" stroke-linecap="round"><path d="M18 13h8.5M18 17h8.5M18 21h4"/><path d="M21.5 11v5"/></g><rect x="1.5" y="9.5" width="16" height="16" rx="3.4" fill="url(#xpTile)" stroke="#022c22" stroke-opacity=".45" stroke-width=".8"/><rect x="2.3" y="10.3" width="14.4" height="7" rx="2.7" fill="#ffffff" fill-opacity=".16"/><path d="M6.2 14.3l6.6 6.9M12.8 14.3l-6.6 6.9" stroke="#ffffff" stroke-width="2.3" stroke-linecap="round" fill="none"/><circle cx="25.5" cy="25.5" r="6" fill="url(#xpGold)" stroke="#ffffff" stroke-width="1.4"/><path d="M25.5 22.4v6M23.1 26.3l2.4 2.5 2.4-2.5" stroke="#ffffff" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" fill="none"/></svg> <span style="position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;">Export Nilai</span>
         </button>
 
         <?php if (!empty($daftar_login_kelas)) : ?>
         <div class="login-ctrl-bar">
-            <div class="login-ctrl-title"><i class="fa fa-lock"></i> Login Siswa</div>
+            <div class="login-ctrl-title"><svg class="pi pi-title" viewBox="0 0 32 32" aria-hidden="true" focusable="false"><use href="#pi-lock"/></svg> Login Siswa</div>
             <select id="login-kelas" class="select-live-dropdown">
                 <option value="semua" data-nama="SEMUA KELAS">Semua Kelas</option>
                 <?php foreach ($daftar_login_kelas as $k) : ?>
@@ -687,8 +730,8 @@ if ($CI->db->table_exists('master_kelas') && $CI->db->field_exists('login_aktif'
                 <?php endforeach; ?>
             </select>
             <span id="login-status-pill" class="pill-login pill-on">Aktif</span>
-            <button type="button" id="btn-login-on" class="btn-login-on" title="Aktifkan login siswa" aria-label="Aktifkan login siswa"><i class="fa fa-unlock"></i></button>
-            <button type="button" id="btn-login-off" class="btn-login-off" title="Nonaktifkan login siswa" aria-label="Nonaktifkan login siswa"><i class="fa fa-lock"></i></button>
+            <button type="button" id="btn-login-on" class="btn-login-on" title="Aktifkan login siswa" aria-label="Aktifkan login siswa"><svg class="icon-login-premium" viewBox="0 0 32 32" width="26" height="26" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false"><defs><linearGradient id="lkSilver-on" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#ffffff"/><stop offset=".5" stop-color="#cbd5e1"/><stop offset="1" stop-color="#64748b"/></linearGradient><linearGradient id="lkBodyOn" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffffff"/><stop offset="1" stop-color="#bbf7d0"/></linearGradient><linearGradient id="lkBadgeOn" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#4ade80"/><stop offset=".55" stop-color="#15803d"/><stop offset="1" stop-color="#052e16"/></linearGradient></defs><path d="M10 14V8.5a6 6 0 0 1 12 0V10" fill="none" stroke="#0f172a" stroke-opacity=".35" stroke-width="4.2" stroke-linecap="round"/><path d="M10 14V8.5a6 6 0 0 1 12 0V10" fill="none" stroke="url(#lkSilver-on)" stroke-width="3" stroke-linecap="round"/><rect x="4.5" y="14" width="23" height="15" rx="3.6" fill="url(#lkBodyOn)" stroke="#14532d" stroke-opacity=".5" stroke-width=".9"/><rect x="5.4" y="14.9" width="21.2" height="5" rx="2.6" fill="#ffffff" fill-opacity=".55"/><circle cx="16" cy="21" r="2.4" fill="#14532d"/><path d="M14.9 22.2h2.2l.6 4.2h-3.4z" fill="#14532d"/><circle cx="25.5" cy="26" r="5.8" fill="url(#lkBadgeOn)" stroke="#ffffff" stroke-width="1.4"/><path d="M22.9 26.2l2 2 3.3-3.9" stroke="#ffffff" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" fill="none"/></svg></button>
+            <button type="button" id="btn-login-off" class="btn-login-off" title="Nonaktifkan login siswa" aria-label="Nonaktifkan login siswa"><svg class="icon-login-premium" viewBox="0 0 32 32" width="26" height="26" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false"><defs><linearGradient id="lkSilver-off" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#ffffff"/><stop offset=".5" stop-color="#cbd5e1"/><stop offset="1" stop-color="#64748b"/></linearGradient><linearGradient id="lkBodyOff" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffffff"/><stop offset="1" stop-color="#fecaca"/></linearGradient><linearGradient id="lkBadgeOff" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#f87171"/><stop offset=".55" stop-color="#b91c1c"/><stop offset="1" stop-color="#450a0a"/></linearGradient></defs><path d="M10 14v-3.5a6 6 0 0 1 12 0V14" fill="none" stroke="#0f172a" stroke-opacity=".35" stroke-width="4.2" stroke-linecap="round"/><path d="M10 14v-3.5a6 6 0 0 1 12 0V14" fill="none" stroke="url(#lkSilver-off)" stroke-width="3" stroke-linecap="round"/><rect x="4.5" y="14" width="23" height="15" rx="3.6" fill="url(#lkBodyOff)" stroke="#7f1d1d" stroke-opacity=".5" stroke-width=".9"/><rect x="5.4" y="14.9" width="21.2" height="5" rx="2.6" fill="#ffffff" fill-opacity=".55"/><circle cx="16" cy="21" r="2.4" fill="#7f1d1d"/><path d="M14.9 22.2h2.2l.6 4.2h-3.4z" fill="#7f1d1d"/><circle cx="25.5" cy="26" r="5.8" fill="url(#lkBadgeOff)" stroke="#ffffff" stroke-width="1.4"/><path d="M23.4 23.9l4.2 4.2M27.6 23.9l-4.2 4.2" stroke="#ffffff" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" fill="none"/></svg></button>
             <span class="login-ctrl-hint">Nonaktifkan sebelum ujian dimulai, aktifkan saat siswa boleh masuk.</span>
         </div>
         <?php endif; ?>
@@ -795,10 +838,10 @@ if ($CI->db->table_exists('master_kelas') && $CI->db->field_exists('login_aktif'
                                 $link_edit = site_url('cbtbanksoal/buatsoal/' . $row['id_bank']);
                                 $link_koreksi = site_url('cbtnilai/detail?siswa=' . $row['id_siswa'] . '&jadwal=' . $row['id_jadwal']);
                                 ?>
-                                <a href="<?= $link_edit ?>" class="btn btn-default btn-xs" title="Edit Soal" style="border: 1px solid #cbd5e1; color: #64748b; padding: 4px 8px; background: #fff;"><i class="fa fa-pencil"></i></a>
-                                <a href="<?= $link_koreksi ?>" class="btn btn-primary btn-xs" title="Detail Koreksi" style="padding: 4px 8px; background-color: #3b82f6; border-color: #2563eb;"><i class="fa fa-eye"></i></a>
-                                <button type="button" class="btn btn-danger btn-xs btn-hapus-siswa" data-key="<?= htmlspecialchars($row['row_key']) ?>" data-nama="<?= htmlspecialchars($row['nama']) ?>" title="Reset waktu dan hapus data ujian siswa ini" style="padding: 4px 8px; background-color: #dc2626; border-color: #b91c1c; color: #fff;"><i class="fa fa-trash"></i></button>
-                                <button type="button" class="btn btn-warning btn-xs btn-izin-keluar" data-siswa="<?= htmlspecialchars($row['id_siswa']) ?>" data-nama="<?= htmlspecialchars($row['nama']) ?>" title="Izinkan siswa keluar dari aplikasi ujian" style="padding: 4px 8px; background-color: #f59e0b; border-color: #d97706; color: #fff;"><i class="fa fa-sign-out"></i></button>
+                                <a href="<?= $link_edit ?>" class="btn btn-default btn-xs" title="Edit Soal" style="border: 1px solid #cbd5e1; color: #64748b; padding: 4px 8px; background: #fff;"><svg class="pi" viewBox="0 0 32 32" aria-hidden="true" focusable="false"><use href="#pi-pencil"/></svg></a>
+                                <a href="<?= $link_koreksi ?>" class="btn btn-primary btn-xs" title="Detail Koreksi" style="padding: 4px 8px; background-color: #3b82f6; border-color: #2563eb;"><svg class="pi" viewBox="0 0 32 32" aria-hidden="true" focusable="false"><use href="#pi-eye"/></svg></a>
+                                <button type="button" class="btn btn-danger btn-xs btn-hapus-siswa" data-key="<?= htmlspecialchars($row['row_key']) ?>" data-nama="<?= htmlspecialchars($row['nama']) ?>" title="Reset waktu dan hapus data ujian siswa ini" style="padding: 4px 8px; background-color: #dc2626; border-color: #b91c1c; color: #fff;"><svg class="pi" viewBox="0 0 32 32" aria-hidden="true" focusable="false"><use href="#pi-trash"/></svg></button>
+                                <button type="button" class="btn btn-warning btn-xs btn-izin-keluar" data-siswa="<?= htmlspecialchars($row['id_siswa']) ?>" data-nama="<?= htmlspecialchars($row['nama']) ?>" title="Izinkan siswa keluar dari aplikasi ujian" style="padding: 4px 8px; background-color: #f59e0b; border-color: #d97706; color: #fff;"><svg class="pi" viewBox="0 0 32 32" aria-hidden="true" focusable="false"><use href="#pi-signout"/></svg></button>
                             </div>
                         </td>
                     </tr>
@@ -1534,12 +1577,12 @@ $(document).ready(function() {
         if (izin) {
             b.style.backgroundColor = '#16a34a';
             b.style.borderColor = '#15803d';
-            b.innerHTML = '<i class="fa fa-check"></i>';
+            b.innerHTML = '<svg class="pi" viewBox="0 0 32 32" aria-hidden="true" focusable="false"><use href="#pi-check"/></svg>';
             b.title = 'Sudah diizinkan. Klik untuk membatalkan izin.';
         } else {
             b.style.backgroundColor = '#f59e0b';
             b.style.borderColor = '#d97706';
-            b.innerHTML = '<i class="fa fa-sign-out"></i>';
+            b.innerHTML = '<svg class="pi" viewBox="0 0 32 32" aria-hidden="true" focusable="false"><use href="#pi-signout"/></svg>';
             b.title = 'Izinkan siswa keluar dari aplikasi ujian';
         }
     }
@@ -1725,4 +1768,246 @@ window.pesanGagal = function (xhr) {
     if (kode === 0) { return 'Gagal menghubungi server (tidak ada balasan). Pastikan alamat halaman sama dengan alamat server, lalu muat ulang.'; }
     return 'Gagal (kode ' + kode + '): ' + (isi || 'balasan kosong') + '\n\nMuat ulang halaman (Ctrl+F5) lalu coba lagi.';
 };
+</script>
+
+<style>
+/* =================================================================================== */
+/* LIQUID HIGHLIGHT — blob cair yang meluncur & melar antar item (toolbar, baris, kartu) */
+/* =================================================================================== */
+.lq-blob {
+    position: absolute; left: 0; top: 0; width: 0; height: 0; z-index: 0;
+    pointer-events: none; opacity: 0; --rgb: 20,184,166;
+    will-change: left, top, width, height;
+}
+.lq-blob.lq-on { opacity: 1; }
+.lq-blob.lq-track { transition: none !important; }
+
+@keyframes lqMorph {
+    0%, 100% { border-radius: 14px 12px 15px 13px / 13px 15px 12px 14px; }
+    50%      { border-radius: 12px 16px 12px 15px / 15px 12px 16px 12px; }
+}
+@keyframes lqMorphCard {
+    0%, 100% { border-radius: 26px 22px 28px 24px / 24px 28px 22px 26px; }
+    50%      { border-radius: 22px 28px 24px 26px / 28px 22px 26px 24px; }
+}
+
+/* Toolbar: halo berwarna di sekeliling tombol (warna tombol sendiri tidak diubah) */
+#wrapper-tabel-bypass .filter-live-container { position: relative; }
+#wrapper-tabel-bypass .filter-live-container > *:not(.lq-blob),
+#wrapper-tabel-bypass .login-ctrl-bar > * { position: relative; z-index: 1; }
+.lq-btn {
+    border-radius: 14px;
+    background: rgba(var(--rgb), .20);
+    box-shadow: 0 0 0 1px rgba(var(--rgb), .38),
+                0 0 14px 3px rgba(var(--rgb), .45),
+                0 0 32px 8px rgba(var(--rgb), .22);
+    animation: lqMorph 4.5s ease-in-out infinite;
+}
+
+/* Baris tabel: sorotan selebar baris dengan "bead" bercahaya di belakang nomor */
+#wrapper-tabel-bypass:not(.mode-proyektor-aktif) { position: relative; }
+#wrapper-tabel-bypass table.table-premium-live { position: relative; z-index: 1; }
+.lq-row {
+    border-radius: 12px;
+    background:
+        radial-gradient(circle at 34px 50%, rgba(var(--rgb), .38) 0, rgba(var(--rgb), 0) 46px),
+        linear-gradient(90deg, rgba(var(--rgb), .10), rgba(var(--rgb), .04));
+    box-shadow: inset 3px 0 0 rgba(var(--rgb), .9), 0 4px 16px rgba(var(--rgb), .16);
+}
+#wrapper-tabel-bypass.lq-rows-on table.table-premium-live tbody tr:hover { background-color: transparent !important; }
+#wrapper-tabel-bypass.lq-rows-on table.table-premium-live tbody tr:hover td:first-child { box-shadow: none !important; }
+
+/* Kartu statistik: glow lembut berwarna kartu yang berpindah antar kartu */
+.lq-card {
+    border-radius: 26px;
+    background: rgba(var(--rgb), .62);
+    filter: blur(11px);
+    animation: lqMorphCard 5s ease-in-out infinite;
+}
+.lq-card.lq-on { opacity: .85; }
+
+@media (prefers-reduced-motion: reduce) {
+    .lq-btn, .lq-card { animation: none; }
+}
+</style>
+<script type="text/javascript">
+/* LiquidHL — satu blob yang meluncur, melar, lalu "menetes" ke item yang di-hover.
+   Dipakai bersama oleh live_tabel.php (toolbar + baris) dan dashboard.php (kartu). */
+(function () {
+    if (window.LiquidHL) { return; }
+    var reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+    function trans(dur, ease) {
+        return ['left', 'top', 'width', 'height'].map(function (k) { return k + ' ' + dur + 's ' + ease; }).join(',') +
+               ',opacity .3s ease,background-color .3s ease,box-shadow .3s ease';
+    }
+
+    window.LiquidHL = function (o) {
+        var box = o && o.container;
+        if (!box) { return null; }
+        if (box.__lq) { return box.__lq; }
+
+        var padX = o.padX || 0, padY = o.padY || 0;
+        var blob = document.createElement('span');
+        blob.className = 'lq-blob ' + (o.cls || '');
+        blob.setAttribute('aria-hidden', 'true');
+        box.appendChild(blob);
+
+        var cur = null, shown = false, target = null, timer = 0, hideTimer = 0;
+
+        function rectOf(el) {
+            var r = el.getBoundingClientRect(), b = box.getBoundingClientRect();
+            return {
+                x: r.left - b.left - box.clientLeft + box.scrollLeft - padX,
+                y: r.top  - b.top  - box.clientTop  + box.scrollTop  - padY,
+                w: r.width  + padX * 2,
+                h: r.height + padY * 2
+            };
+        }
+        function setGeom(g) {
+            blob.style.left = g.x + 'px'; blob.style.top = g.y + 'px';
+            blob.style.width = g.w + 'px'; blob.style.height = g.h + 'px';
+        }
+        function snap(g) {                       // pindah tanpa animasi
+            blob.classList.add('lq-track');
+            setGeom(g);
+            void blob.offsetWidth;
+            blob.classList.remove('lq-track');
+        }
+        function doHide() {
+            clearTimeout(timer);
+            blob.classList.remove('lq-on');
+            shown = false; target = null;
+        }
+        function hide(now) {
+            clearTimeout(hideTimer); hideTimer = 0;
+            if (now) { doHide(); return; }
+            hideTimer = setTimeout(function () { hideTimer = 0; doHide(); }, 150);
+        }
+
+        function moveTo(el, instant) {
+            var t = rectOf(el);
+            if (!t.w || !t.h) { doHide(); return; }
+            clearTimeout(timer);
+            target = el;
+            blob.style.setProperty('--rgb', (o.color ? o.color(el) : '20,184,166'));
+
+            if (!shown || !cur || instant || reduce) {
+                snap(t);
+                blob.style.transition = trans(.25, 'ease-out');
+                blob.classList.add('lq-on');
+                shown = true; cur = t;
+                return;
+            }
+
+            var dx = Math.abs(t.x - cur.x), dy = Math.abs(t.y - cur.y);
+            var sameRow = dy < 8, sameCol = dx < 8;
+
+            if (o.stretch !== false && (sameRow || sameCol) && (dx + dy) > 2) {
+                // Fase 1 — melar: membentang dari posisi lama sampai tujuan
+                var u = { x: Math.min(cur.x, t.x), y: Math.min(cur.y, t.y) };
+                u.w = Math.max(cur.x + cur.w, t.x + t.w) - u.x;
+                u.h = Math.max(cur.y + cur.h, t.y + t.h) - u.y;
+                if (sameRow) { var sh = Math.min(14, t.h * .14); u.y += sh / 2; u.h -= sh; }
+                else         { var sw = Math.min(14, t.w * .14); u.x += sw / 2; u.w -= sw; }
+                var t1 = .12 + Math.min(Math.max(dx, dy), 400) / 400 * .08;
+                blob.style.transition = trans(t1, 'cubic-bezier(.2,.7,.2,1)');
+                setGeom(u);
+                // Fase 2 — menetes: ekor menyusul sambil sedikit memantul
+                timer = setTimeout(function () {
+                    blob.style.transition = trans(.42, 'cubic-bezier(.34,1.56,.64,1)');
+                    setGeom(t);
+                }, t1 * 1000);
+            } else {
+                blob.style.transition = trans(.4, 'cubic-bezier(.34,1.35,.5,1)');
+                setGeom(t);
+            }
+            cur = t;
+        }
+
+        box.addEventListener('mouseover', function (e) {
+            var el = e.target && e.target.closest ? e.target.closest(o.items) : null;
+            if (el && box.contains(el) && (!o.accept || o.accept(el))) {
+                clearTimeout(hideTimer); hideTimer = 0;
+                if (el !== target || !shown) { moveTo(el); }
+            } else if (!hideTimer) {
+                hide(false);
+            }
+        });
+        box.addEventListener('mouseleave', function () { hide(false); });
+        // Pengaman: kalau item yang sedang di-hover ikut terhapus (tabel auto-refresh),
+        // browser tidak mengirim mouseleave — sembunyikan saat kursor terdeteksi di luar kotak.
+        document.addEventListener('mouseover', function (e) {
+            if (shown && !hideTimer && !box.contains(e.target)) { hide(false); }
+        }, true);
+
+        var api = {
+            moveTo: moveTo,
+            hide: hide,
+            current: function () { return target; }
+        };
+        box.__lq = api;
+        return api;
+    };
+})();
+
+/* Pasang efek liquid: halo tombol toolbar + sorotan baris tabel */
+(function () {
+    try {
+        var wrap = document.getElementById('wrapper-tabel-bypass');
+        if (!wrap || !window.LiquidHL) { return; }
+
+        // 1) Toolbar: halo mengikuti warna tombolnya (merah = hapus/nonaktif, hijau = export/aktif)
+        var bar = wrap.querySelector('.filter-live-container');
+        var BTN = {
+            'btn-hapus-ujian': '220,38,38',
+            'btn-trigger-proyektor': '99,102,241',
+            'btn-export-nilai': '22,163,74',
+            'btn-login-on': '22,163,74',
+            'btn-login-off': '220,38,38'
+        };
+        var tb = bar ? window.LiquidHL({
+            container: bar,
+            items: '#btn-hapus-ujian, #btn-trigger-proyektor, #btn-export-nilai, #btn-login-on, #btn-login-off',
+            cls: 'lq-btn', padX: 7, padY: 7,
+            color: function (el) { return BTN[el.id] || '20,184,166'; }
+        }) : null;
+
+        // 2) Baris tabel: hijau = sedang mengerjakan, biru = selesai
+        var tbody = document.getElementById('body-tabel-live');
+        var rows = tbody ? window.LiquidHL({
+            container: wrap,
+            items: '#body-tabel-live > tr',
+            cls: 'lq-row',
+            accept: function (el) { return el.hasAttribute('data-id') && el.offsetHeight > 0; },
+            color: function (el) { return el.classList.contains('tr-mengerjakan') ? '34,197,94' : '37,99,235'; }
+        }) : null;
+        if (rows) { wrap.classList.add('lq-rows-on'); }
+
+        // Tabel di-refresh otomatis (isi <tbody> diganti / diurutkan ulang):
+        // pindahkan sorotan ke baris yang sama, atau sembunyikan kalau barisnya hilang.
+        if (rows && window.MutationObserver) {
+            new MutationObserver(function () {
+                var cur = rows.current();
+                if (!cur) { return; }
+                var id = cur.getAttribute('data-id'), el = null, list = tbody.children;
+                for (var i = 0; i < list.length; i++) {
+                    if (list[i].getAttribute('data-id') === id) { el = list[i]; break; }
+                }
+                if (el && el.offsetHeight) { rows.moveTo(el, true); } else { rows.hide(true); }
+            }).observe(tbody, { childList: true });
+        }
+
+        function hideAll() { if (rows) { rows.hide(true); } if (tb) { tb.hide(true); } }
+        document.addEventListener('change', function (e) {
+            if (e.target && (e.target.id === 'filter-kelas' || e.target.id === 'filter-mapel')) { hideAll(); }
+        });
+        window.addEventListener('resize', hideAll);
+        if (window.MutationObserver) {
+            new MutationObserver(function () {
+                if (wrap.classList.contains('mode-proyektor-aktif')) { hideAll(); }
+            }).observe(wrap, { attributes: true, attributeFilter: ['class'] });
+        }
+    } catch (err) { if (window.console) { console.error('LiquidHL (live tabel):', err); } }
+})();
 </script>

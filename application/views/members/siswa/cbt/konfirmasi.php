@@ -334,4 +334,3 @@ body { color:var(--kid-ink); }
 }
 @media(prefers-reduced-motion:reduce) { .kf-card,.kf-btn,.kf-btn-ghost { transition:none; } }
 </style>
-

@@ -154,6 +154,7 @@ try {
                     $bobot_status = 0; 
                     $nilai_internal = 0.0;
                     $waktu_selesai_timestamp = 0; 
+                    $waktu_jeda_ts = 0; 
                     $progress_persen = 0; 
                     $nama_mapel_siswa = ''; $kode_mapel_siswa = ''; 
 
@@ -181,12 +182,17 @@ try {
                                 }
                             }
                             if ($durasi_menit > 0) {
+                                // sertakan tambahan waktu dari admin (kolom waktu_tambahan)
+                                $durasi_menit += intval($cek_durasi['waktu_tambahan'] ?? 0);
                                 $waktu_selesai_timestamp = strtotime($waktu_mulai_raw) + ($durasi_menit * 60);
                             }
                         }
 
                         // 2. Tentukan Status berdasarkan Database Ujian ATAU Batas Waktu Server
-                        $sekarang_timestamp = time();
+                        // JEDA: saat dijeda, jam siswa berhenti di waktu jeda (bukan jam server sekarang)
+                        $jeda_raw = $cek_durasi['jeda'] ?? null;
+                        $waktu_jeda_ts = !empty($jeda_raw) ? intval(strtotime($jeda_raw)) : 0;
+                        $sekarang_timestamp = $waktu_jeda_ts > 0 ? $waktu_jeda_ts : time();
                         if ($status_clean === '2' || $status_clean === 'selesai') {
                             $status = 'selesai';
                             $bobot_status = 1; 
@@ -198,6 +204,7 @@ try {
                             $status = '1'; 
                             $bobot_status = 2; 
                         }
+                        if ($status === 'selesai') { $waktu_jeda_ts = 0; }
 
                         if ($id_j !== '0') {
                             if ($id_b === '0' || $id_b === '1' || empty($id_b)) {
@@ -293,6 +300,7 @@ try {
                             'nama_mapel'     => ($kode_mapel_siswa !== '' ? $kode_mapel_siswa : $nama_mapel_siswa),
                             'nama_mapel_lengkap' => $nama_mapel_siswa,
                             'waktu_selesai'  => $waktu_selesai_timestamp, 
+                            'waktu_jeda'     => $waktu_jeda_ts, 
                             'progress'       => $progress_persen,
                             'benar'          => $benar_tampil,
                             'salah'          => $salah_tampil,
@@ -481,6 +489,13 @@ try {
         background-color: #dcfce7 !important; color: #15803d !important; padding: 6px 14px !important; border-radius: 20px !important; font-size: 12px !important; font-weight: 700 !important; display: inline-flex !important; align-items: center !important; gap: 5px !important; 
     }
     .badge-status-active::before { content: ''; width: 6px; height: 6px; background-color: #22c55e; border-radius: 50%; }
+    
+    .dot-jeda { background-color: #f59e0b !important; box-shadow: 0 0 6px rgba(245, 158, 11, 0.7); }
+    .badge-status-jeda { 
+        background-color: #fef3c7 !important; color: #b45309 !important; padding: 6px 14px !important; border-radius: 20px !important; font-size: 12px !important; font-weight: 700 !important; display: inline-flex !important; align-items: center !important; gap: 5px !important; 
+    }
+    .badge-status-jeda::before { content: ''; width: 6px; height: 6px; background-color: #f59e0b; border-radius: 50%; }
+    .countdown-jeda { font-size: 11px; font-weight: 700; color: #b45309; margin-left: 6px; }
     
     .badge-status-completed { 
         background-color: #dbeafe !important; color: #1d4ed8 !important; padding: 6px 14px !important; border-radius: 20px !important; font-size: 12px !important; font-weight: 700 !important; display: inline-flex !important; align-items: center !important; gap: 5px !important; text-transform: capitalize !important; 
@@ -758,7 +773,12 @@ if ($CI->db->table_exists('master_kelas') && $CI->db->field_exists('login_aktif'
             if (!empty($data_siswa)) :
                 $no = 1;
                 foreach ($data_siswa as $row) : 
-                    if ($row['status'] === '1') {
+                    if ($row['status'] === '1' && !empty($row['waktu_jeda'])) {
+                        $tr_class = 'tr-mengerjakan';
+                        $status_badge = '<span class="badge-status-jeda">Dijeda</span>';
+                        $skor_style_class = 'nilai-live-bold';
+                        $dot_status_html = '<span class="status-dot-indicator dot-jeda" title="Dijeda"></span>';
+                    } elseif ($row['status'] === '1') {
                         $tr_class = 'tr-mengerjakan';
                         $status_badge = '<span class="badge-status-active">Active</span>';
                         $skor_style_class = 'nilai-live-bold';
@@ -775,9 +795,9 @@ if ($CI->db->table_exists('master_kelas') && $CI->db->field_exists('login_aktif'
                         $nama_file_avatar = 'siswa-p.png'; 
                     }
 
-                    $hash_cek = $row['status'] . '-' . $row['benar'] . '-' . $row['salah'] . '-' . $row['skor'] . '-' . $row['progress'] . '-' . urlencode($row['kelas']) . '-' . urlencode($row['nama_mapel']) . '-' . $nama_file_avatar;
+                    $hash_cek = $row['status'] . (!empty($row['waktu_jeda']) ? 'J' : '') . '-' . $row['benar'] . '-' . $row['salah'] . '-' . $row['skor'] . '-' . $row['progress'] . '-' . urlencode($row['kelas']) . '-' . urlencode($row['nama_mapel']) . '-' . $nama_file_avatar;
                 ?>
-                    <tr class="<?= $tr_class ?>" data-id="<?= htmlspecialchars($row['row_key']) ?>" data-siswa="<?= htmlspecialchars($row['id_siswa']) ?>" data-hash="<?= $hash_cek ?>" data-selesai="<?= $row['waktu_selesai'] ?>" data-status="<?= $row['status'] ?>" data-kelas="<?= htmlspecialchars($row['kelas']) ?>" data-mapel="<?= htmlspecialchars($row['nama_mapel']) ?>" data-nama="<?= htmlspecialchars($row['nama']) ?>" data-avatar="<?= base_url('assets/img/' . $nama_file_avatar) ?>" data-progress="<?= $row['progress'] ?>" data-benar="<?= $row['benar'] ?>" data-salah="<?= $row['salah'] ?>" data-skor="<?= $row['skor'] ?>">
+                    <tr class="<?= $tr_class ?>" data-id="<?= htmlspecialchars($row['row_key']) ?>" data-siswa="<?= htmlspecialchars($row['id_siswa']) ?>" data-hash="<?= $hash_cek ?>" data-selesai="<?= $row['waktu_selesai'] ?>" data-jeda="<?= intval($row['waktu_jeda']) ?>" data-status="<?= $row['status'] ?>" data-kelas="<?= htmlspecialchars($row['kelas']) ?>" data-mapel="<?= htmlspecialchars($row['nama_mapel']) ?>" data-nama="<?= htmlspecialchars($row['nama']) ?>" data-avatar="<?= base_url('assets/img/' . $nama_file_avatar) ?>" data-progress="<?= $row['progress'] ?>" data-benar="<?= $row['benar'] ?>" data-salah="<?= $row['salah'] ?>" data-skor="<?= $row['skor'] ?>">
                         <td class="kolom-nomor-data">
                             <div class="flex-center-wrapper txt-count"><?= $no++ ?></div>
                         </td>
@@ -936,7 +956,8 @@ $(document).ready(function() {
                 return;
             }
 
-            var sisaDetik = timestampSelesai - sekarang;
+            var tsJeda = parseInt($(this).attr('data-jeda')) || 0;
+            var sisaDetik = timestampSelesai - (tsJeda > 0 ? tsJeda : sekarang);
 
             if (sisaDetik > 0) {
                 var jam = Math.floor(sisaDetik / 3600);
@@ -947,7 +968,7 @@ $(document).ready(function() {
                 var teksMenit = (menit < 10 ? '0' + menit : menit) + ':';
                 var teksDetik = detik < 10 ? '0' + detik : detik;
 
-                elementTampil.html('<span class="countdown-timer">' + teksJam + teksMenit + teksDetik + '</span>');
+                elementTampil.html('<span class="countdown-timer">' + teksJam + teksMenit + teksDetik + '</span>' + (tsJeda > 0 ? '<span class="countdown-jeda">&#9208; jeda</span>' : ''));
             } else {
                 elementTampil.html('<span class="countdown-finished" style="color: #ef4444; font-weight:bold;">Waktu Habis</span>');
             }
@@ -1047,6 +1068,7 @@ $(document).ready(function() {
                 skor: parseFloat(t.getAttribute('data-skor')) || 0,
                 status: t.getAttribute('data-status'),
                 selesai: parseInt(t.getAttribute('data-selesai'), 10) || 0,
+                jeda: parseInt(t.getAttribute('data-jeda'), 10) || 0,
                 hash: t.getAttribute('data-hash')
             });
         }
@@ -1098,6 +1120,7 @@ $(document).ready(function() {
         c.skor.className = 'pj-skor ' + (r.skor >= 75 ? 'hi' : (r.skor >= 50 ? 'mid' : 'lo'));
         el.setAttribute('data-status', r.status);
         el.setAttribute('data-selesai', r.selesai);
+        el.setAttribute('data-jeda', r.jeda || 0);
         var w = Math.max(0, Math.min(100, r.progress)) + '%';
         if (baru && !reduce) {
             c.bar.style.width = '0%';
@@ -1161,11 +1184,11 @@ $(document).ready(function() {
 
         for (var i = 0; i < list.children.length; i++) {
             var el = list.children[i], t = el._r.time, txt, cls = 'pj-time';
-            var status = el.getAttribute('data-status'), end = parseInt(el.getAttribute('data-selesai'), 10) || 0;
+            var status = el.getAttribute('data-status'), end = parseInt(el.getAttribute('data-selesai'), 10) || 0, jd = parseInt(el.getAttribute('data-jeda'), 10) || 0;
             if (status === 'selesai') { txt = 'Selesai'; cls += ' end'; }
             else if (!end) { txt = '--:--'; }
             else {
-                var s = end - now;
+                var s = end - (jd > 0 ? jd : now);
                 if (s > 0) {
                     var h = Math.floor(s / 3600), m = Math.floor((s % 3600) / 60), dt = s % 60;
                     txt = (h > 0 ? pad(h) + ':' : '') + pad(m) + ':' + pad(dt);

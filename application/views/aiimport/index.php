@@ -245,6 +245,10 @@
   .tema button{width:30px;height:28px;border-radius:999px;display:grid;place-items:center;color:#64748b;cursor:pointer;font-size:13px}
   .tema button.on{background:#fff;color:#0f172a;box-shadow:0 1px 3px rgba(0,0,0,.2)}
   html[data-theme="dark"] .tema button.on{background:#2dd4bf;color:#0f172a}
+  .kt-lan{white-space:nowrap}
+  .kt-lan a{color:inherit;text-decoration:none}
+  .kt-lan a:hover{color:#20c997}
+  @media (max-width:1100px){.kt-lan{display:none}}
   @media (max-width:900px){.kt-tgl{display:none}}
   @media (max-width:560px){.kotak{display:none}}
 
@@ -493,7 +497,7 @@ if (!function_exists('lan_ip_aiimport')) {
     }
 }
 $lan_script = isset($_SERVER['SCRIPT_NAME']) ? str_replace('\\', '/', $_SERVER['SCRIPT_NAME']) : '';
-$lan_dir    = trim(dirname($lan_script), '/');
+$lan_dir    = trim(str_replace('\\', '/', dirname($lan_script)), '/.');
 $lan_path   = ($lan_dir === '.') ? '' : $lan_dir;
 $lan_scheme = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? 'https' : 'http';
 $lan_port   = isset($_SERVER['SERVER_PORT']) ? (int) $_SERVER['SERVER_PORT'] : 80;
@@ -523,7 +527,6 @@ $lan_url    = $lan_scheme . '://' . lan_ip_aiimport() . (in_array($lan_port, [80
     <?php endforeach; ?>
     <a class="keluar" href="<?= base_url('login/logout_admin') ?>"><?= ix_ico('ix-logout') ?><span class="nm">LOGOUT</span></a>
   </nav>
-  <div class="lan" title="Alamat akses dari komputer lain (LAN)"><svg class="ix-mini" viewBox="0 0 32 32" aria-hidden="true" focusable="false"><use href="#ix-network"/></svg>LAN: <a href="<?= htmlspecialchars($lan_url) ?>"><?= htmlspecialchars($lan_url) ?></a></div>
 </aside>
 
 <div class="konten">
@@ -531,6 +534,7 @@ $lan_url    = $lan_scheme . '://' . lan_ip_aiimport() . (in_array($lan_port, [80
   <button type="button" class="tgl" id="btnSide" aria-label="Buka / tutup menu"><span></span><span></span><span></span></button>
   <span class="jdl"><svg class="ix-ttl" viewBox="0 0 32 32" aria-hidden="true" focusable="false"><use href="#ix-spark"/></svg>Konversi Soal Ujian</span>
   <div class="kanan">
+    <div class="kotak kt-lan" title="Alamat akses dari komputer lain (LAN)"><svg class="ix-mini" viewBox="0 0 32 32" aria-hidden="true" focusable="false"><use href="#ix-network"/></svg><span>LAN: <a href="<?= htmlspecialchars($lan_url) ?>"><?= htmlspecialchars($lan_url) ?></a></span></div>
     <div class="kotak"><svg class="ix-mini" viewBox="0 0 32 32" aria-hidden="true" focusable="false"><use href="#ix-clock"/></svg><span id="jam">00:00:00</span></div>
     <div class="kotak kt-tgl"><svg class="ix-mini" viewBox="0 0 32 32" aria-hidden="true" focusable="false"><use href="#ix-calendar"/></svg><span id="tgl"></span></div>
     <div class="tema" role="group" aria-label="Pilih tema">

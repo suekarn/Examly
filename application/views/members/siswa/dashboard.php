@@ -135,6 +135,17 @@ a:focus-visible,button:focus-visible { outline:3px solid #ffbf27 !important; out
             $hariIni = date('Y-m-d');
             $jadwal_ujian = [];
 
+            // Ujian siswa ini yang sudah dimulai tapi belum selesai (termasuk yang dijeda / dilanjutkan)
+            $durasi_berjalan = [];
+            if (!empty($siswa->id_siswa) && $CI->db->table_exists('cbt_durasi_siswa')) {
+                $q_dur = $CI->db->where('id_siswa', $siswa->id_siswa)->where('selesai IS NULL', null, false)->get('cbt_durasi_siswa')->result();
+                foreach ($q_dur as $dr) {
+                    if (!empty($dr->mulai) && strtotime($dr->mulai) !== false && $dr->mulai > '2000-01-01') {
+                        $durasi_berjalan[(string)$dr->id_jadwal] = $dr;
+                    }
+                }
+            }
+
             $CI->db->select('a.*, b.kode_jenis, b.nama_jenis, c.bank_kode, c.bank_kelas, c.soal_agama, d.nama_mapel');
             $CI->db->from('cbt_jadwal a');
             $CI->db->join('cbt_jenis b', 'b.id_jenis = a.id_jenis', 'left');
@@ -144,7 +155,14 @@ a:focus-visible,button:focus-visible { outline:3px solid #ffbf27 !important; out
             $CI->db->where('a.id_smt', $smt_active->id_smt);
             $CI->db->where('c.status', '1');
             $CI->db->where('c.status_soal', '1');
-            $CI->db->where('a.status', '1'); // hanya jadwal AKTIF (sama dengan yang dipakai login.php)
+            if (!empty($durasi_berjalan)) {
+                $CI->db->group_start();
+                $CI->db->where('a.status', '1'); // jadwal AKTIF (sama dengan yang dipakai login.php)
+                $CI->db->or_where_in('a.id_jadwal', array_keys($durasi_berjalan)); // atau ujian siswa ini masih berjalan
+                $CI->db->group_end();
+            } else {
+                $CI->db->where('a.status', '1'); // hanya jadwal AKTIF (sama dengan yang dipakai login.php)
+            }
             $CI->db->where('DATE(a.tgl_selesai) >= ' . $CI->db->escape($hariIni), NULL, FALSE);
             $CI->db->order_by('a.tgl_mulai', 'ASC');
             $CI->db->order_by('a.jam_ke', 'ASC');
@@ -161,6 +179,20 @@ a:focus-visible,button:focus-visible { outline:3px solid #ffbf27 !important; out
                 }
                 if (!in_array((string)$siswa->id_kelas, $ids_kelas, true)) continue;
                 if ($agama_siswa !== null && !in_array($r->soal_agama, ['-', '0', '', null], true) && $r->soal_agama != $agama_siswa) continue;
+
+                // Siswa yang dijeda, atau masih punya sisa waktu pribadi, boleh melanjutkan walau jam jadwal sudah lewat
+                $r->_lanjut = false; $r->_dijeda = false; $r->_sisa_pribadi = 0;
+                if (isset($durasi_berjalan[(string)$r->id_jadwal])) {
+                    $dr = $durasi_berjalan[(string)$r->id_jadwal];
+                    $dijeda = !empty($dr->jeda ?? null);
+                    $menit_total = (int)$r->durasi_ujian + (int)($dr->waktu_tambahan ?? 0);
+                    $akhir_pribadi = strtotime($dr->mulai) + ($menit_total * 60);
+                    $r->_lanjut = ($dijeda || time() < $akhir_pribadi);
+                    $r->_dijeda = $dijeda;
+                    // sisa waktu pribadi; saat dijeda jam berhenti di waktu jeda
+                    $r->_sisa_pribadi = max(0, $akhir_pribadi - ($dijeda ? strtotime($dr->jeda) : time()));
+                }
+                if ($r->status !== '1' && !$r->_lanjut) continue;
                 $jadwal_ujian[] = $r;
             }
 
@@ -176,7 +208,9 @@ a:focus-visible,button:focus-visible { outline:3px solid #ffbf27 !important; out
                 if ($hariIni >= $d_m && $hariIni <= $d_s && !$jj->_tanpa_jam) {
                     $ts_m = strtotime($hariIni . ' ' . $jj->jam_mulai);
                     $ts_s = strtotime($hariIni . ' ' . $jj->jam_selesai);
-                    if ($now_ts >= $ts_s) {
+                    if ($now_ts >= $ts_s && !empty($jj->_lanjut)) {
+                        $jj->_berlangsung = true; // dijeda / masih ada sisa waktu pribadi
+                    } elseif ($now_ts >= $ts_s) {
                         $jj->_selesai = true;
                     } elseif ($now_ts >= $ts_m) {
                         $jj->_berlangsung = true;
@@ -230,14 +264,19 @@ a:focus-visible,button:focus-visible { outline:3px solid #ffbf27 !important; out
             <?php foreach ($banner_now as $bj):
                 $b_judul = !empty($bj->nama_mapel) ? $bj->nama_mapel : $bj->bank_kode;
                 $b_jenis = !empty($bj->nama_jenis) ? $bj->nama_jenis : 'Ujian';
-                $b_sisa  = $bj->_berlangsung ? max(0, strtotime($hariIni . ' ' . $bj->jam_selesai) - $now_ts) : 0;
+                if (!empty($bj->_lanjut)) {
+                    $b_sisa = (int)$bj->_sisa_pribadi;   // sisa waktu pribadi siswa (bukan jam selesai jadwal)
+                } else {
+                    $b_sisa = $bj->_berlangsung ? max(0, strtotime($hariIni . ' ' . $bj->jam_selesai) - $now_ts) : 0;
+                }
+                $b_beku = !empty($bj->_dijeda);
                 ?>
                 <a href="<?= !empty($bj->id_jadwal) ? base_url('siswa/konfirmasi/' . $bj->id_jadwal) : base_url('siswa/cbt') ?>" class="sd-go">
                     <div class="t1">📝 <?= html_escape($b_jenis) ?> hari ini sudah dibuka</div>
                     <div class="t2"><?= html_escape($b_judul) ?></div>
                     <?php if ($bj->_berlangsung): ?>
-                        <div class="t3">Sisa waktu</div>
-                        <div class="clock ju-sisa" data-sisa="<?= $b_sisa ?>"></div>
+                        <div class="t3"><?= $b_beku ? '⏸ Ujian dijeda - sisa waktu' : 'Sisa waktu' ?></div>
+                        <div class="clock ju-sisa" data-sisa="<?= $b_sisa ?>"<?= $b_beku ? ' data-beku="1"' : '' ?>></div>
                     <?php endif; ?>
                     <div class="sd-btn">▶ MULAI MENGERJAKAN</div>
                 </a>
@@ -416,8 +455,9 @@ a:focus-visible,button:focus-visible { outline:3px solid #ffbf27 !important; out
         var t0 = Date.now();
         function pad(n) { return n < 10 ? '0' + n : n; }
         function tick() {
-            var passed = Math.floor((Date.now() - t0) / 1000);
+            var passed0 = Math.floor((Date.now() - t0) / 1000);
             els.forEach(function (el) {
+                var passed = el.getAttribute('data-beku') ? 0 : passed0; // dijeda: waktu tidak berjalan
                 var r = Math.max(0, parseInt(el.getAttribute('data-sisa'), 10) - passed);
                 var h = Math.floor(r / 3600), m = Math.floor((r % 3600) / 60), d = r % 60;
                 el.textContent = (h > 0 ? h + ':' + pad(m) : m) + ':' + pad(d);
@@ -1001,4 +1041,3 @@ a:focus-visible,button:focus-visible { outline:3px solid #ffbf27 !important; out
 }
 @media(prefers-reduced-motion:reduce) { .sd-card,.sd-go,.sd-item,.menu-icon-container,.btn-modern-muted,.btn-action-post { transition:none; } }
 </style>
-

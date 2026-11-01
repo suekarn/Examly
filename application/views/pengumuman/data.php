@@ -179,6 +179,20 @@
     #tb-text .editable:focus { outline: 0; border-color: #6366f1 !important; box-shadow: 0 0 0 4px rgba(99,102,241,.15), 0 10px 22px -14px rgba(67,56,202,.6); }
     #tb-text tbody tr:hover { background: transparent !important; }
 
+    /* pengaturan kecepatan running text */
+    .pg-speed {
+        background: linear-gradient(180deg, #f8fafc, #f1f5f9); border: 1px solid #e2e8f0; border-radius: 14px;
+        padding: 12px 16px 10px; margin-bottom: 16px; box-shadow: inset 0 1px 0 #fff;
+    }
+    .pg-speed .pg-speed-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; }
+    .pg-speed .pg-speed-title { font-weight: 700; color: #334155; font-size: .85rem; }
+    .pg-speed .pg-speed-val {
+        font-weight: 800; font-size: .75rem; color: #fff; padding: 3px 12px; border-radius: 999px;
+        background: linear-gradient(135deg, #60a5fa, #2563eb); box-shadow: 0 6px 12px -8px rgba(29,78,216,.9);
+    }
+    .pg-speed .custom-range { width: 100%; cursor: pointer; }
+    .pg-speed .pg-speed-scale { display: flex; justify-content: space-between; color: #64748b; font-size: .72rem; font-weight: 600; }
+
     /* tombol */
     #formrunningtext .btn-primary, #formpengumuman .btn-success, #komentarModal .btn-success, #balasanModal .btn-success {
         position: relative; overflow: hidden; border: 1px solid rgba(255,255,255,.3) !important; font-weight: 700; letter-spacing: .2px;
@@ -272,6 +286,204 @@
         .pg-ic.pg-lg { width: 34px; height: 34px; margin-right: 10px !important; }
     }
     @media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation: none !important; transition: none !important; } }
+
+    /* ==========================================================================
+       MODE SIANG & MALAM — semua warna permukaan & teks memakai variabel.
+       Mode malam aktif lewat class "dark-mode" (AdminLTE) pada <body>.
+       Nilai mode siang = tampilan asli, jadi mode siang tidak berubah.
+       ========================================================================== */
+    :root {
+        --pg-text-strong: #1e293b;
+        --pg-text: #334155;
+        --pg-text-soft: #475569;
+        --pg-muted: #64748b;
+        --pg-placeholder: #94a3b8;
+        --pg-link: #2563eb;
+        --pg-ok-text: #16a34a;
+        --pg-bad-text: #dc3545;
+        --pg-info-text: #007bff;
+
+        --pg-page-bg: #eef3f9;
+        --pg-page-img:
+            radial-gradient(1000px 440px at 10% -8%, rgba(56,189,248,.18), transparent 62%),
+            radial-gradient(900px 420px at 100% 0%, rgba(16,185,129,.13), transparent 58%),
+            radial-gradient(700px 480px at 50% 110%, rgba(99,102,241,.10), transparent 60%);
+
+        --pg-card-a: #ffffff;   --pg-card-b: #fbfcfe;   --pg-card-line: rgba(203,213,225,.55);
+        --pg-head-a: #ffffff;   --pg-head-b: #f8fafc;
+        --pg-item-line: #e8edf5;
+        --pg-field-a: #ffffff;  --pg-field-b: #f8fafc;  --pg-field-line: #dbe3ec;
+        --pg-line: #e2e8f0;     --pg-line-soft: #eef2f7;
+        --pg-reply-line: #c7d2fe;
+        --pg-chip-a: #ffffff;   --pg-chip-b: #eef2ff;   --pg-chip-line: #e0e7ff;
+
+        --pg-bub-a: #ffffff;    --pg-bub-b: #f4f7fb;    --pg-bub-line: #e8edf5;
+        --pg-rep-a: #f8fafc;    --pg-rep-b: #eef2f7;    --pg-rep-line: #e6ebf2;
+
+        --pg-btn-a: #ffffff;    --pg-btn-b: #f6f8fb;    --pg-btn-line: #e6ebf2;
+        --pg-btn-hover-b: #eef4ff; --pg-btn-hover-line: #bfd3ff;
+        --pg-more-b: #f3f6fb;   --pg-more-line: #d6e0ee;
+        --pg-del-hover-b: #fef2f2; --pg-del-hover-line: #fecaca;
+        --pg-hover-bg: #f1f5f9;
+        --pg-hover-info: #eff6ff; --pg-hover-ok: #ecfdf5; --pg-hover-bad: #fef2f2;
+
+        --pg-alert-a: #e0f2fe;  --pg-alert-b: #dbeafe;  --pg-alert-text: #0c4a6e; --pg-alert-line: #bae6fd;
+        --pg-speed-a: #f8fafc;  --pg-speed-b: #f1f5f9;
+        --pg-empty-a: #f8fafc;  --pg-empty-b: #f1f5f9;  --pg-empty-line: #cbd5e1;
+        --pg-tool-a: #f8fafc;   --pg-tool-b: #eef2f7;
+        --pg-menu-hover: #eff6ff;
+    }
+
+    body.dark-mode,
+    .dark-mode,
+    html[data-theme="dark"],
+    html[data-bs-theme="dark"],
+    body[data-theme="dark"] {
+        --pg-text-strong: #f1f5f9;
+        --pg-text: #cbd5e1;
+        --pg-text-soft: #b6c3d6;
+        --pg-muted: #a3b3c9;
+        --pg-placeholder: #8fa0b8;
+        --pg-link: #8bb8ff;
+        --pg-ok-text: #4ade80;
+        --pg-bad-text: #ff8d8d;
+        --pg-info-text: #8bb8ff;
+
+        --pg-page-bg: #0e1522;
+        --pg-page-img:
+            radial-gradient(1000px 440px at 10% -8%, rgba(56,189,248,.10), transparent 62%),
+            radial-gradient(900px 420px at 100% 0%, rgba(16,185,129,.08), transparent 58%),
+            radial-gradient(700px 480px at 50% 110%, rgba(99,102,241,.08), transparent 60%);
+
+        --pg-card-a: #1b2638;   --pg-card-b: #172131;   --pg-card-line: rgba(100,116,139,.45);
+        --pg-head-a: #213049;   --pg-head-b: #1c2a40;
+        --pg-item-line: #2f3f58;
+        --pg-field-a: #131c2b;  --pg-field-b: #111a28;  --pg-field-line: #455672;
+        --pg-line: #33445e;     --pg-line-soft: #2a3a52;
+        --pg-reply-line: #4a5d86;
+        --pg-chip-a: #27374f;   --pg-chip-b: #213049;   --pg-chip-line: #3b4e72;
+
+        --pg-bub-a: #233149;    --pg-bub-b: #1f2c42;    --pg-bub-line: #34455f;
+        --pg-rep-a: #1f2c42;    --pg-rep-b: #1b2639;    --pg-rep-line: #31425c;
+
+        --pg-btn-a: #263650;    --pg-btn-b: #213049;    --pg-btn-line: #3a4c68;
+        --pg-btn-hover-b: #2b4163; --pg-btn-hover-line: #4f74b3;
+        --pg-more-b: #213049;   --pg-more-line: #3f5578;
+        --pg-del-hover-b: #4a2327; --pg-del-hover-line: #7d3a40;
+        --pg-hover-bg: #2b3c56;
+        --pg-hover-info: #223a63; --pg-hover-ok: #17402c; --pg-hover-bad: #4a2327;
+
+        --pg-alert-a: #12324f;  --pg-alert-b: #163a63;  --pg-alert-text: #c4e6ff; --pg-alert-line: #2d6190;
+        --pg-speed-a: #1f2c42;  --pg-speed-b: #1b2639;
+        --pg-empty-a: #1f2c42;  --pg-empty-b: #1b2639;  --pg-empty-line: #4a5c7a;
+        --pg-tool-a: #243249;   --pg-tool-b: #1f2b40;
+        --pg-menu-hover: #2b4163;
+    }
+
+    /* ---------- Halaman, kartu, teks umum ---------- */
+    .content-wrapper.bg-light { background: var(--pg-page-img), var(--pg-page-bg) !important; color: var(--pg-text-strong); }
+    .modern-card { background: linear-gradient(180deg, var(--pg-card-a), var(--pg-card-b)); border-color: var(--pg-card-line) !important; color: var(--pg-text-strong); }
+    .modern-card .card-header { background: linear-gradient(180deg, var(--pg-head-a), var(--pg-head-b)) !important; border-bottom-color: var(--pg-line-soft) !important; color: var(--pg-text) !important; }
+    .modern-card .card-body { color: var(--pg-text-strong); }
+    .content-wrapper .text-dark, .modal .text-dark, .announcement-item .text-dark { color: var(--pg-text-strong) !important; }
+    .announcement-item .text-dark.my-3 { color: var(--pg-text-strong) !important; }
+    .announcement-item .text-dark.my-3 a { color: var(--pg-link); }
+    .content-wrapper .text-muted, .modal .text-muted { color: var(--pg-muted) !important; }
+    .content-wrapper .col-form-font { color: var(--pg-muted) !important; }
+    .pg-ic.pg-lg { background: linear-gradient(150deg, var(--pg-chip-a), var(--pg-chip-b)); border-color: var(--pg-chip-line); }
+
+    /* ---------- Running text ---------- */
+    .modern-card .alert-info { background: linear-gradient(135deg, var(--pg-alert-a), var(--pg-alert-b)) !important; color: var(--pg-alert-text) !important; border-color: var(--pg-alert-line) !important; }
+    #tb-text { color: var(--pg-text-strong); }
+    #tb-text td { border-color: var(--pg-line-soft) !important; }
+    #tb-text tbody tr:hover { color: inherit !important; }
+    #tb-text .badge-secondary { box-shadow: 0 0 0 3px var(--pg-chip-line), 0 8px 14px -6px rgba(29,78,216,.7), inset 0 1.5px 0 rgba(255,255,255,.45); }
+    #tb-text .editable { background: linear-gradient(180deg, var(--pg-field-a), var(--pg-field-b)) !important; border-color: var(--pg-field-line) !important; color: var(--pg-text-strong) !important; }
+    #tb-text .editable:empty::before { color: var(--pg-placeholder); }
+    .pg-speed { background: linear-gradient(180deg, var(--pg-speed-a), var(--pg-speed-b)); border-color: var(--pg-line); }
+    .pg-speed .pg-speed-title { color: var(--pg-text); }
+    .pg-speed .pg-speed-scale { color: var(--pg-muted); }
+
+    /* ---------- Form penerima (select2) ---------- */
+    .select2-container--default .select2-selection--multiple { background: linear-gradient(180deg, var(--pg-field-a), var(--pg-field-b)); border-color: var(--pg-field-line) !important; color: var(--pg-text-strong); }
+    .select2-container--default .select2-search--inline .select2-search__field { color: var(--pg-text-strong) !important; background: transparent !important; }
+    .select2-container--default .select2-selection--multiple .select2-selection__placeholder { color: var(--pg-placeholder) !important; }
+    .select2-dropdown { background: var(--pg-card-a) !important; border-color: var(--pg-field-line) !important; color: var(--pg-text-strong); }
+    .select2-container--default .select2-results__option { color: var(--pg-text-strong); background: transparent; }
+    .select2-container--default .select2-results__option[aria-selected="true"] { background: var(--pg-hover-bg); color: var(--pg-text-strong); }
+    .select2-container--default .select2-results__option--highlighted[aria-selected],
+    .select2-container--default .select2-results__option--highlighted.select2-results__option--selectable { color: #fff !important; }
+    .select2-container--default .select2-search--dropdown .select2-search__field { background: var(--pg-field-a); color: var(--pg-text-strong); border-color: var(--pg-field-line); }
+    .select2-container--default .select2-results__message { color: var(--pg-muted); }
+
+    /* ---------- Editor Summernote ---------- */
+    .note-editor.note-frame { border-color: var(--pg-field-line) !important; background: var(--pg-field-a); }
+    .note-editor .note-toolbar { background: linear-gradient(180deg, var(--pg-tool-a), var(--pg-tool-b)) !important; border-bottom-color: var(--pg-line) !important; }
+    .note-editor .note-btn { background-color: var(--pg-btn-a); color: var(--pg-text-strong); border-color: var(--pg-btn-line); }
+    .note-editor .note-btn:hover, .note-editor .note-btn:focus, .note-editor .note-btn.active { background-color: var(--pg-hover-bg); color: var(--pg-text-strong); border-color: var(--pg-btn-hover-line); }
+    .note-editor .note-editing-area, .note-editor .note-editing-area .note-editable { background-color: var(--pg-field-a) !important; color: var(--pg-text-strong) !important; }
+    .note-editor .note-editing-area .note-placeholder { color: var(--pg-placeholder) !important; }
+    .note-editor .note-statusbar { background-color: var(--pg-tool-b); border-top-color: var(--pg-line); }
+    .note-editor .note-statusbar .note-resizebar .note-icon-bar { border-top-color: var(--pg-muted); }
+    .note-editor .note-codable { background: var(--pg-field-a); color: var(--pg-text-strong); }
+    .note-editor .dropdown-menu, .note-popover .popover-content .dropdown-menu { background: var(--pg-card-a); border-color: var(--pg-field-line); }
+    .note-editor .dropdown-menu a, .note-editor .dropdown-menu li, .note-editor .dropdown-menu h1, .note-editor .dropdown-menu h2, .note-editor .dropdown-menu h3,
+    .note-editor .dropdown-menu h4, .note-editor .dropdown-menu h5, .note-editor .dropdown-menu h6, .note-editor .dropdown-menu p, .note-editor .dropdown-menu pre { color: var(--pg-text-strong); }
+    .note-editor .dropdown-menu a:hover, .note-editor .dropdown-menu .dropdown-item:hover { background: var(--pg-hover-bg); }
+    .note-modal .modal-content, .note-popover .popover-content { background: var(--pg-card-a); color: var(--pg-text-strong); }
+    .note-modal label, .note-modal .modal-title, .note-modal .help-block { color: var(--pg-text-strong); }
+
+    /* ---------- Daftar pengumuman ---------- */
+    .announcement-item { background: linear-gradient(180deg, var(--pg-card-a), var(--pg-card-b)) !important; border-color: var(--pg-item-line) !important; color: var(--pg-text-strong); }
+    .announcement-item hr { border-top-color: var(--pg-line-soft) !important; }
+    .announcement-item small.text-muted { color: var(--pg-muted) !important; }
+    .avatar-admin { box-shadow: 0 0 0 3px var(--pg-card-a), 0 0 0 5px rgba(16,185,129,.35), 0 10px 16px -8px rgba(4,120,87,.8), inset 0 1.5px 0 rgba(255,255,255,.5) !important; }
+    .avatar-img { border-color: var(--pg-card-a) !important; box-shadow: 0 0 0 2px var(--pg-reply-line), 0 8px 14px -8px rgba(15,23,42,.6) !important; }
+    .toggle-comment { border-top-color: var(--pg-field-line) !important; }
+    .toggle-reply { border-left-color: var(--pg-reply-line) !important; }
+
+    .btn-action-sm { background: linear-gradient(180deg, var(--pg-btn-a), var(--pg-btn-b)); border-color: var(--pg-btn-line) !important; color: var(--pg-muted) !important; }
+    .btn-action-sm:hover { background: linear-gradient(180deg, var(--pg-btn-a), var(--pg-btn-hover-b)); border-color: var(--pg-btn-hover-line) !important; color: var(--pg-text-strong) !important; }
+    .btn-action-delete:hover { background: linear-gradient(180deg, var(--pg-btn-a), var(--pg-del-hover-b)) !important; border-color: var(--pg-del-hover-line) !important; color: var(--pg-bad-text) !important; }
+    .btn-action-sm span { color: var(--pg-text-strong); }
+
+    .comment-bubble { background: linear-gradient(180deg, var(--pg-bub-a), var(--pg-bub-b)) !important; border-color: var(--pg-bub-line) !important; color: var(--pg-text-strong); }
+    .reply-bubble { background: linear-gradient(180deg, var(--pg-rep-a), var(--pg-rep-b)) !important; border-color: var(--pg-rep-line) !important; color: var(--pg-text-strong); }
+    .comment-bubble .comment-text, .reply-bubble .comment-text { color: var(--pg-text-soft) !important; }
+    .media .btn.text-primary { color: var(--pg-info-text) !important; }
+    .media .btn.text-success { color: var(--pg-ok-text) !important; }
+    .media .btn.text-danger { color: var(--pg-bad-text) !important; }
+    .media .btn.text-primary:hover { background: var(--pg-hover-info); }
+    .media .btn.text-success:hover { background: var(--pg-hover-ok); }
+    .media .btn.text-danger:hover { background: var(--pg-hover-bad); }
+    .loadmore .btn, .loadmore-reply .btn { background: linear-gradient(180deg, var(--pg-btn-a), var(--pg-more-b)) !important; border-color: var(--pg-more-line) !important; color: var(--pg-link) !important; }
+    .loadmore .btn:hover, .loadmore-reply .btn:hover { color: var(--pg-link) !important; }
+    .pg-empty { background: linear-gradient(180deg, var(--pg-empty-a), var(--pg-empty-b)); border-color: var(--pg-empty-line); }
+
+    /* ---------- Modal komentar & balasan ---------- */
+    #komentarModal .modal-content, #balasanModal .modal-content { background: var(--pg-card-a) !important; color: var(--pg-text-strong); border-color: var(--pg-card-line) !important; }
+    #komentarModal .modal-header, #balasanModal .modal-header { background: linear-gradient(180deg, var(--pg-tool-a), var(--pg-tool-b)); border-bottom-color: var(--pg-line-soft) !important; color: var(--pg-text-strong); }
+    #komentarModal .modal-title, #balasanModal .modal-title { color: var(--pg-text-strong); }
+    #komentarModal .close, #balasanModal .close { color: var(--pg-text-strong); text-shadow: none; opacity: .75; }
+    #komentarModal .close:hover, #balasanModal .close:hover { color: var(--pg-text-strong); opacity: 1; }
+    #komentarModal .form-control, #balasanModal .form-control { background: linear-gradient(180deg, var(--pg-field-a), var(--pg-field-b)); border-color: var(--pg-field-line); color: var(--pg-text-strong); }
+    #komentarModal .form-control::placeholder, #balasanModal .form-control::placeholder { color: var(--pg-placeholder); opacity: 1; }
+    .modal .btn-light { background: linear-gradient(180deg, var(--pg-btn-a), var(--pg-btn-b)) !important; border-color: var(--pg-field-line) !important; color: var(--pg-text-soft); }
+    .modal .btn-light:hover { color: var(--pg-text-strong); border-color: var(--pg-btn-hover-line) !important; }
+
+    /* ---------- SweetAlert2 (konfirmasi hapus, dsb.) ---------- */
+    .swal2-popup { background: var(--pg-card-a) !important; color: var(--pg-text-strong) !important; }
+    .swal2-title, .swal2-html-container, .swal2-content { color: var(--pg-text-strong) !important; }
+
+    /* ---------- Isi pengumuman buatan pengguna (mode malam) ----------
+       Isi dari editor bisa membawa warna inline (mis. hitam) yang tak terbaca di latar gelap. */
+    body.dark-mode .announcement-item .text-dark.my-3 *:not(a):not(img),
+    .dark-mode .announcement-item .text-dark.my-3 *:not(a):not(img),
+    html[data-theme="dark"] .announcement-item .text-dark.my-3 *:not(a):not(img),
+    html[data-bs-theme="dark"] .announcement-item .text-dark.my-3 *:not(a):not(img) {
+        color: inherit !important;
+        background-color: transparent !important;
+    }
 </style>
 
 <div class="content-wrapper bg-light pt-4">
@@ -296,6 +508,17 @@
                 $col = '';
                 if ($this->ion_auth->is_admin()) :
                     $col = 'col-md-7';
+
+                    // Pisahkan baris pengaturan kecepatan "[kecepatan:N]" dari teks berjalan biasa
+                    $rt_list = [];
+                    $rt_speed = 3;
+                    foreach ((array) $running_text as $r) {
+                        if (preg_match('/^\[kecepatan:([1-5])\]$/', trim((string) $r->text), $m)) {
+                            $rt_speed = (int) $m[1];
+                            continue;
+                        }
+                        $rt_list[] = $r;
+                    }
                     ?>
                     <div class="col-12 col-md-5 mb-4">
                         <div class="card modern-card">
@@ -307,12 +530,21 @@
                                     <svg class="pg-ic mr-1" viewBox="0 0 32 32" aria-hidden="true" focusable="false"><use href="#pg-info"/></svg> Running Text akan muncul di bagian bawah layar siswa.
                                 </div>
 
+                                <div class="pg-speed">
+                                    <div class="pg-speed-head">
+                                        <span class="pg-speed-title"><i class="fas fa-tachometer-alt mr-1"></i> Kecepatan Berjalan</span>
+                                        <span class="pg-speed-val" id="rt-speed-label"></span>
+                                    </div>
+                                    <input type="range" class="custom-range" id="rt-speed" min="1" max="5" step="1" value="<?= $rt_speed ?>">
+                                    <div class="pg-speed-scale"><span>Lambat</span><span>Sedang</span><span>Cepat</span></div>
+                                </div>
+
                                 <div class="table-responsive">
                                     <table id="tb-text" class="table table-hover border-0 mb-3">
                                         <tbody>
                                         <?php
                                         for ($i = 0; $i < 5; $i++) :
-                                            $text = isset($running_text[$i]) ? $running_text[$i]->text : '';
+                                            $text = isset($rt_list[$i]) ? $rt_list[$i]->text : '';
                                             ?>
                                             <tr style="background: transparent;">
                                                 <td width="60" class="text-center align-middle" style="border-top: 1px solid #f1f5f9;">
@@ -780,6 +1012,12 @@
         $('.editable').attr('contentEditable', true);
         $('.select2').select2();
 
+        // Label kecepatan running text
+        var rtNama = ['', 'Sangat lambat', 'Lambat', 'Sedang', 'Cepat', 'Sangat cepat'];
+        function labelSpeed() { $('#rt-speed-label').text(rtNama[$('#rt-speed').val()]); }
+        $('#rt-speed').on('input change', labelSpeed);
+        labelSpeed();
+
         $('#text-pengumuman').summernote({
             placeholder: 'Tulis isi pengumuman atau info penting disini...',
             tabsize: 2,
@@ -893,6 +1131,9 @@
                 jsonObj.push(item);
                 no++;
             });
+
+            // Baris ke-6: pengaturan kecepatan (dibaca halaman siswa, tidak ditampilkan sebagai teks)
+            jsonObj.push({ id_text: no, text: '[kecepatan:' + $('#rt-speed').val() + ']' });
 
             var dataPost = $(this).serialize() + "&text=" + JSON.stringify(jsonObj);
             $.ajax({

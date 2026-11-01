@@ -671,9 +671,10 @@ p:not(.katex *), span:not(.katex):not(.katex *), div:not(.katex *), label, li, t
 
     let tick = 0;
     const _second = 1000, _minute = _second * 60, _hour = _minute * 60, _day = _hour * 24;
-    const durasiUujian = Number(infoJadwal.durasi_ujian);
+    let durasiUujian = Number(infoJadwal.durasi_ujian);
 
     let autosaveDebounceTimer = null;
+    let sedangJeda = false;   // true selama ujian dijeda admin
     
     const idSiswaGlobal = '<?= isset($siswa->id_siswa) ? $siswa->id_siswa : "anon" ?>';
     const idJadwalGlobal = '<?= isset($jadwal->id_jadwal) ? $jadwal->id_jadwal : "anon" ?>';
@@ -728,6 +729,7 @@ p:not(.katex *), span:not(.katex):not(.katex *), div:not(.katex *), label, li, t
     }
 
     function checkAndSaveJawaban() {
+        if (sedangJeda) return;
         var jwb1 = jawabanSiswa;
         var jwb2 = jawabanBaru;
         if ($.isArray(jwb1)) jwb1 = JSON.stringify(jwb1);
@@ -735,6 +737,7 @@ p:not(.katex *), span:not(.katex):not(.katex *), div:not(.katex *), label, li, t
 
         if (jawabanBaru != null && jwb1 !== jwb2) {
             clearTimeout(autosaveDebounceTimer);
+            var jawabanSebelum = jawabanSiswa, nomorKirim = nomorSoal;
             
             var siswa = $('#up').find('input[name="siswa"]').val();
             var bank = $('#up').find('input[name="bank"]').val();
@@ -759,6 +762,12 @@ p:not(.katex *), span:not(.katex):not(.katex *), div:not(.katex *), label, li, t
                 contentType: false,
                 data: formData,
                 success: function (response) {
+                    if (response && response.jeda) {
+                        // server menolak karena ujian sedang dijeda: jawaban belum tersimpan
+                        if (nomorKirim === nomorSoal) jawabanSiswa = jawabanSebelum;
+                        masukJeda();
+                        return;
+                    }
                     if (response && response.soal_terjawab !== undefined) {
                         soalTerjawab = parseInt(response.soal_terjawab);
                         perbaruiProgressBar();
@@ -1025,6 +1034,7 @@ p:not(.katex *), span:not(.katex):not(.katex *), div:not(.katex *), label, li, t
 
     function terimaSoal(data, isInitial) {
         $('#loading').addClass('d-none');
+        if (data && data.jeda) { masukJeda(); return; }
 
         if (isInitial && tampilDariCache) {
             tampilDariCache = false;
@@ -1068,6 +1078,7 @@ p:not(.katex *), span:not(.katex):not(.katex *), div:not(.katex *), label, li, t
     }
 
     function loadSoalNomor(nomor, force, percobaan) {
+        if (sedangJeda) return;
         percobaan = percobaan || 1;
         if (!force && nomor == nomorSoal) { if (navDikunci) unlockNavigasi(); return; }
         $('#loading').removeClass('d-none');
@@ -1393,6 +1404,7 @@ p:not(.katex *), span:not(.katex):not(.katex *), div:not(.katex *), label, li, t
     }
 
     function nextSoal() {
+        if (sedangJeda) return;
         $('#next').attr('disabled', 'disabled');
         pasangFailsafeNav();
         nav = (nomorSoal + 1);
@@ -1401,6 +1413,7 @@ p:not(.katex *), span:not(.katex):not(.katex *), div:not(.katex *), label, li, t
     }
 
     function prevSoal() {
+        if (sedangJeda) return;
         $('#prev').attr('disabled', 'disabled');
         pasangFailsafeNav();
         nav = (nomorSoal - 1);
@@ -1439,6 +1452,7 @@ p:not(.katex *), span:not(.katex):not(.katex *), div:not(.katex *), label, li, t
     }
 
     function submitJawaban(opsi) {
+        if (sedangJeda) return;
         hapusCacheNomor(nomorSoal);
         var jawaban_Siswa = '', jawaban_Alias = '';
         if (jenisSoal == 1) {
@@ -1640,6 +1654,67 @@ p:not(.katex *), span:not(.katex):not(.katex *), div:not(.katex *), label, li, t
             }
         }
     }
+
+    /* ===== JEDA UJIAN: sinkron dengan server ===== */
+    function pastikanOverlayJeda() {
+        if ($('#overlay-jeda').length) return;
+        $('body').append(
+            '<div id="overlay-jeda" style="display:none;position:fixed;inset:0;z-index:99999;background:rgba(15,23,42,.94);' +
+            'align-items:center;justify-content:center;padding:24px;text-align:center;font-family:inherit;">' +
+            '<div style="max-width:420px;background:#fff;border-radius:18px;padding:32px 28px;box-shadow:0 20px 50px rgba(0,0,0,.35);">' +
+            '<div style="font-size:54px;line-height:1;margin-bottom:12px;">&#9208;&#65039;</div>' +
+            '<h3 style="margin:0 0 10px;font-weight:800;color:#b45309;">Ujian Sedang Dijeda</h3>' +
+            '<p style="margin:0 0 14px;color:#334155;font-size:15px;">Pengawas menjeda ujian Anda. Waktu berhenti dan soal tidak dapat dikerjakan sementara.</p>' +
+            '<p style="margin:0 0 14px;color:#64748b;font-size:13px;">Sisa waktu Anda: <b id="jeda-sisa-waktu" style="font-family:monospace;font-size:15px;color:#0f172a;">--:--:--</b></p>' +
+            '<p style="margin:0;color:#64748b;font-size:13px;">Mohon tunggu. Layar ini akan tertutup otomatis saat ujian dilanjutkan. Jangan menutup atau menyegarkan halaman.</p>' +
+            '</div></div>'
+        );
+    }
+
+    function masukJeda() {
+        if (sedangJeda) return;
+        sedangJeda = true;
+        if (timerOut) { clearTimeout(timerOut); timerOut = null; }
+        if (timerSelesai) { clearTimeout(timerSelesai); timerSelesai = null; }
+        clearTimeout(autosaveDebounceTimer);
+        sedangMemuatSoal = false;
+        navDikunci = false;
+        $('#loading').addClass('d-none');
+        $('#prev, #next').attr('disabled', 'disabled');
+        $('#timer').removeClass('timer-pulse timer-critical');
+        pastikanOverlayJeda();
+        $('#jeda-sisa-waktu').text($('#timer').text());
+        $('#overlay-jeda').css('display', 'flex');
+    }
+
+    function keluarJeda(res) {
+        sedangJeda = false;
+        if (res && res.durasi_total) durasiUujian = Number(res.durasi_total);
+        $('#overlay-jeda').css('display', 'none');
+        $('#timer').addClass('timer-pulse');
+        // muat ulang soal dari server: timer & durasi ikut disinkronkan lagi
+        var n = nomorSoal || parseInt(sessionStorage.getItem('last_nomor_' + idSiswaGlobal + '_' + idJadwalGlobal)) || 1;
+        loadSoalNomor(n, true);
+    }
+
+    function cekStatusWaktu() {
+        $.ajax({
+            type: 'POST',
+            url: base_url + 'siswa/statusWaktu',
+            data: { jadwal: idJadwalGlobal },
+            dataType: 'json',
+            timeout: 8000,
+            success: function (res) {
+                if (!res || !res.ada) return;
+                if (res.jeda) masukJeda();
+                else if (sedangJeda) keluarJeda(res);
+            },
+            error: function () { /* abaikan, coba lagi pada siklus berikutnya */ }
+        });
+    }
+    setInterval(cekStatusWaktu, 8000);
+    document.addEventListener('visibilitychange', function () { if (!document.hidden) cekStatusWaktu(); });
+    /* ===== AKHIR JEDA UJIAN ===== */
 
     function zeroPad(no) { return no < 10 ? '0' + no : no; }
 </script>

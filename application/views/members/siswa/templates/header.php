@@ -53,8 +53,10 @@
         }
 
         /* ===== Bar tombol di bawah layar (Beranda & Keluar) ===== */
-        :root { --bottom-bar-h: 0px; }
-        body.has-bottom-bar { --bottom-bar-h: 76px; padding-bottom: var(--bottom-bar-h); }
+        :root { --bottom-bar-h: 0px; --rt-h: 0px; }
+        body.has-bottom-bar { --bottom-bar-h: 76px; }
+        body.has-rt { --rt-h: 38px; }
+        body { padding-bottom: calc(var(--bottom-bar-h) + var(--rt-h)); }
         .bottom-bar {
             position: fixed; left: 0; right: 0; bottom: 0; z-index: 10000;
             display: flex; gap: 12px; align-items: stretch;
@@ -72,6 +74,30 @@
         .bottom-bar .bb-home { background: #2563eb; }
         .bottom-bar .bb-out  { background: #dc2626; }
         .bottom-bar .bb-btn:active { transform: scale(.97); }
+
+        /* ===== Running text di bawah layar siswa ===== */
+        .running-text {
+            position: fixed; left: 0; right: 0; bottom: var(--bottom-bar-h); z-index: 9999;
+            height: 38px; overflow: hidden; display: flex; align-items: center;
+            background: #1e3a8a; color: #fff; font-size: .95rem; font-weight: 600;
+            box-shadow: 0 -3px 10px rgba(15, 23, 42, .15);
+        }
+        .running-text .rt-track {
+            display: flex; flex-wrap: nowrap; flex: none; align-items: center;
+            width: max-content; height: 38px; white-space: nowrap !important;
+            will-change: transform;
+            /* !important supaya menang atas "* { animation: none !important }" di footer siswa */
+            animation: rt-geser var(--rt-durasi, 25s) linear infinite !important;
+        }
+        .running-text:hover .rt-track { animation-play-state: paused !important; }
+        .running-text .rt-track span {
+            flex: none; white-space: nowrap !important; line-height: 38px;
+            margin-right: 80px; word-break: normal !important;
+        }
+        @keyframes rt-geser {
+            from { transform: translateX(100vw); }
+            to   { transform: translateX(-100%); }
+        }
     </style>
 
     <script type="text/javascript">
@@ -140,9 +166,30 @@ $display_logout = $this->uri->segment(2) == "penilaian" ? 'd-none' : '';
 $tampil_beranda = ($dnone === '');
 $tampil_logout  = ($display_logout === '') && $dash !== 'dashboard'; // tombol Keluar tidak tampil di Dashboard
 $tampil_bar     = $tampil_beranda || $tampil_logout;
+
+// Running text (data dikirim controller lewat $data['running_text'])
+$rt_items = [];
+$rt_speed = 3; // 1 (sangat lambat) - 5 (sangat cepat); diatur admin lewat baris khusus "[kecepatan:N]"
+$rt_pps = [1 => 40, 2 => 70, 3 => 100, 4 => 140, 5 => 200]; // kecepatan dalam piksel per detik
+if (!empty($running_text)) {
+    foreach ((array)$running_text as $rt) {
+        $t = is_object($rt) ? trim((string)($rt->text ?? '')) : trim((string)($rt['text'] ?? ''));
+        // Baris pengaturan kecepatan: bukan teks yang ditampilkan
+        if (preg_match('/^\[kecepatan:([1-5])\]$/', $t, $m)) {
+            $rt_speed = (int)$m[1];
+            continue;
+        }
+        if ($t !== '') {
+            $rt_items[] = htmlspecialchars($t, ENT_QUOTES, 'UTF-8');
+        }
+    }
+}
+$tampil_rt = count($rt_items) > 0 && $dash !== 'auth';
+// Durasi cadangan (diperhalus oleh JavaScript sesuai lebar teks & layar)
+$rt_durasi = max(10, (int)(((strlen(strip_tags(implode(' ', $rt_items))) * 9) + 1366) / $rt_pps[$rt_speed]));
 ?>
 
-<body class="layout-top-nav layout-navbar-fixed<?= $tampil_bar ? ' has-bottom-bar' : '' ?>">
+<body class="layout-top-nav layout-navbar-fixed<?= $tampil_bar ? ' has-bottom-bar' : '' ?><?= $tampil_rt ? ' has-rt' : '' ?>">
 <div class="wrapper">
     <nav class="main-header navbar navbar-expand-md navbar-transparent border-bottom-0">
         <ul class="navbar-nav ml-auto">
@@ -151,6 +198,30 @@ $tampil_bar     = $tampil_beranda || $tampil_logout;
             </li>
         </ul>
     </nav>
+
+    <?php if ($tampil_rt) : ?>
+    <div class="running-text" style="--rt-durasi: <?= $rt_durasi ?>s">
+        <div class="rt-track">
+            <?php foreach ($rt_items as $t) : ?><span><?= $t ?></span><?php endforeach; ?>
+        </div>
+    </div>
+    <script type="text/javascript">
+        // Kecepatan konstan (piksel/detik) berapa pun panjang teks dan lebar layar
+        (function () {
+            var pps = <?= (int)$rt_pps[$rt_speed] ?>;
+            function setRt() {
+                var bar = document.querySelector('.running-text');
+                var track = bar && bar.querySelector('.rt-track');
+                if (!track) return;
+                var dur = (window.innerWidth + track.offsetWidth) / pps;
+                bar.style.setProperty('--rt-durasi', Math.max(5, dur).toFixed(1) + 's');
+            }
+            setRt();
+            window.addEventListener('load', setRt);
+            window.addEventListener('resize', setRt);
+        })();
+    </script>
+    <?php endif; ?>
 
     <?php if ($tampil_bar) : ?>
     <div class="bottom-bar">

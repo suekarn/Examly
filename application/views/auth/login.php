@@ -372,7 +372,7 @@ if (!headers_sent()) {
                     ]
                 );
 
-                $stmt_jadwal = $pdo->prepare("SELECT id_jadwal, id_bank FROM cbt_jadwal WHERE status = '1'");
+                $stmt_jadwal = $pdo->prepare("SELECT * FROM cbt_jadwal WHERE status = '1'");
                 $stmt_jadwal->execute();
                 $jadwal_list = $stmt_jadwal->fetchAll(PDO::FETCH_ASSOC);
 
@@ -426,6 +426,16 @@ if (!headers_sent()) {
                                 }
                             }
                         }
+                        // Jadwal yang jamnya sudah lewat tapi masih aktif karena ada siswa yang dijeda: beri label
+                        $now_login = new DateTime('now', new DateTimeZone('Asia/Jakarta'));
+                        $tg_login = $now_login->format('Y-m-d');
+                        $jm_login = $now_login->format('H:i:s');
+                        $diluar_jam = false;
+                        if (!empty($row['jam_mulai']) && !empty($row['jam_selesai'])) {
+                            if (!($row['jam_mulai'] <= $jm_login && $row['jam_selesai'] > $jm_login)) { $diluar_jam = true; }
+                        }
+                        if (!empty($row['tgl_selesai']) && substr($row['tgl_selesai'], 0, 10) < $tg_login) { $diluar_jam = true; }
+                        if ($diluar_jam) { $text_tampil .= ' (khusus lanjutan)'; }
                         $options_html .= '<option value="' . htmlspecialchars($id_jadwal) . '">' . htmlspecialchars($text_tampil) . '</option>';
                     }
                 }

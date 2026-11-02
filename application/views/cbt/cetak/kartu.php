@@ -1,18 +1,375 @@
-<?php $kpCss = '.kp-card{box-sizing:border-box;width:10cm;height:6.4cm;background:#fff !important;color:#000 !important;border:1.5px solid #1f3a6e;border-radius:8px;overflow:hidden;display:flex;flex-direction:column;font-family:Arial,Helvetica,sans-serif;text-align:left;-webkit-print-color-adjust:exact;print-color-adjust:exact;page-break-inside:avoid}.kp-card *{box-sizing:border-box}.kp-strip{flex:none;height:5px;background:#1f3a6e !important}.kp-head{flex:none;width:100%;border-collapse:collapse;border-bottom:2px solid #1f3a6e}.kp-head td{padding:3px 4px;vertical-align:middle}.kp-logo{width:19%;text-align:center}.kp-logo img{width:15mm;height:15mm;object-fit:contain;margin:0}.kp-title{width:62%;text-align:center;line-height:1.1}.kp-title .h1,.kp-title .h2,.kp-title .h3,.kp-title .h4{margin:0 !important;padding:0 !important;line-height:1.1 !important}.kp-title .h1{font-size:8.5pt}.kp-title .h2{font-size:10.5pt;font-weight:bold}.kp-title .h3,.kp-title .h4{font-size:7.5pt}.kp-body{flex:1;display:flex;gap:8px;padding:4px 8px 2px 8px;min-height:0}.kp-foto{flex:none;width:22mm;position:relative}.kp-foto img{width:22mm;height:29mm;object-fit:cover;object-position:center;border:1px solid #333;display:block}.kp-main{flex:1;display:flex;flex-direction:column;justify-content:space-between;min-width:0}.kp-data{border-collapse:collapse;font-size:9pt;line-height:1.25}.kp-data td{padding:0 2px 0 0;vertical-align:top}.kp-data td:first-child{width:25mm;white-space:nowrap}.kp-data td:nth-child(2){width:3mm;text-align:center}.kp-cam{position:absolute;right:2px;bottom:2px;width:16px;height:16px;border-radius:50%;background:rgba(31,58,110,.9);color:#fff;font-size:9px;line-height:16px;text-align:center}@media print{.kp-cam{display:none !important}}.kp-ttd{align-self:flex-end;width:46mm;text-align:center;font-size:7.5pt;line-height:1.15;background-repeat:no-repeat;background-position:center;background-size:auto 34px}.kp-ttd .sp{display:block;height:18px}.kp-ttd .nm{font-weight:bold;text-decoration:underline}.kp-foot{flex:none;background:#e8eef8 !important;color:#1f3a6e;text-align:center;font-size:6pt;font-style:italic;padding:2px 0;border-top:1px solid #1f3a6e}'; ?>
+<?php
+// CSS kartu: dipakai di preview, di halaman cetak, dan ikut tercetak (lihat createPrintPreview).
+// Jangan taruh gaya halaman (tombol, panel, stage) di sini.
+$kpCss = <<<'CSS'
+.kp-card{position:relative;box-sizing:border-box;width:10cm;height:6.4cm;background-color:#fffdf8 !important;color:#14213d !important;border:1.5px solid #16315f;border-radius:9px;overflow:hidden;display:flex;flex-direction:column;font-family:"Segoe UI",Arial,Helvetica,sans-serif;text-align:left;-webkit-print-color-adjust:exact;print-color-adjust:exact;page-break-inside:avoid;break-inside:avoid}
+.kp-card *{box-sizing:border-box}
+.kp-card::after{content:"";position:absolute;left:2.5px;top:2.5px;right:2.5px;bottom:2.5px;border:1px solid rgba(184,145,63,.9);border-radius:6.5px;pointer-events:none;z-index:3}
+.kp-strip{flex:none;height:5px;background:linear-gradient(90deg,#102650 0%,#21468a 50%,#102650 100%) !important}
+.kp-head{flex:none;width:100%;table-layout:fixed;border-collapse:collapse;background:linear-gradient(180deg,#fffdf8 0%,#f6efdf 100%) !important;border-bottom:1.5px solid #16315f}
+.kp-head td{padding:2px 6px;vertical-align:middle}
+.kp-logo{width:16%;text-align:center}
+.kp-head td.kp-logo{padding:2px 3px}
+.kp-logo img{width:13mm;height:13mm;object-fit:contain;margin:0}
+.kp-title{width:68%;text-align:center;line-height:1.1}
+.kp-title .h1,.kp-title .h2,.kp-title .h3,.kp-title .h4{margin:0 !important;padding:0 !important;line-height:1.1 !important;border:0;background:none}
+.kp-title .h1{font-size:7.6pt;font-weight:600;color:#16315f;letter-spacing:.3px}
+.kp-title .h2{font-size:10pt;font-weight:700;font-family:"Palatino Linotype","Book Antiqua",Palatino,Georgia,serif;color:#0f2247;letter-spacing:.6px;white-space:nowrap}
+.kp-title .h3,.kp-title .h4{font-size:6.6pt;font-weight:400;color:#46557a}
+.kp-body{flex:1;display:flex;gap:9px;padding:4px 9px 2px 9px;margin-top:2px;min-height:0;border-top:1px solid #b8913f;background-image:linear-gradient(100deg,rgba(255,253,248,1) 0%,rgba(255,253,248,.88) 50%,rgba(255,253,248,0) 100%),repeating-radial-gradient(circle at 96% 108%,rgba(22,49,95,.075) 0,rgba(22,49,95,.075) .7px,transparent .7px,transparent 5px)}
+.kp-foto{flex:none;width:24mm;position:relative;align-self:flex-start}
+.kp-foto img{width:24mm;height:31mm;object-fit:cover;object-position:center top;padding:2px;background:#fff;border:1px solid #16315f;outline:1px solid #b8913f;outline-offset:1.5px;border-radius:2px;display:block}
+.kp-cam{position:absolute;right:5px;bottom:5px;width:16px;height:16px;border-radius:50%;background:#b8913f;border:1px solid #fff;color:#fff;font-size:8px;line-height:14px;text-align:center}
+@media print{.kp-cam{display:none !important}}
+.kp-main{flex:1;display:flex;flex-direction:column;justify-content:space-between;min-width:0}
+.kp-data{width:100%;border-collapse:collapse;font-size:8pt;line-height:1.22}
+.kp-data td{padding:0 2px 0 0;vertical-align:top;color:#14213d;word-break:break-word}
+.kp-data td:first-child{width:22mm;white-space:nowrap;color:#5a6a88;font-size:7.4pt;padding-top:.5px}
+.kp-data td:nth-child(2){width:3mm;text-align:center;color:#5a6a88}
+.kp-data tr:first-child td{padding-bottom:1px;border-bottom:1px solid #d8c38d}
+.kp-data tr:nth-child(2) td{padding-top:2px}
+.kp-data tr:first-child td:nth-child(3) b{font-family:Georgia,"Times New Roman",serif;font-size:9.2pt;line-height:1.12;color:#0f2247}
+.kp-data tr:nth-child(n+4) td:nth-child(3) b{display:inline-block;padding:0 5px;background:#eef2fa;border:0;border-left:2px solid #b8913f;border-radius:2px;font-family:Consolas,"Courier New",monospace;font-size:8pt;line-height:1.2;letter-spacing:.4px;color:#0f2247}
+.kp-ttd{align-self:flex-end;width:44mm;text-align:center;font-size:6.8pt;line-height:1.12;color:#14213d;background-repeat:no-repeat;background-position:center;background-size:auto 30px}
+.kp-ttd .sp{display:block;height:13px}
+.kp-ttd .nm{display:inline-block;padding:0 2px;font-weight:700;color:#0f2247;line-height:1.1;border-bottom:1px solid #16315f}
+.kp-foot{position:relative;z-index:1;flex:none;background:#16315f !important;color:#ecd9a2;text-align:center;font-size:5.8pt;letter-spacing:.5px;padding:2px 0;border-top:1px solid #b8913f}
+.kp-foot::before,.kp-foot::after{content:"\25C6";font-size:4pt;color:#b8913f;margin:0 6px;vertical-align:middle}
+CSS;
+?>
 <style><?= $kpCss ?></style>
-<div class="content-wrapper bg-white pt-4">
+<style>
+    /* ===== Gaya halaman (tidak ikut tercetak) ===== */
+    .kp-page {
+        --kp-navy: #16315f;
+        --kp-navy-deep: #0d1f40;
+        --kp-gold: #b8913f;
+        --kp-gold-soft: #ecd9a2;
+        --kp-ink: #14213d;
+        --kp-mute: #66748f;
+        --kp-line: #e1e6f0;
+        background: #f4f6fb !important;
+        color: var(--kp-ink);
+    }
+
+    .kp-page .kp-pagehead {
+        display: flex;
+        align-items: flex-end;
+        justify-content: space-between;
+        flex-wrap: wrap;
+        gap: 12px;
+        margin-bottom: .5rem;
+    }
+
+    .kp-page .kp-heading {
+        margin: 0;
+        font-family: Georgia, "Times New Roman", serif;
+        font-size: 1.7rem;
+        font-weight: 700;
+        line-height: 1.2;
+        letter-spacing: -.01em;
+        color: var(--kp-navy);
+    }
+
+    .kp-page .kp-sub {
+        margin: .25rem 0 0;
+        font-size: .9rem;
+        color: var(--kp-mute);
+    }
+
+    /* Tombol */
+    .kp-page .kp-btn {
+        display: inline-flex;
+        align-items: center;
+        gap: .45rem;
+        padding: .45rem .95rem;
+        border: 1px solid transparent;
+        border-radius: 8px;
+        font-weight: 600;
+        line-height: 1.4;
+        transition: background-color .15s, box-shadow .15s, filter .15s;
+    }
+
+    .kp-page .kp-btn:focus-visible {
+        outline: 2px solid var(--kp-gold);
+        outline-offset: 2px;
+    }
+
+    .kp-page .kp-btn-ghost {
+        background: #fff;
+        border-color: var(--kp-line);
+        color: var(--kp-navy);
+    }
+
+    .kp-page .kp-btn-ghost:hover {
+        background: #eef2fa;
+        color: var(--kp-navy);
+    }
+
+    .kp-page .kp-btn-navy {
+        background: var(--kp-navy);
+        color: #fff;
+    }
+
+    .kp-page .kp-btn-navy i {
+        color: var(--kp-gold-soft);
+    }
+
+    .kp-page .kp-btn-navy:hover {
+        background: #21468a;
+        color: #fff;
+    }
+
+    .kp-page .kp-btn-gold {
+        background: linear-gradient(180deg, #dcc17a 0%, #b8913f 100%);
+        border-color: #a3802f;
+        color: #1a2540;
+        padding-left: 1.2rem;
+        padding-right: 1.2rem;
+    }
+
+    .kp-page .kp-btn-gold:hover {
+        filter: brightness(1.06);
+        color: #1a2540;
+    }
+
+    /* Panel */
+    .kp-page .kp-panel {
+        margin-bottom: 1.25rem;
+        overflow: hidden;
+        background: #fff;
+        border: 1px solid var(--kp-line);
+        border-radius: 12px;
+        box-shadow: 0 1px 2px rgba(13, 31, 64, .05), 0 10px 30px -18px rgba(13, 31, 64, .28);
+    }
+
+    .kp-page .kp-panel > .card-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        padding: .9rem 1.25rem;
+        background: #fff;
+        border-bottom: 1px solid var(--kp-line);
+    }
+
+    .kp-page .kp-panel > .card-header::after {
+        display: none;
+    }
+
+    .kp-page .kp-panel .card-title {
+        float: none;
+        margin: 0;
+        font-size: 1rem;
+        font-weight: 700;
+        color: var(--kp-navy);
+    }
+
+    .kp-page .kp-panel-meta {
+        font-size: .78rem;
+        color: var(--kp-mute);
+    }
+
+    .kp-page .kp-panel > .card-body {
+        padding: 1.25rem;
+    }
+
+    /* Form */
+    .kp-page .kp-group-title {
+        margin: 0 0 .15rem;
+        font-size: .9rem;
+        font-weight: 700;
+        color: var(--kp-navy);
+    }
+
+    .kp-page .kp-group-desc {
+        margin: 0 0 .9rem;
+        font-size: .8rem;
+        color: var(--kp-mute);
+    }
+
+    .kp-page .kp-group + .kp-group {
+        margin-top: 1.4rem;
+        padding-top: 1.2rem;
+        border-top: 1px dashed #d3dbea;
+    }
+
+    .kp-page .form-group {
+        margin-bottom: .95rem;
+    }
+
+    .kp-page .form-group > label {
+        margin-bottom: .25rem;
+        font-size: .85rem;
+        font-weight: 600;
+        color: var(--kp-ink);
+    }
+
+    .kp-page .kp-hint {
+        display: block;
+        margin-top: .25rem;
+        font-size: .76rem;
+        color: var(--kp-mute);
+    }
+
+    .kp-page .form-control {
+        background: #fbfcfe;
+        border: 1px solid #d5dcea;
+        border-radius: 8px;
+        box-shadow: none;
+        font-size: .92rem;
+        color: var(--kp-ink);
+        transition: border-color .15s, box-shadow .15s, background-color .15s;
+    }
+
+    .kp-page .form-control:focus {
+        background: #fff;
+        border-color: var(--kp-navy);
+        box-shadow: 0 0 0 3px rgba(184, 145, 63, .28);
+    }
+
+    .kp-page textarea.form-control {
+        resize: vertical;
+        min-height: 3.1rem;
+    }
+
+    /* Panggung pratinjau kartu */
+    .kp-page .kp-stage {
+        padding: 34px 16px 22px;
+        overflow-x: auto;
+        background-color: #16315f;
+        background-image: radial-gradient(120% 90% at 50% 0%, #2b4f8f 0%, rgba(22, 49, 95, 0) 70%),
+        radial-gradient(rgba(236, 217, 162, .13) 1px, transparent 1px);
+        background-size: auto, 16px 16px;
+    }
+
+    .kp-page .kp-stage-inner {
+        display: flex;
+    }
+
+    .kp-page .kp-stage .kp-card {
+        flex: none;
+        margin: 0 auto;
+        box-shadow: 0 22px 40px -14px rgba(0, 0, 0, .65), 0 3px 8px rgba(0, 0, 0, .35);
+    }
+
+    .kp-page .kp-stage-note {
+        margin: 18px 0 0;
+        text-align: center;
+        font-size: .78rem;
+        color: #b4c2e0;
+    }
+
+    /* Panel cetak */
+    .kp-page .kp-print-row {
+        display: flex;
+        gap: 10px;
+        align-items: stretch;
+    }
+
+    .kp-page .kp-print-select {
+        flex: 1;
+        min-width: 0;
+    }
+
+    .kp-page .kp-print-select .select2-container {
+        width: 100% !important;
+    }
+
+    .kp-page .select2-container--bootstrap4 .select2-selection {
+        border: 1px solid #d5dcea;
+        border-radius: 8px;
+    }
+
+    /* Lembar cetak */
+    .kp-page .kp-sheet-stage {
+        display: flex;
+        align-items: flex-start;
+        min-height: 420px;
+        padding: 28px 12px;
+        overflow-x: auto;
+        border-radius: 8px;
+        background-color: #e6eaf3;
+        background-image: radial-gradient(rgba(22, 49, 95, .13) 1px, transparent 1px);
+        background-size: 18px 18px;
+    }
+
+    .kp-page #print-preview {
+        margin: 0 auto !important;
+    }
+
+    .kp-page #print-preview:empty {
+        display: none;
+    }
+
+    .kp-page #print-preview > div.border {
+        border: 0 !important;
+        box-shadow: 0 14px 34px -14px rgba(13, 31, 64, .5), 0 1px 3px rgba(13, 31, 64, .22) !important;
+    }
+
+    .kp-page .kp-empty {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: .35rem;
+        max-width: 320px;
+        margin: auto;
+        padding: 60px 0;
+        text-align: center;
+        font-size: .86rem;
+        color: var(--kp-mute);
+    }
+
+    .kp-page .kp-empty strong {
+        font-size: 1rem;
+        color: var(--kp-navy);
+    }
+
+    .kp-page .kp-empty-icon {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 52px;
+        height: 52px;
+        margin-bottom: .4rem;
+        border: 1px solid #cdd6e8;
+        border-radius: 50%;
+        background: #fff;
+        font-size: 1.2rem;
+        color: var(--kp-gold);
+    }
+
+    .kp-page #print-preview:not(:empty) + .kp-empty {
+        display: none;
+    }
+
+    @media (max-width: 575.98px) {
+        .kp-page .kp-heading {
+            font-size: 1.4rem;
+        }
+
+        .kp-page .kp-print-row {
+            flex-direction: column;
+        }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+        .kp-page * {
+            transition: none !important;
+        }
+    }
+</style>
+<div class="content-wrapper kp-page pt-4">
     <section class="content-header">
         <div class="container-fluid">
-            <div class="row mb-2">
-                <div class="col-6">
-                    <h1><?= $judul ?></h1>
+            <div class="kp-pagehead">
+                <div>
+                    <h1 class="kp-heading"><?= $judul ?></h1>
+                    <p class="kp-sub">Atur kop dan tanggal kartu, cek tampilannya, lalu cetak per kelas.</p>
                 </div>
-                <div class="col-6">
-                    <a href="<?= base_url('cbtcetak') ?>" type="button" class="btn btn-sm btn-danger float-right">
-                        <i class="fas fa-arrow-circle-left"></i><span
-                                class="d-none d-sm-inline-block ml-1">Kembali</span>
-                    </a>
-                </div>
+                <a href="<?= base_url('cbtcetak') ?>" class="kp-btn kp-btn-ghost btn btn-sm">
+                    <i class="fas fa-arrow-circle-left"></i><span class="d-none d-sm-inline-block">Kembali</span>
+                </a>
             </div>
         </div>
     </section>
@@ -21,57 +378,69 @@
         <div class="container-fluid">
             <div class="row">
                 <div class="col-md-5">
-                    <div class="card my-shadow card-primary card-outline">
+                    <div class="card kp-panel">
                         <div class="card-header">
-                            <h6 class="card-title">Setting Kartu</h6>
-                            <button class="card-tools btn btn-sm bg-primary text-white" onclick="submitKartu()">
-                                <i class="fas fa-save mr-1"></i> Simpan
+                            <h6 class="card-title">Setting kartu</h6>
+                            <button type="button" class="kp-btn kp-btn-navy btn btn-sm" onclick="submitKartu()">
+                                <i class="fas fa-save"></i><span>Simpan</span>
                             </button>
                         </div>
                         <div class="card-body">
                             <?= form_open('', array('id' => 'set-kartu')) ?>
-                            <div class="form-group">
-                                <label>Header 1</label>
-                                <textarea id="header-1" class="form-control" name="header_1" rows="2"
-                                          placeholder="Header baris 1"
-                                          required><?= isset($kartu->header_1) ? $kartu->header_1 : '' ?></textarea>
+                            <div class="kp-group">
+                                <p class="kp-group-title">Kop kartu</p>
+                                <p class="kp-group-desc">Empat baris teks di bagian atas kartu, lengkap dengan logo kiri dan kanan.</p>
+                                <div class="form-group">
+                                    <label for="header-1">Header 1</label>
+                                    <textarea id="header-1" class="form-control" name="header_1" rows="2"
+                                              placeholder="Header baris 1"
+                                              required><?= isset($kartu->header_1) ? $kartu->header_1 : '' ?></textarea>
+                                    <small class="kp-hint">Baris pembuka, ukuran sedang.</small>
+                                </div>
+                                <div class="form-group">
+                                    <label for="header-2">Header 2</label>
+                                    <textarea id="header-2" class="form-control" name="header_2" rows="2"
+                                              placeholder="Header baris 2"
+                                              required><?= isset($kartu->header_2) ? $kartu->header_2 : '' ?></textarea>
+                                    <small class="kp-hint">Baris utama, tampil paling besar dan tebal.</small>
+                                </div>
+                                <div class="form-group">
+                                    <label for="header-3">Header 3</label>
+                                    <textarea id="header-3" class="form-control" name="header_3" rows="2"
+                                              placeholder="Header baris 3"
+                                              required><?= isset($kartu->header_3) ? $kartu->header_3 : '' ?></textarea>
+                                    <small class="kp-hint">Baris pendukung, ukuran kecil.</small>
+                                </div>
+                                <div class="form-group">
+                                    <label for="header-4">Header 4</label>
+                                    <textarea id="header-4" class="form-control" name="header_4" rows="2"
+                                              placeholder="Header baris 4"
+                                              required><?= isset($kartu->header_4) ? $kartu->header_4 : '' ?></textarea>
+                                    <small class="kp-hint">Baris pendukung, ukuran kecil.</small>
+                                </div>
                             </div>
-                            <div class="form-group">
-                                <label>Header 2</label>
-                                <textarea id="header-2" class="form-control" name="header_2" rows="2"
-                                          placeholder="Header baris 2"
-                                          required><?= isset($kartu->header_2) ? $kartu->header_2 : '' ?></textarea>
-                            </div>
-                            <div class="form-group">
-                                <label>Header 3</label>
-                                <textarea id="header-3" class="form-control" name="header_3" rows="2"
-                                          placeholder="Header baris 3"
-                                          required><?= isset($kartu->header_3) ? $kartu->header_3 : '' ?></textarea>
-                            </div>
-                            <div class="form-group">
-                                <label>Header 4</label>
-                                <textarea id="header-4" class="form-control" name="header_4" rows="2"
-                                          placeholder="Header baris 4"
-                                          required><?= isset($kartu->header_4) ? $kartu->header_4 : '' ?></textarea>
-                            </div>
-                            <div class="form-group">
-                                <label>Tanggal</label>
-                                <input id="input-tanggal" class="form-control" name="tanggal" placeholder="Titimangsa"
-                                       value="<?= isset($kartu->tanggal) ? $kartu->tanggal : '' ?>" required>
+                            <div class="kp-group">
+                                <p class="kp-group-title">Tanda tangan</p>
+                                <p class="kp-group-desc">Tanggal tampil di atas nama kepala <?= $setting->satuan_pendidikan == '2' ? 'madrasah' : 'sekolah' ?>.</p>
+                                <div class="form-group mb-0">
+                                    <label for="input-tanggal">Tanggal</label>
+                                    <input id="input-tanggal" class="form-control" name="tanggal" placeholder="Titimangsa"
+                                           value="<?= isset($kartu->tanggal) ? $kartu->tanggal : '' ?>" required>
+                                    <small class="kp-hint">Contoh: 2 November 2026</small>
+                                </div>
                             </div>
                             <?= form_close() ?>
                         </div>
                     </div>
                 </div>
                 <div class="col-md-7">
-                    <div class="card my-shadow">
+                    <div class="card kp-panel">
                         <div class="card-header">
-                            <div class="card-title">
-                                Preview
-                            </div>
+                            <div class="card-title">Pratinjau kartu</div>
+                            <span class="kp-panel-meta">Ukuran asli 10 × 6,4 cm</span>
                         </div>
-                        <div class="card-body pb-4">
-                            <div style="display: flex; justify-content: center; align-items: center;">
+                        <div class="kp-stage">
+                            <div class="kp-stage-inner">
                                 <div class="kp-card">
                                     <div class="kp-strip"></div>
                                     <table class="kp-head">
@@ -109,42 +478,35 @@
                                     <div class="kp-foot">Kartu ini wajib dibawa selama ujian berlangsung</div>
                                 </div>
                             </div>
-                            <br>
+                            <p class="kp-stage-note">Perubahan di form langsung tampil di kartu ini.</p>
                         </div>
                     </div>
-                    <div class="card my-shadow">
+                    <div class="card kp-panel">
                         <div class="card-header">
-                            <div class="card-title">
-                                Cetak
-                            </div>
+                            <div class="card-title">Cetak</div>
+                            <span class="kp-panel-meta">A4, 8 kartu per halaman</span>
                         </div>
-                        <div class="card-body pb-4">
-                            <div class="row">
-                                <div class="col-8">
-                                    <div class="input-group">
-                                        <?php
-                                        echo form_dropdown(
-                                            'kelas',
-                                            $kelas,
-                                            null,
-                                            'id="kelas" class="form-control"'
-                                        ); ?>
-                                    </div>
-                                    <div class="input-group">
-                                        <?php
-                                        echo form_dropdown(
-                                            'ruang',
-                                            $ruang,
-                                            null,
-                                            'id="ruang" class="form-control d-none"'
-                                        ); ?>
-                                    </div>
+                        <div class="card-body">
+                            <div class="kp-print-row">
+                                <div class="kp-print-select">
+                                    <?php
+                                    echo form_dropdown(
+                                        'kelas',
+                                        $kelas,
+                                        null,
+                                        'id="kelas" class="form-control"'
+                                    ); ?>
+                                    <?php
+                                    echo form_dropdown(
+                                        'ruang',
+                                        $ruang,
+                                        null,
+                                        'id="ruang" class="form-control d-none"'
+                                    ); ?>
                                 </div>
-                                <div class="col-4">
-                                    <button class="btn bg-success text-white" id="btn-print">
-                                        <i class="fa fa-print"></i><span class="ml-1">Cetak</span>
-                                    </button>
-                                </div>
+                                <button type="button" class="kp-btn kp-btn-gold btn" id="btn-print">
+                                    <i class="fa fa-print"></i><span>Cetak</span>
+                                </button>
                             </div>
                         </div>
                     </div>
@@ -152,15 +514,17 @@
             </div>
             <div class="row">
                 <div class="col-12">
-                    <div class="card my-shadow">
+                    <div class="card kp-panel">
                         <div class="card-header">
-                            <div class="card-title">
-                                Preview
-                            </div>
+                            <div class="card-title">Pratinjau halaman cetak</div>
                         </div>
-                        <div class="card-body pb-4">
-                            <div class="d-flex justify-content-center bg-gray-light" style="min-height: 300mm">
-                                <div id="print-preview" class="m-2">
+                        <div class="card-body">
+                            <div class="kp-sheet-stage">
+                                <div id="print-preview" class="m-2"></div>
+                                <div class="kp-empty">
+                                    <span class="kp-empty-icon"><i class="fas fa-id-card"></i></span>
+                                    <strong>Belum ada kartu untuk dicetak</strong>
+                                    <span>Pilih kelas di panel Cetak, lalu kartu seluruh peserta tampil di sini.</span>
                                 </div>
                             </div>
                         </div>

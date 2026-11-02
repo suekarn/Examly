@@ -11,4 +11,4 @@ defined('BASEPATH') OR exit('No direct script access allowed');
  * instalasi punya kode sendiri.
  */
 
-$key = 'GCBT-D6B9-C612-82DA-1AF3';
+$key = 'GCBT-0FE3-4521-6A30-91BF';

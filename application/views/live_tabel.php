@@ -693,6 +693,39 @@ try {
     @media (prefers-reduced-motion: reduce) {
         .pj-stage *, .pj-stage *::before, .pj-stage *::after { animation: none !important; transition: none !important; }
     }
+
+
+    /* MODE MALAM (otomatis): aktif saat script mendeteksi latar halaman gelap */
+    #wrapper-tabel-bypass[data-malam="1"] { background:transparent !important; box-shadow:none !important; color:#e2e8f0 !important; }
+    #wrapper-tabel-bypass[data-malam="1"] .filter-live-container { background-color:#1e293b !important; border-color:#334155 !important; }
+    #wrapper-tabel-bypass[data-malam="1"] .filter-live-box label, #wrapper-tabel-bypass[data-malam="1"] .login-ctrl-title, #wrapper-tabel-bypass[data-malam="1"] .login-ctrl-title i { color:#cbd5e1 !important; }
+    #wrapper-tabel-bypass[data-malam="1"] .login-ctrl-hint { color:#94a3b8 !important; }
+    #wrapper-tabel-bypass[data-malam="1"] .select-live-dropdown { background-color:#0f172a !important; color:#f1f5f9 !important; border-color:#475569 !important; }
+    #wrapper-tabel-bypass[data-malam="1"] .select-live-dropdown option { background-color:#0f172a; color:#f1f5f9; }
+    #wrapper-tabel-bypass[data-malam="1"] table.table-premium-live thead th, #wrapper-tabel-bypass[data-malam="1"] table.table-premium-live th { background:#1e293b !important; background-image:none !important; color:#f1f5f9 !important; border-bottom:1px solid #334155 !important; box-shadow:none !important; text-shadow:none !important; }
+    #wrapper-tabel-bypass[data-malam="1"] table.table-premium-live th * { color:#f1f5f9 !important; }
+    #wrapper-tabel-bypass[data-malam="1"] table.table-premium-live tbody tr { border-bottom:1px solid #1e293b !important; color:#e2e8f0 !important; }
+    #wrapper-tabel-bypass[data-malam="1"] table.table-premium-live tbody tr td { color:#e2e8f0 !important; }
+    #wrapper-tabel-bypass[data-malam="1"] .container-nama-center span { color:#f8fafc !important; }
+    #wrapper-tabel-bypass[data-malam="1"] .txt-kelas { color:#cbd5e1 !important; }
+    #wrapper-tabel-bypass[data-malam="1"] .txt-mapel { color:#38bdf8 !important; }
+    #wrapper-tabel-bypass[data-malam="1"] .txt-count { color:#f1f5f9 !important; }
+    #wrapper-tabel-bypass[data-malam="1"] .nilai-live-bold { color:#4ade80 !important; }
+    #wrapper-tabel-bypass[data-malam="1"] .nilai-live-selesai { color:#60a5fa !important; }
+    #wrapper-tabel-bypass[data-malam="1"] .progress-lbl-text { color:#f8fafc !important; }
+    #wrapper-tabel-bypass[data-malam="1"] .progress-lbl-start { color:#94a3b8 !important; }
+    #wrapper-tabel-bypass[data-malam="1"] .progress-bar-bg { background-color:#334155 !important; }
+    #wrapper-tabel-bypass[data-malam="1"] .avatar-image-box { background-color:#1e293b !important; border-color:#475569 !important; }
+    #wrapper-tabel-bypass[data-malam="1"] .countdown-render { color:#f1f5f9 !important; }
+    #wrapper-tabel-bypass[data-malam="1"] .countdown-timer { color:#f87171 !important; }
+    #wrapper-tabel-bypass[data-malam="1"] .countdown-finished { color:#60a5fa !important; }
+    #wrapper-tabel-bypass[data-malam="1"] .countdown-jeda { color:#fbbf24 !important; }
+    #wrapper-tabel-bypass[data-malam="1"] .badge-status-active, #wrapper-tabel-bypass[data-malam="1"] .pill-login.pill-on { background-color:rgba(34,197,94,.18) !important; color:#86efac !important; }
+    #wrapper-tabel-bypass[data-malam="1"] .badge-status-jeda, #wrapper-tabel-bypass[data-malam="1"] .pill-login.pill-mix { background-color:rgba(245,158,11,.20) !important; color:#fcd34d !important; }
+    #wrapper-tabel-bypass[data-malam="1"] .badge-status-completed { background-color:rgba(59,130,246,.22) !important; color:#93c5fd !important; }
+    #wrapper-tabel-bypass[data-malam="1"] .pill-login.pill-off { background-color:rgba(239,68,68,.20) !important; color:#fca5a5 !important; }
+    #wrapper-tabel-bypass[data-malam="1"] .center-btn-group .btn-default { background:#1e293b !important; color:#e2e8f0 !important; border-color:#475569 !important; }
+    #wrapper-tabel-bypass[data-malam="1"] #body-tabel-live > tr:only-child > td { color:#94a3b8 !important; }
 </style>
 
 <?php
@@ -2032,5 +2065,33 @@ window.pesanGagal = function (xhr) {
             }).observe(wrap, { attributes: true, attributeFilter: ['class'] });
         }
     } catch (err) { if (window.console) { console.error('LiquidHL (live tabel):', err); } }
+})();
+
+/* Deteksi mode malam otomatis: ikuti warna latar halaman, ikut berubah saat tombol tema ditekan */
+(function () {
+    var wrap = document.getElementById('wrapper-tabel-bypass');
+    if (!wrap) { return; }
+    function bgGelap() {
+        var el = wrap.parentElement;
+        while (el) {
+            var m = (getComputedStyle(el).backgroundColor || '').match(/[\d.]+/g);
+            if (m && m.length >= 3 && (m.length < 4 || parseFloat(m[3]) > 0.5)) {
+                return (0.299 * m[0] + 0.587 * m[1] + 0.114 * m[2]) < 140;
+            }
+            el = el.parentElement;
+        }
+        return false;
+    }
+    function cek() { wrap.setAttribute('data-malam', bgGelap() ? '1' : '0'); }
+    cek();
+    var t = 0;
+    function tunda() { clearTimeout(t); t = setTimeout(cek, 120); setTimeout(cek, 600); }
+    var opt = { attributes: true, attributeFilter: ['class', 'data-theme', 'data-bs-theme', 'style'] };
+    if (window.MutationObserver) {
+        new MutationObserver(tunda).observe(document.documentElement, opt);
+        new MutationObserver(tunda).observe(document.body, opt);
+    }
+    document.addEventListener('click', tunda, true);
+    if (window.matchMedia) { try { matchMedia('(prefers-color-scheme: dark)').addEventListener('change', tunda); } catch (e) {} }
 })();
 </script>

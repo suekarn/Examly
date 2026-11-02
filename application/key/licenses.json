@@ -1,0 +1,32 @@
+{
+    "installations": {
+        "GCBT-5642-0406-A56C-C482": {
+            "label": "localhost(XAMPP)",
+            "domain": "localhost",
+            "status": "active",
+            "message": "2027-12-31",
+            "contact": "081234567890",
+            "expired_date": "2027-12-31",
+            "menu_ai_soal": true,
+            "last_seen_domain": "",
+            "last_seen_at": "2026-11-02 10:02:59",
+            "bound_mac": "48-D2-24-CE-F3-58",
+            "bound_macs": [
+                "48-D2-24-CE-F3-58"
+            ],
+            "bound_host": "",
+            "bound_at": "2026-11-02 10:02:59",
+            "last_seen_mac": "48-D2-24-CE-F3-58",
+            "last_seen_hostname": "",
+            "last_seen_ip": "",
+            "last_seen_visitor_ip": "::1"
+        }
+    },
+    "default": {
+        "status": "disabled",
+        "message": "Kode lisensi tidak ditemukan / tidak terdaftar. Hubungi developer.",
+        "contact": "081234567890",
+        "expired_date": "-",
+        "menu_ai_soal": false
+    }
+}

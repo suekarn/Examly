@@ -1,6 +1,6 @@
 <?php
 defined('BASEPATH') OR exit('No direct script access allowed');
-// LG_HELPER_VERSION: 5
+// LG_HELPER_VERSION: 8
 
 /**
  * =====================================================================
@@ -29,8 +29,13 @@ defined('BASEPATH') OR exit('No direct script access allowed');
 // application/config/license_key.php:
 //     $server_url = 'https://lisensi-anda.com/check_license.php';
 if (!defined('LG_LICENSE_SERVER_URL')) {
-    define('LG_LICENSE_SERVER_URL', 'http://localhost/license-server/check_license.php');
+    define('LG_LICENSE_SERVER_URL', 'http://localhost/key/check_license.php');
 }
+// v7: instalasi dikenali hanya dari KODE LISENSI + MAC ADDRESS. Domain, IP, dan nama
+// komputer tidak dikirim, jadi ganti IP / alamat akses tidak memengaruhi lisensi.
+// Set true HANYA kalau server lisensi lama masih mewajibkan parameter domain/ip/host.
+if (!defined('LG_SEND_EXTRA')) define('LG_SEND_EXTRA', false);
+if (!defined('LG_SEND_IP'))    define('LG_SEND_IP', false); // v6: kirim IP komputer ke server lisensi? (tidak perlu)
 if (!defined('LG_DEBUG'))      define('LG_DEBUG', false);   // set true hanya saat perlu melacak masalah
 if (!defined('LG_DEBUG_FILE')) define('LG_DEBUG_FILE', APPPATH . 'cache/lg_license_debug.log');
 if (!defined('LG_CACHE_FILE'))  define('LG_CACHE_FILE', APPPATH . 'cache/lg_license_cache.json');
@@ -38,7 +43,7 @@ if (!defined('LG_FAIL_FILE'))   define('LG_FAIL_FILE', APPPATH . 'cache/lg_licen
 if (!defined('LG_IDENT_FILE'))  define('LG_IDENT_FILE', APPPATH . 'cache/lg_license_ident.json');
 if (!defined('LG_MENU_TTL'))    define('LG_MENU_TTL', 60);    // detik; dipakai untuk tampil/sembunyi menu di sidebar
 if (!defined('LG_GRACE_DAYS'))  define('LG_GRACE_DAYS', 3);   // hari offline maksimal sebelum Converter dikunci
-if (!defined('LG_RETRY_SECONDS')) define('LG_RETRY_SECONDS', 300); // jeda sebelum mencoba server lisensi lagi setelah gagal
+if (!defined('LG_RETRY_SECONDS')) define('LG_RETRY_SECONDS', 60); // jeda sebelum mencoba server lisensi lagi setelah gagal
 if (!defined('LG_HTTP_TIMEOUT'))  define('LG_HTTP_TIMEOUT', 2);    // detik, total waktu tunggu per permintaan
 if (!defined('LG_CONNECT_TIMEOUT')) define('LG_CONNECT_TIMEOUT', 1); // detik, waktu tunggu koneksi
 
@@ -62,7 +67,12 @@ if (!function_exists('lg_site_host')) {
         if ($host === '') $host = $_SERVER['HTTP_HOST'] ?? '';
         $host = strtolower(trim($host));
         $host = preg_replace('/:\d+$/', '', $host);
-        return preg_replace('/^www\./', '', $host);
+        $host = preg_replace('/^www\./', '', $host);
+        // v6: IP LAN / localhost dianggap SATU domain tetap ('localhost'), supaya
+        // ganti IP (DHCP, pindah jaringan, buka lewat .118 / .246) tidak mengubah
+        // identitas instalasi dan tidak membuat menu AI Soal hilang.
+        if ($host === '' || $host === 'localhost' || filter_var($host, FILTER_VALIDATE_IP)) return 'localhost';
+        return $host;
     }
 }
 
@@ -124,14 +134,23 @@ if (!function_exists('lg_local_mac')) {
                 ? @shell_exec('getmac /NH /FO CSV 2>NUL')
                 : @shell_exec('ip link show 2>/dev/null || ifconfig -a 2>/dev/null');
 
-            if ($out) {
-                // Cari pola MAC pertama (pemisah - atau :), lewati yang semuanya nol.
-                if (preg_match_all('/([0-9A-Fa-f]{2}([:-][0-9A-Fa-f]{2}){5})/', $out, $m)) {
-                    foreach ($m[1] as $candidate) {
-                        $norm = strtoupper(str_replace(':', '-', $candidate));
-                        if ($norm !== '00-00-00-00-00-00') { $mac = $norm; break; }
-                    }
+            if ($out && preg_match_all('/([0-9A-Fa-f]{2}([:-][0-9A-Fa-f]{2}){5})/', $out, $m)) {
+                // v6: kumpulkan semua MAC, buang yang nol / virtual / acak (locally administered,
+                // VirtualBox, VMware, Hyper-V), lalu URUTKAN. Dengan begitu hasilnya tidak
+                // bergantung pada urutan adapter yang bisa berubah (VPN, adapter virtual, dll).
+                $virtual = ['0A-00-27', '00-50-56', '00-0C-29', '00-05-69', '00-15-5D', '00-1C-14'];
+                $cands = [];
+                foreach ($m[1] as $candidate) {
+                    $norm = strtoupper(str_replace(':', '-', $candidate));
+                    if ($norm === '00-00-00-00-00-00' || $norm === 'FF-FF-FF-FF-FF-FF') continue;
+                    if (in_array(substr($norm, 0, 8), $virtual, true)) continue;
+                    $firstByte = hexdec(substr($norm, 0, 2));
+                    if ($firstByte & 0x02) continue; // locally administered = MAC acak / virtual
+                    $cands[$norm] = true;
                 }
+                $cands = array_keys($cands);
+                sort($cands, SORT_STRING);
+                if ($cands) $mac = $cands[0];
             }
         }
         return $mac;
@@ -182,12 +201,20 @@ if (!function_exists('lg_ident')) {
 
         if (is_file(LG_IDENT_FILE) && (time() - (int)@filemtime(LG_IDENT_FILE)) < 86400) {
             $d = json_decode((string)@file_get_contents(LG_IDENT_FILE), true);
-            if (is_array($d) && array_key_exists('mac', $d) && array_key_exists('ip', $d) && array_key_exists('host', $d)) {
+            // v6: cache yang MAC-nya kosong dianggap tidak sah (dulu kosong ikut tersimpan 24 jam).
+            if (is_array($d) && !empty($d['mac']) && array_key_exists('ip', $d) && array_key_exists('host', $d)) {
                 return $id = $d;
             }
         }
-        $id = ['mac' => lg_local_mac(), 'ip' => lg_local_ip(), 'host' => lg_local_hostname()];
-        @file_put_contents(LG_IDENT_FILE, json_encode($id), LOCK_EX);
+        // v6: IP tidak dikirim (hanya info tambahan dan sering berganti). Set LG_SEND_IP = true
+        // di atas file ini kalau masih ingin IP tampil di admin.php.
+        $id = [
+            'mac'  => lg_local_mac(),
+            'ip'   => (defined('LG_SEND_IP') && LG_SEND_IP) ? lg_local_ip() : '',
+            'host' => lg_local_hostname(),
+        ];
+        // v6: jangan simpan hasil gagal (MAC kosong) supaya dicoba lagi di permintaan berikutnya.
+        if ($id['mac'] !== '') @file_put_contents(LG_IDENT_FILE, json_encode($id), LOCK_EX);
         return $id;
     }
 }
@@ -281,13 +308,15 @@ if (!function_exists('lg_fetch_license_live')) {
             return null;
         }
 
-        $domain = lg_site_host();
-        $id     = lg_ident();
-        $url    = lg_server_url() . '?key=' . urlencode($key)
-                . '&domain=' . urlencode($domain)
-                . '&mac=' . urlencode($id['mac'])
-                . '&ip=' . urlencode($id['ip'])
-                . '&host=' . urlencode($id['host']);
+        $id  = lg_ident();
+        // v7: hanya kode lisensi + MAC address.
+        $url = lg_server_url() . '?key=' . urlencode($key)
+             . '&mac=' . urlencode($id['mac']);
+        if (LG_SEND_EXTRA) { // mode kompatibilitas server lama
+            $url .= '&domain=' . urlencode(lg_site_host())
+                  . '&ip=' . urlencode((defined('LG_SEND_IP') && LG_SEND_IP) ? lg_local_ip() : '')
+                  . '&host=' . urlencode($id['host']);
+        }
         $raw    = lg_http_get($url);
         lg_dbg('request=' . preg_replace('/key=[^&]*/', 'key=***', $url) . ' | raw=' . ($raw === false ? 'FALSE' : substr($raw, 0, 160)));
         if ($raw === false || $raw === '') {
@@ -351,7 +380,7 @@ if (!function_exists('lg_evaluate_access')) {
         if ($live !== null) {
             if (in_array($live['status'], ['expired', 'disabled'], true)) {
                 return ['block' => true, 'error' => [
-                    'title' => 'Masa Trial / Lisensi Berakhir',
+                    'title' => $live['status'] === 'expired' ? 'Masa Trial / Lisensi Berakhir' : 'Lisensi Tidak Aktif',
                     'message' => $live['message'] ?: 'Masa berlaku lisensi modul Converter AI telah habis. Silakan perpanjang lisensi Anda.',
                     'contact' => $live['contact'] ?: '081234567890', 'domain' => $domain,
                     'expired_date' => $live['expired_date'] ?: '-',
@@ -375,7 +404,7 @@ if (!function_exists('lg_evaluate_access')) {
 
             if (in_array($cache['status'], ['expired', 'disabled'], true)) {
                 return ['block' => true, 'error' => [
-                    'title' => 'Masa Trial / Lisensi Berakhir',
+                    'title' => $cache['status'] === 'expired' ? 'Masa Trial / Lisensi Berakhir' : 'Lisensi Tidak Aktif',
                     'message' => $cache['message'] ?: 'Masa berlaku lisensi modul Converter AI telah habis. Silakan perpanjang lisensi Anda.',
                     'contact' => $cache['contact'] ?: '081234567890', 'domain' => $domain,
                     'expired_date' => $cache['expired_date'] ?: '-',
@@ -423,8 +452,31 @@ if (!function_exists('lg_show_ai_soal_menu')) {
             $live = lg_fetch_license_live(); // null cepat bila baru gagal (lihat lg_recent_fail)
             if ($live !== null) $cache = $live;
         }
-        if (!$cache) return true; // belum pernah berhasil cek -> jangan sembunyikan diam-diam
+        // v8: belum pernah berhasil diverifikasi server lisensi -> SEMBUNYIKAN (dulu: tampil).
+        if (!$cache) return false;
         if (in_array($cache['status'] ?? '', ['expired', 'disabled'], true)) return false;
-        return array_key_exists('menu_ai_soal', $cache) ? (bool)$cache['menu_ai_soal'] : true;
+        // v8: terlalu lama tidak bisa memverifikasi (lewat masa tenggang) -> sembunyikan.
+        if (isset($cache['checked_at']) && (time() - $cache['checked_at']) / 86400 > LG_GRACE_DAYS) return false;
+        return !empty($cache['menu_ai_soal']);
+    }
+}
+
+/**
+ * v8: GERBANG akses halaman AI Soal (dipanggil di constructor Aiimport.php).
+ * Menyembunyikan menu saja tidak cukup, karena alamat /aiimport masih bisa diketik langsung.
+ * Return: ['block' => bool, 'error' => [...] atau null] (bentuk sama dengan lg_evaluate_access).
+ * Jawaban 'boleh' dari cache yang masih segar (LG_MENU_TTL) dipakai supaya tiap klik tidak
+ * memanggil server; jawaban 'blokir' selalu dicek ulang ke server, jadi unbind di admin.php
+ * berlaku dalam hitungan detik.
+ */
+if (!function_exists('lg_gate_ai_soal')) {
+    function lg_gate_ai_soal() {
+        $cache = lg_read_cache();
+        if ($cache && isset($cache['checked_at'], $cache['status'])
+            && (time() - $cache['checked_at']) < LG_MENU_TTL
+            && $cache['status'] === 'active' && !empty($cache['menu_ai_soal'])) {
+            return ['block' => false, 'error' => null];
+        }
+        return lg_evaluate_access();
     }
 }

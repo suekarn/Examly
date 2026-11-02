@@ -10,6 +10,7 @@
 !/.github/
 !/version.json
 !/application/
+!/key/
 
 # --- Di dalam application/: file khusus tiap komputer (JANGAN dibagikan) ---
 /application/config/database.php

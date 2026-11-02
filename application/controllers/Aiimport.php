@@ -27,6 +27,16 @@ class Aiimport extends CI_Controller
         if (!$this->ion_auth->logged_in() || !$this->ion_auth->is_admin()) {
             show_error('Akses ditolak', 403);
         }
+        // Gerbang lisensi: 1 kode lisensi = 1 komputer. Kalau tidak sah, tampilkan halaman terkunci
+        // (bukan hanya menyembunyikan menu, supaya alamat /aiimport tidak bisa dibuka langsung).
+        $this->load->helper('license');
+        $akses = lg_gate_ai_soal();
+        if (!empty($akses['block'])) {
+            $this->output->set_status_header(403);
+            $this->load->view('errors/html/error_license', $akses['error']);
+            echo $this->output->get_output();
+            exit;
+        }
         $this->load->library('ai_converter');
         $this->load->library('ai_converter_pdf');
         $this->load->library('docx_template');

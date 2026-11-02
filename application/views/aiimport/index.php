@@ -3,7 +3,7 @@
 <html lang="id">
 <head>
 <meta charset="utf-8">
-<title>Konversi Soal Ujian</title>
+<title>Konversi Soal</title>
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="color-scheme" content="light dark">
 <script>try{if(localStorage.getItem('garudaCBT.theme')==='dark')document.documentElement.setAttribute('data-theme','dark');}catch(e){}</script>

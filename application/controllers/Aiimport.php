@@ -25,7 +25,7 @@ class Aiimport extends CI_Controller
         // Hanya admin yang sudah login (GarudaCBT memakai ion_auth). Sesuaikan jika berbeda.
         $this->load->library('ion_auth');
         if (!$this->ion_auth->logged_in() || !$this->ion_auth->is_admin()) {
-            show_error('Akses ditolak', 403);
+            show_error('Akses ditolak karena anda belum login', 403);
         }
         // Gerbang lisensi: 1 kode lisensi = 1 komputer. Kalau tidak sah, tampilkan halaman terkunci
         // (bukan hanya menyembunyikan menu, supaya alamat /aiimport tidak bisa dibuka langsung).

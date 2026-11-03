@@ -1,4 +1,4 @@
-# Updater Online untuk Aplikasi CodeIgniter 3 (GarudaCBT)
+# Updater Online untuk Aplikasi CodeIgniter 3 (VERSI FINAL)
 
 Developer merilis update sekali, semua instalasi (sekolah) bisa memasangnya lewat internet dari halaman admin.
 

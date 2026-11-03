@@ -1,16 +1,18 @@
 # ==========================================================
-# .gitignore Examly
-# Hanya folder application/ yang dibagikan lewat GitHub.
-# Semua file dan folder lain di folder utama (htdocs) diabaikan.
+# .gitignore Examly (versi lengkap)
+# Semua file dan folder di htdocs ikut dibagikan,
+# KECUALI folder assets dan file khusus tiap komputer.
 # ==========================================================
 
-# --- Abaikan SEMUA di folder utama, kecuali yang diizinkan ---
-/*
-!/.gitignore
-!/.github/
-!/version.json
-!/application/
-!/key/
+# --- Folder yang tidak dibagikan ---
+/assets/
+
+# --- Opsional: hapus tanda # di bawah jika tidak ingin dibagikan ---
+# /uploads/
+# /backups/
+# /key/
+# /developer-tools/
+# /installer/
 
 # --- Di dalam application/: file khusus tiap komputer (JANGAN dibagikan) ---
 /application/config/database.php
@@ -37,8 +39,9 @@
 *.log
 *.sql
 
-# --- File editor ---
+# --- File editor dan sistem ---
 .idea/
 *.iml
 .vscode/
 Thumbs.db
+desktop.ini

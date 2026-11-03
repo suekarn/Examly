@@ -1,8 +1,8 @@
 {
-  "version": "1.2.49",
+  "version": "1.2.50",
   "released": "2026-11-03",
-  "url": "https://github.com/suekarn/Examly/releases/download/v1.2.49/update-1.2.49.zip",
-  "sha256": "a0aeb16540a5b1c0acfc13614d2a1bf94ef53471b4f21676b6ab65723a99af12",
-  "notes": "Zip Release berisi semua isi repo",
+  "url": "https://github.com/suekarn/Examly/releases/download/v1.2.50/update-1.2.50.zip",
+  "sha256": "f29e9552c38a15abf22bfca53147dfdb30bcdff42a0792b48104d915a8450940",
+  "notes": "Rilis manual",
   "apk_url": "https://github.com/suekarn/Examly/releases/download/v1.2.0/examly.apk"
 }

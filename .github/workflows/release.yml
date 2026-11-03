@@ -4,15 +4,8 @@ on:
   workflow_dispatch:
   push:
     branches: [main]
-    paths:
-      - 'application/**'
-      - 'system/**'
-      - 'index.php'
-      - '.htaccess'
-      - 'api_live_score.php'
-      - 'ambil_skor.php'
-      - 'live_score.php'
-      - 'live_skor_api.php'
+    paths-ignore:
+      - 'version.json'
 
 permissions:
   contents: write
@@ -27,13 +20,14 @@ jobs:
         id: v
         run: echo "version=1.2.${{ github.run_number }}" >> $GITHUB_OUTPUT
 
-      - name: Buat zip dan hash
+      - name: Buat zip dan hash (semua isi repo)
         id: z
         run: |
           VER=${{ steps.v.outputs.version }}
-          zip -r update-$VER.zip application system index.php .htaccess \
-            api_live_score.php ambil_skor.php live_score.php live_skor_api.php \
-            -x "application/config/database.php" "application/config/config.php" \
+          zip -r update-$VER.zip . \
+            -x ".git/*" ".github/*" "version.json" "update-*.zip" \
+               "application/config/database.php" "application/config/config.php" \
+               "application/config/version.php" "application/updater_data/*" \
                "application/cache/*" "application/logs/*"
           echo "sha=$(sha256sum update-$VER.zip | cut -d' ' -f1)" >> $GITHUB_OUTPUT
 

@@ -15,6 +15,9 @@
 /developer-tools/
 # /installer/
 
+# --- File dokumentasi yang tidak dibagikan ---
+/README.md
+
 # --- Di dalam application/: file khusus tiap komputer (JANGAN dibagikan) ---
 /application/config/database.php
 /application/config/config.php

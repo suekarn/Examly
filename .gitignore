@@ -7,9 +7,10 @@
 # --- Folder yang tidak dibagikan ---
 /assets/
 
+/uploads/
+/backups/
+
 # --- Opsional: hapus tanda # di bawah jika tidak ingin dibagikan ---
-# /uploads/
-# /backups/
 # /key/
 # /developer-tools/
 # /installer/

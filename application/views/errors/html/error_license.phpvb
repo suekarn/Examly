@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><?= htmlspecialchars($title ?? 'Akses Dibatasi'); ?></title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f4f6f9;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+        }
+        .license-card {
+            background: #ffffff;
+            border-radius: 12px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.08);
+            max-width: 480px;
+            width: 90%;
+            padding: 30px;
+            text-align: center;
+            border-top: 5px solid #dc3545;
+        }
+        .icon-warning {
+            font-size: 50px;
+            color: #dc3545;
+            margin-bottom: 15px;
+        }
+        h2 {
+            margin-top: 0;
+            color: #333333;
+            font-size: 22px;
+        }
+        p {
+            color: #666666;
+            line-height: 1.6;
+            font-size: 14px;
+        }
+        .info-box {
+            background-color: #f8f9fa;
+            border: 1px dashed #dee2e6;
+            border-radius: 8px;
+            padding: 12px;
+            margin: 20px 0;
+            font-size: 13px;
+            color: #495057;
+        }
+        .contact-btn {
+            display: inline-block;
+            background-color: #25d366;
+            color: white;
+            padding: 10px 20px;
+            text-decoration: none;
+            border-radius: 6px;
+            font-weight: bold;
+            font-size: 14px;
+            transition: background 0.3s;
+        }
+        .contact-btn:hover {
+            background-color: #1eb856;
+        }
+    </style>
+</head>
+<body>
+
+<div class="license-card">
+    <div class="icon-warning">⚠️</div>
+    <h2><?= htmlspecialchars($title ?? 'Masa Trial / Lisensi Berakhir'); ?></h2>
+    <p><?= htmlspecialchars($message ?? 'Masa berlaku lisensi untuk modul ini telah habis.'); ?></p>
+    
+    <div class="info-box">
+        <strong>Domain:</strong> <?= htmlspecialchars($domain ?? $_SERVER['HTTP_HOST']); ?><br>
+        <strong>Status Kedaluwarsa:</strong> <?= htmlspecialchars($expired_date ?? 'Expired'); ?>
+    </div>
+
+    <p>Silakan hubungi pengembang untuk melakukan aktivasi lisensi kembali.</p>
+    
+    <?php if (!empty($contact)): ?>
+        <a href="https://wa.me/<?= preg_replace('/[^0-9]/', '', $contact); ?>" target="_blank" class="contact-btn">
+            💬 Hubungi Pengembang (<?= htmlspecialchars($contact); ?>)
+        </a>
+    <?php endif; ?>
+</div>
+
+</body>
+</html>

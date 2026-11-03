@@ -1,0 +1,1576 @@
+<script>
+document.addEventListener("DOMContentLoaded", function() {
+    let currentTitle = document.title;
+    if (currentTitle.includes("<div") || currentTitle.includes("border:")) {
+        document.title = "AI Converter Soal + Auto-Key";
+    }
+});
+</script>
+
+<style>
+    .content-wrapper { background-color: #f4f6f9 !important; color: #333 !important; }
+    .text-teal { color: #20c997 !important; }
+    .bg-teal { background-color: #20c997 !important; }
+    .btn-teal { background-color: #20c997; color: #fff; border-color: #20c997; font-weight: 500; }
+    .btn-teal:hover { background-color: #1baa80; color: #fff; }
+    .card-teal.card-outline { border-top: 3px solid #20c997; }
+    .cursor-pointer { cursor: pointer; }
+    .badge-type { font-size: 11px; padding: 4px 8px; }
+    
+    .terminal-input {
+        height: 420px; 
+        overflow-y: auto; 
+        font-family: monospace; 
+        font-size: 13px; 
+        white-space: pre-wrap; 
+        background: #ffffff; 
+        color: #333;
+        border: 1px solid #ced4da;
+        box-shadow: inset 0 1px 3px rgba(0,0,0,.075);
+    }
+    
+    .terminal-input table, #previewRenderArea table {
+        border-collapse: collapse;
+        margin: 8px 0;
+        width: 100%;
+    }
+    .terminal-input th, .terminal-input td, #previewRenderArea th, #previewRenderArea td {
+        border: 1px solid #ccc;
+        padding: 4px 8px;
+        font-size: 12px;
+    }
+</style>
+
+<div class="content-wrapper pt-3">
+    <section class="content">
+        <div class="container-fluid">
+            <div class="row mb-4 mt-2">
+                <div class="col-sm-12 text-center">
+                    <h1 class="m-0 text-dark font-weight-bold" style="font-size: 26px;">
+                        <i class="fas fa-robot text-teal mr-2"></i>AI Converter + Auto-Key
+                    </h1>
+                    <p class="text-muted m-0 mt-1 mb-2" style="font-size: 13px;">
+                        Deteksi Tipe Soal & Pembuatan Kunci Jawaban Otomatis Berbasis Multi-AI (Gemini, OpenAI, Groq, Cerebras, GitHub, OpenRouter, Mistral, & Cloudflare Workers AI)
+                    </p>
+                    <button type="button" class="btn btn-outline-dark btn-sm shadow-sm font-weight-bold" onclick="openApiKeyModal()">
+                        <i class="fas fa-cog text-teal mr-1"></i> Pengaturan Multi-API Key & Provider AI
+                    </button>
+                </div>
+            </div>
+
+            <div class="row">
+                <div class="col-lg-6 col-md-12">
+                    <div class="card card-teal card-outline shadow-sm">
+                        <div class="card-header bg-light d-flex align-items-center py-2">
+                            <h3 class="card-title font-weight-bold text-dark mb-0" style="font-size: 15px;">
+                                <i class="fas fa-paste text-teal mr-1"></i> Input Bank Soal Mentah
+                            </h3>
+                            <div class="card-tools ml-auto">
+                                <button type="button" onclick="clearAll()" class="btn btn-xs btn-outline-danger">
+                                    <i class="fas fa-trash mr-1"></i> Bersihkan
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="card-body bg-light border-bottom py-2 px-3">
+                            <div class="row">
+                                <div class="col-6">
+                                    <label class="btn btn-primary btn-xs btn-block mb-0 shadow-sm cursor-pointer" for="fileImporter">
+                                        <i class="fas fa-file-upload mr-1"></i> Import Word / PDF
+                                        <input type="file" id="fileImporter" accept=".docx,.pdf" style="display: none;" onchange="handleFileUpload(this)">
+                                    </label>
+                                </div>
+                                <div class="col-6">
+                                    <label class="btn btn-teal btn-xs btn-block mb-0 shadow-sm cursor-pointer" for="batchImageUploader">
+                                        <i class="fas fa-images mr-1"></i> Upload Gambar (Batch)
+                                        <input type="file" id="batchImageUploader" multiple accept="image/*" style="display: none;" onchange="uploadBatchImages(this)">
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="card-body">
+                            <div id="inputText" contenteditable="true" class="form-control terminal-input" oninput="autoCleanAndParse()"></div>
+                            <small class="text-muted mt-2 d-block">
+                                <i class="fas fa-info-circle text-teal"></i> Tempel teks atau gunakan tombol upload di atas.
+                            </small>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-lg-6 col-md-12">
+                    <div class="card card-teal card-outline shadow-sm">
+                        <div class="card-header d-flex align-items-center bg-light py-2">
+                            <h3 class="card-title font-weight-bold text-dark mb-0" style="font-size: 15px;">
+                                <i class="fas fa-check-circle text-teal mr-1"></i> Preview Struktur & Kunci Jawaban
+                            </h3>
+                            <div class="card-tools ml-auto">
+                                <span class="badge badge-warning px-2 py-1 text-dark" id="countBadge">0 Soal Terdeteksi</span>
+                            </div>
+                        </div>
+                        
+                        <div class="card-body p-3" id="previewRenderArea" style="height: 415px; overflow-y: auto; background-color: #f8f9fa;">
+                            <div class="text-center text-muted py-5">
+                                <i class="fas fa-magic fa-3x mb-3 text-teal d-block"></i>
+                                Tempelkan teks bank soal di sebelah kiri atau unggah dokumen untuk memulai.
+                            </div>
+                        </div>
+
+                        <div class="card-footer bg-white py-2">
+                            <div id="cacheStatus" class="small text-muted mb-2" style="display:none;"></div>
+                            <button type="button" onclick="prosesDanRapikanDenganAI()" id="btnAiAnswer" class="btn btn-warning btn-block font-weight-bold py-2 mb-2 shadow-sm text-dark" style="display:none;">
+                                <i class="fas fa-robot mr-2"></i> Jalankan AI Generator & Kunci Jawaban Otomatis ✨
+                            </button>
+                            <button type="button" onclick="convertToWordGaruda()" id="btnDownloadWord" class="btn btn-primary btn-block font-weight-bold py-2 shadow-sm">
+                                <i class="fas fa-file-word mr-2"></i> Download Soal (.docx)
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+</div>
+
+<!-- Modal Setting Multi-API Key & Provider Rotation -->
+<div class="modal fade" id="apiKeyModal" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg" role="document">
+        <div class="modal-content">
+            <div class="modal-header bg-teal text-white py-2">
+                <h5 class="modal-title font-weight-bold" style="font-size: 16px;">
+                    <i class="fas fa-sync-alt mr-2"></i>Pengaturan Multi-API Key & Rotasi Provider AI
+                </h5>
+                <button type="button" class="close text-white" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body" style="max-height: 75vh; overflow-y: auto;">
+                <p class="text-muted mb-3" style="font-size: 12px;">
+                    <i class="fas fa-info-circle text-teal"></i> Anda dapat memasukkan beberapa API Key per provider dipisahkan dengan tanda koma (<code>,</code>).
+                </p>
+
+                <!-- Google Gemini -->
+                <div class="form-group mb-3">
+                    <label class="font-weight-bold text-dark mb-1" style="font-size: 13px;">Google Gemini API Key(s):</label>
+                    <div class="input-group input-group-sm">
+                        <input type="password" id="inputGeminiKey" class="form-control" placeholder="AIzaSy1..., AIzaSy2...">
+                        <div class="input-group-append">
+                            <button class="btn btn-outline-secondary" type="button" title="Salin API Key" onclick="copyToClipboard('inputGeminiKey', this)"><i class="fas fa-copy"></i></button>
+                            <button class="btn btn-outline-secondary" type="button" title="Lihat/Sembunyikan" onclick="toggleVisibility('inputGeminiKey', this)"><i class="fas fa-eye"></i></button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- OpenAI -->
+                <div class="form-group mb-3">
+                    <label class="font-weight-bold text-dark mb-1" style="font-size: 13px;">OpenAI API Key(s):</label>
+                    <div class="input-group input-group-sm">
+                        <input type="password" id="inputOpenaiKey" class="form-control" placeholder="sk-proj-1..., sk-proj-2...">
+                        <div class="input-group-append">
+                            <button class="btn btn-outline-secondary" type="button" title="Salin API Key" onclick="copyToClipboard('inputOpenaiKey', this)"><i class="fas fa-copy"></i></button>
+                            <button class="btn btn-outline-secondary" type="button" title="Lihat/Sembunyikan" onclick="toggleVisibility('inputOpenaiKey', this)"><i class="fas fa-eye"></i></button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Groq -->
+                <div class="form-group mb-3">
+                    <label class="font-weight-bold text-dark mb-1" style="font-size: 13px;">Groq API Key(s):</label>
+                    <div class="input-group input-group-sm">
+                        <input type="password" id="inputGroqKey" class="form-control" placeholder="gsk_1..., gsk_2...">
+                        <div class="input-group-append">
+                            <button class="btn btn-outline-secondary" type="button" title="Salin API Key" onclick="copyToClipboard('inputGroqKey', this)"><i class="fas fa-copy"></i></button>
+                            <button class="btn btn-outline-secondary" type="button" title="Lihat/Sembunyikan" onclick="toggleVisibility('inputGroqKey', this)"><i class="fas fa-eye"></i></button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Cerebras -->
+                <div class="form-group mb-3">
+                    <label class="font-weight-bold text-dark mb-1" style="font-size: 13px;">Cerebras AI API Key(s):</label>
+                    <div class="input-group input-group-sm">
+                        <input type="password" id="inputCerebrasKey" class="form-control" placeholder="csk-..., csk-...">
+                        <div class="input-group-append">
+                            <button class="btn btn-outline-secondary" type="button" title="Salin API Key" onclick="copyToClipboard('inputCerebrasKey', this)"><i class="fas fa-copy"></i></button>
+                            <button class="btn btn-outline-secondary" type="button" title="Lihat/Sembunyikan" onclick="toggleVisibility('inputCerebrasKey', this)"><i class="fas fa-eye"></i></button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- GitHub Models -->
+                <div class="form-group mb-3">
+                    <label class="font-weight-bold text-dark mb-1" style="font-size: 13px;">GitHub Token / PAT(s):</label>
+                    <div class="input-group input-group-sm">
+                        <input type="password" id="inputGithubKey" class="form-control" placeholder="ghp_1..., github_pat_1...">
+                        <div class="input-group-append">
+                            <button class="btn btn-outline-secondary" type="button" title="Salin Token" onclick="copyToClipboard('inputGithubKey', this)"><i class="fas fa-copy"></i></button>
+                            <button class="btn btn-outline-secondary" type="button" title="Lihat/Sembunyikan" onclick="toggleVisibility('inputGithubKey', this)"><i class="fas fa-eye"></i></button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- OpenRouter -->
+                <div class="form-group mb-3">
+                    <label class="font-weight-bold text-dark mb-1" style="font-size: 13px;">OpenRouter API Key(s):</label>
+                    <div class="input-group input-group-sm">
+                        <input type="password" id="inputOpenRouterKey" class="form-control" placeholder="sk-or-v1-1..., sk-or-v1-2...">
+                        <div class="input-group-append">
+                            <button class="btn btn-outline-secondary" type="button" title="Salin API Key" onclick="copyToClipboard('inputOpenRouterKey', this)"><i class="fas fa-copy"></i></button>
+                            <button class="btn btn-outline-secondary" type="button" title="Lihat/Sembunyikan" onclick="toggleVisibility('inputOpenRouterKey', this)"><i class="fas fa-eye"></i></button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Mistral AI -->
+                <div class="form-group mb-3">
+                    <label class="font-weight-bold text-dark mb-1" style="font-size: 13px;">Mistral AI API Key(s):</label>
+                    <div class="input-group input-group-sm">
+                        <input type="password" id="inputMistralKey" class="form-control" placeholder="mistral_api_key_1, mistral_api_key_2...">
+                        <div class="input-group-append">
+                            <button class="btn btn-outline-secondary" type="button" title="Salin API Key" onclick="copyToClipboard('inputMistralKey', this)"><i class="fas fa-copy"></i></button>
+                            <button class="btn btn-outline-secondary" type="button" title="Lihat/Sembunyikan" onclick="toggleVisibility('inputMistralKey', this)"><i class="fas fa-eye"></i></button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Cloudflare Workers AI -->
+                <div class="card bg-light border p-2 mb-3">
+                    <div class="form-group mb-2">
+                        <label class="font-weight-bold text-dark mb-1" style="font-size: 13px;">Cloudflare Account ID:</label>
+                        <input type="text" id="inputCloudflareAccountId" class="form-control form-control-sm" placeholder="Contoh: 843abf...">
+                    </div>
+                    <div class="form-group mb-0">
+                        <label class="font-weight-bold text-dark mb-1" style="font-size: 13px;">Cloudflare API Token(s):</label>
+                        <div class="input-group input-group-sm">
+                            <input type="password" id="inputCloudflareKey" class="form-control" placeholder="cf_token_1, cf_token_2...">
+                            <div class="input-group-append">
+                                <button class="btn btn-outline-secondary" type="button" title="Salin Token" onclick="copyToClipboard('inputCloudflareKey', this)"><i class="fas fa-copy"></i></button>
+                                <button class="btn btn-outline-secondary" type="button" title="Lihat/Sembunyikan" onclick="toggleVisibility('inputCloudflareKey', this)"><i class="fas fa-eye"></i></button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Provider Chain -->
+                <div class="form-group mb-2">
+                    <label class="font-weight-bold text-dark mb-1" style="font-size: 13px;">Prioritas Urutan Provider AI (Fallback Hierarchy):</label>
+                    <div class="custom-control custom-checkbox mb-1">
+                        <input type="checkbox" class="custom-control-input provider-chain-item" id="prov1" value="gemini" checked>
+                        <label class="custom-control-label font-weight-bold text-dark" for="prov1">1. Google Gemini <span class="badge badge-primary">Utama</span></label>
+                    </div>
+                    <div class="custom-control custom-checkbox mb-1">
+                        <input type="checkbox" class="custom-control-input provider-chain-item" id="prov_openai" value="openai" checked>
+                        <label class="custom-control-label font-weight-bold text-dark" for="prov_openai">2. OpenAI (GPT-4o/Mini) <span class="badge badge-success">Cadangan 1</span></label>
+                    </div>
+                    <div class="custom-control custom-checkbox mb-1">
+                        <input type="checkbox" class="custom-control-input provider-chain-item" id="prov2" value="groq" checked>
+                        <label class="custom-control-label font-weight-bold text-dark" for="prov2">3. Groq AI <span class="badge badge-info">Cadangan 2</span></label>
+                    </div>
+                    <div class="custom-control custom-checkbox mb-1">
+                        <input type="checkbox" class="custom-control-input provider-chain-item" id="prov3" value="cerebras" checked>
+                        <label class="custom-control-label font-weight-bold text-dark" for="prov3">4. Cerebras AI <span class="badge badge-danger">Cadangan 3</span></label>
+                    </div>
+                    <div class="custom-control custom-checkbox mb-1">
+                        <input type="checkbox" class="custom-control-input provider-chain-item" id="prov4" value="github" checked>
+                        <label class="custom-control-label font-weight-bold text-dark" for="prov4">5. GitHub Models <span class="badge badge-dark">Cadangan 4</span></label>
+                    </div>
+                    <div class="custom-control custom-checkbox mb-1">
+                        <input type="checkbox" class="custom-control-input provider-chain-item" id="prov5" value="openrouter" checked>
+                        <label class="custom-control-label font-weight-bold text-dark" for="prov5">6. OpenRouter <span class="badge badge-warning">Cadangan 5</span></label>
+                    </div>
+                    <div class="custom-control custom-checkbox mb-1">
+                        <input type="checkbox" class="custom-control-input provider-chain-item" id="prov6" value="mistral" checked>
+                        <label class="custom-control-label font-weight-bold text-dark" for="prov6">7. Mistral AI <span class="badge badge-secondary">Cadangan 6</span></label>
+                    </div>
+                    <div class="custom-control custom-checkbox mb-1">
+                        <input type="checkbox" class="custom-control-input provider-chain-item" id="prov7" value="cloudflare" checked>
+                        <label class="custom-control-label font-weight-bold text-dark" for="prov7">8. Cloudflare Workers AI <span class="badge badge-warning text-dark">Cadangan 7</span></label>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer py-2">
+                <button type="button" class="btn btn-secondary btn-sm" data-dismiss="modal">Batal</button>
+                <button type="button" class="btn btn-teal btn-sm font-weight-bold px-3" onclick="saveApiKeyModal()">
+                    <i class="fas fa-check mr-1"></i> Simpan Pengaturan
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.6.0/mammoth.browser.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js"></script>
+<script src="https://unpkg.com/docx@7.8.2/build/index.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
+
+<script>
+const SERVER_KEYS = <?= json_encode($savedKeys ?? ['gemini'=>'','openai'=>'','groq'=>'','cerebras'=>'','github'=>'','openrouter'=>'','mistral'=>'','cloudflare_account'=>'','cloudflare_key'=>'','chain'=>'["gemini","openai","groq","cerebras","github","openrouter","mistral","cloudflare"]']) ?>;
+
+function toggleVisibility(inputId, btn) {
+    let input = document.getElementById(inputId);
+    let icon = btn.querySelector('i');
+    if (input.type === "password") {
+        input.type = "text";
+        icon.classList.remove('fa-eye');
+        icon.classList.add('fa-eye-slash');
+    } else {
+        input.type = "password";
+        icon.classList.remove('fa-eye-slash');
+        icon.classList.add('fa-eye');
+    }
+}
+
+function copyToClipboard(inputId, btn) {
+    let input = document.getElementById(inputId);
+    if (!input.value.trim()) {
+        alert("Key/Token masih kosong, tidak ada yang disalin.");
+        return;
+    }
+
+    navigator.clipboard.writeText(input.value.trim()).then(() => {
+        let icon = btn.querySelector('i');
+        icon.className = 'fas fa-check text-success';
+        btn.classList.add('border-success');
+
+        setTimeout(() => {
+            icon.className = 'fas fa-copy';
+            btn.classList.remove('border-success');
+        }, 1500);
+    }).catch(err => {
+        input.select();
+        document.execCommand('copy');
+        alert("Berhasil disalin!");
+    });
+}
+
+function openApiKeyModal() {
+    let geminiVal = SERVER_KEYS.gemini || localStorage.getItem('CUSTOM_GEMINI_KEY') || '';
+    let openaiVal = SERVER_KEYS.openai || localStorage.getItem('CUSTOM_OPENAI_KEY') || '';
+    let groqVal = SERVER_KEYS.groq || localStorage.getItem('CUSTOM_GROQ_KEY') || '';
+    let cerebrasVal = SERVER_KEYS.cerebras || localStorage.getItem('CUSTOM_CEREBRAS_KEY') || '';
+    let githubVal = SERVER_KEYS.github || localStorage.getItem('CUSTOM_GITHUB_KEY') || '';
+    let openRouterVal = SERVER_KEYS.openrouter || localStorage.getItem('CUSTOM_OPENROUTER_KEY') || '';
+    let mistralVal = SERVER_KEYS.mistral || localStorage.getItem('CUSTOM_MISTRAL_KEY') || '';
+    let cfAccountVal = SERVER_KEYS.cloudflare_account || localStorage.getItem('CUSTOM_CLOUDFLARE_ACCOUNT_ID') || '';
+    let cfKeyVal = SERVER_KEYS.cloudflare_key || localStorage.getItem('CUSTOM_CLOUDFLARE_KEY') || '';
+    let chainVal = SERVER_KEYS.chain || localStorage.getItem('AI_PROVIDER_CHAIN') || '["gemini","openai","groq","cerebras","github","openrouter","mistral","cloudflare"]';
+
+    document.getElementById('inputGeminiKey').value = geminiVal;
+    document.getElementById('inputOpenaiKey').value = openaiVal;
+    document.getElementById('inputGroqKey').value = groqVal;
+    document.getElementById('inputCerebrasKey').value = cerebrasVal;
+    document.getElementById('inputGithubKey').value = githubVal;
+    document.getElementById('inputOpenRouterKey').value = openRouterVal;
+    document.getElementById('inputMistralKey').value = mistralVal;
+    document.getElementById('inputCloudflareAccountId').value = cfAccountVal;
+    document.getElementById('inputCloudflareKey').value = cfKeyVal;
+
+    let chain = [];
+    try { 
+        chain = typeof chainVal === 'string' ? JSON.parse(chainVal) : chainVal; 
+    } catch(e) { 
+        chain = ["gemini","openai","groq","cerebras","github","openrouter","mistral","cloudflare"]; 
+    }
+
+    document.querySelectorAll('.provider-chain-item').forEach(cb => {
+        cb.checked = chain.includes(cb.value);
+    });
+
+    if (typeof $ !== 'undefined') $('#apiKeyModal').modal('show');
+}
+
+async function saveApiKeyModal() {
+    let geminiVal = document.getElementById('inputGeminiKey').value.trim();
+    let openaiVal = document.getElementById('inputOpenaiKey').value.trim();
+    let groqVal = document.getElementById('inputGroqKey').value.trim();
+    let cerebrasVal = document.getElementById('inputCerebrasKey').value.trim();
+    let githubVal = document.getElementById('inputGithubKey').value.trim();
+    let openRouterVal = document.getElementById('inputOpenRouterKey').value.trim();
+    let mistralVal = document.getElementById('inputMistralKey').value.trim();
+    let cfAccountVal = document.getElementById('inputCloudflareAccountId').value.trim();
+    let cfKeyVal = document.getElementById('inputCloudflareKey').value.trim();
+
+    let selectedProviders = [];
+    document.querySelectorAll('.provider-chain-item:checked').forEach(cb => {
+        selectedProviders.push(cb.value);
+    });
+    let chainJsonStr = JSON.stringify(selectedProviders);
+
+    let formData = new FormData();
+    formData.append('action', 'save_keys');
+    formData.append('gemini', geminiVal);
+    formData.append('openai', openaiVal);
+    formData.append('groq', groqVal);
+    formData.append('cerebras', cerebrasVal);
+    formData.append('github', githubVal);
+    formData.append('openrouter', openRouterVal);
+    formData.append('mistral', mistralVal);
+    formData.append('cloudflare_account', cfAccountVal);
+    formData.append('cloudflare_key', cfKeyVal);
+    formData.append('chain', chainJsonStr);
+
+    let csrfName = '<?= $this->security->get_csrf_token_name(); ?>';
+    let csrfHash = '<?= $this->security->get_csrf_hash(); ?>';
+    if (csrfName) formData.append(csrfName, csrfHash);
+
+    try {
+        let res = await fetch(window.location.href, {
+            method: 'POST',
+            body: formData
+        });
+
+        let result = await res.json();
+
+        if (result.status === 'success') {
+            localStorage.setItem('CUSTOM_GEMINI_KEY', geminiVal);
+            localStorage.setItem('CUSTOM_OPENAI_KEY', openaiVal);
+            localStorage.setItem('CUSTOM_GROQ_KEY', groqVal);
+            localStorage.setItem('CUSTOM_CEREBRAS_KEY', cerebrasVal);
+            localStorage.setItem('CUSTOM_GITHUB_KEY', githubVal);
+            localStorage.setItem('CUSTOM_OPENROUTER_KEY', openRouterVal);
+            localStorage.setItem('CUSTOM_MISTRAL_KEY', mistralVal);
+            localStorage.setItem('CUSTOM_CLOUDFLARE_ACCOUNT_ID', cfAccountVal);
+            localStorage.setItem('CUSTOM_CLOUDFLARE_KEY', cfKeyVal);
+            localStorage.setItem('AI_PROVIDER_CHAIN', chainJsonStr);
+
+            alert("API Key berhasil disimpan permanen di Database Server!");
+            if (typeof $ !== 'undefined') $('#apiKeyModal').modal('hide');
+            location.reload();
+        } else {
+            alert("Gagal menyimpan: " + result.message);
+        }
+    } catch (err) {
+        alert("Gagal koneksi ke server: " + err.message);
+    }
+}
+
+function getApiKeys(provider) {
+    let keyStr = SERVER_KEYS[provider] || localStorage.getItem(`CUSTOM_${provider.toUpperCase()}_KEY`) || '';
+    if (!keyStr) return [];
+    return keyStr.split(',').map(k => k.trim()).filter(k => k.length > 0);
+}
+
+if (typeof window !== 'undefined' && 'pdfjsLib' in window) {
+    window.pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.worker.min.js';
+}
+
+let parsedData = [];
+let isAiProcessed = false;
+let activeQuestionFingerprint = '';
+let cacheLoaded = false;
+let cacheLookupTimer = null;
+let cacheLookupInProgress = false;
+
+function normalizeForFingerprint(value) {
+    return String(value ?? '')
+        .replace(/\r\n/g, '\n')
+        .replace(/\r/g, '\n')
+        .replace(/[\u00A0\u1680\u180E\u2000-\u200B\u202F\u205F\u3000\t]+/g, ' ')
+        .replace(/\s+/g, ' ')
+        .trim();
+}
+
+function getFingerprintSource(data) {
+    return (data || []).map(item => ({
+        question: normalizeForFingerprint(item.question),
+        options: Array.isArray(item.options) ? item.options.map(normalizeForFingerprint) : [],
+        jenisDraft: item.jenis ? String(item.jenis) : '',
+        answer: item.answer ? normalizeForFingerprint(item.answer) : ''
+    }));
+}
+
+async function sha256Hex(text) {
+    if (window.crypto && window.crypto.subtle) {
+        const buffer = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(text));
+        return Array.from(new Uint8Array(buffer)).map(b => b.toString(16).padStart(2, '0')).join('');
+    }
+    let h1 = 0x811c9dc5, h2 = 0x01000193;
+    for (let i = 0; i < text.length; i++) {
+        const c = text.charCodeAt(i);
+        h1 ^= c; h1 = Math.imul(h1, 16777619);
+        h2 ^= c + i; h2 = Math.imul(h2, 16777619);
+    }
+    return (h1 >>> 0).toString(16).padStart(8,'0') + (h2 >>> 0).toString(16).padStart(8,'0') +
+           (text.length >>> 0).toString(16).padStart(8,'0') + '00000000000000000000000000000000';
+}
+
+async function getQuestionFingerprint(data = parsedData) {
+    const canonical = JSON.stringify(getFingerprintSource(data));
+    return await sha256Hex(canonical);
+}
+
+function setCacheStatus(message, type = 'muted') {
+    const el = document.getElementById('cacheStatus');
+    if (!el) return;
+    el.className = `small text-${type} mb-2`;
+    el.style.display = message ? 'block' : 'none';
+    el.innerHTML = message;
+}
+
+function normalizeAiResult(data) {
+    if (!Array.isArray(data)) return [];
+    return data.map((item, index) => {
+        item = item || {};
+        item.number = index + 1;
+        item.question = String(item.question || '').replace(/^\d+[\.\)]\s*/, '').trim();
+        item.images = Array.isArray(item.images) ? item.images : [];
+        return item;
+    });
+}
+
+async function lookupConverterCache(showMiss = false) {
+    if (cacheLookupInProgress || !parsedData || parsedData.length === 0 || isAiProcessed) return false;
+    cacheLookupInProgress = true;
+    try {
+        const fingerprint = await getQuestionFingerprint(parsedData);
+        activeQuestionFingerprint = fingerprint;
+        const fd = new FormData();
+        fd.append('action', 'cache_lookup');
+        fd.append('fingerprint', fingerprint);
+        const csrfName = '<?= $this->security->get_csrf_token_name(); ?>';
+        const csrfHash = '<?= $this->security->get_csrf_hash(); ?>';
+        if (csrfName) fd.append(csrfName, csrfHash);
+
+        const res = await fetch(window.location.href, { method: 'POST', body: fd });
+        const result = await res.json();
+        if (result.status === 'hit' && Array.isArray(result.data) && result.data.length) {
+            parsedData = normalizeAiResult(result.data);
+            isAiProcessed = true;
+            cacheLoaded = true;
+            document.getElementById('btnAiAnswer').style.display = 'none';
+            setCacheStatus(`<i class="fas fa-database mr-1"></i> Hasil ditemukan di cache. ${result.question_count || parsedData.length} soal siap diunduh tanpa convert ulang. <span class="text-muted">${result.cached_at || ''}</span>`, 'success');
+            renderPreview();
+            return true;
+        }
+        if (showMiss) setCacheStatus('<i class="fas fa-info-circle mr-1"></i> Belum ada hasil tersimpan. Klik AI Generator untuk memproses.', 'muted');
+    } catch (e) {
+        console.warn('Cache lookup gagal:', e);
+        if (showMiss) setCacheStatus('<i class="fas fa-exclamation-triangle mr-1"></i> Cache server tidak dapat diperiksa. Anda tetap dapat menjalankan AI.', 'warning');
+    } finally {
+        cacheLookupInProgress = false;
+    }
+    return false;
+}
+
+function scheduleCacheLookup() {
+    clearTimeout(cacheLookupTimer);
+    cacheLookupTimer = setTimeout(() => lookupConverterCache(false), 900);
+}
+
+async function saveConverterCache(fingerprint, data) {
+    if (!fingerprint || !Array.isArray(data) || !data.length) return false;
+    try {
+        const fd = new FormData();
+        fd.append('action', 'cache_save');
+        fd.append('fingerprint', fingerprint);
+        fd.append('payload', JSON.stringify(data));
+        const csrfName = '<?= $this->security->get_csrf_token_name(); ?>';
+        const csrfHash = '<?= $this->security->get_csrf_hash(); ?>';
+        if (csrfName) fd.append(csrfName, csrfHash);
+        const res = await fetch(window.location.href, { method: 'POST', body: fd });
+        const result = await res.json();
+        if (result.status === 'success') {
+            setCacheStatus(`<i class="fas fa-database mr-1"></i> Hasil AI tersimpan. Import ulang soal yang sama akan menggunakan cache tanpa convert ulang.`, 'success');
+            return true;
+        }
+    } catch (e) {
+        console.warn('Cache save gagal:', e);
+    }
+    return false;
+}
+
+const inputArea = document.getElementById('inputText');
+if (inputArea) {
+    inputArea.addEventListener('paste', function(e) {
+        let clipboardData = e.clipboardData || window.clipboardData;
+        if (!clipboardData) return;
+        let hasImage = false;
+
+        if (clipboardData.items) {
+            for (let i = 0; i < clipboardData.items.length; i++) {
+                if (clipboardData.items[i].type.indexOf('image') !== -1) {
+                    e.preventDefault();
+                    hasImage = true;
+                    let blob = clipboardData.items[i].getAsFile();
+                    let reader = new FileReader();
+                    reader.onload = function(event) { insertImageToInput(event.target.result); };
+                    reader.readAsDataURL(blob);
+                }
+            }
+        }
+        if (!hasImage) {
+            let textData = clipboardData.getData('text/plain');
+            if (textData) {
+                e.preventDefault();
+                textData = textData.replace(/[\u00A0\u1680\u180E\u2000-\u200B\u202F\u205F\u3000\t]/g, ' ');
+                document.execCommand('insertText', false, textData);
+            }
+        }
+        setTimeout(() => autoCleanAndParse(), 100);
+    });
+}
+
+function insertImageToInput(base64Src) {
+    let imgHTML = `<br><img src="${base64Src}" style="max-width:220px; display:block; margin:5px 0;"><br>`;
+    document.execCommand('insertHTML', false, imgHTML);
+    autoCleanAndParse();
+}
+
+function showProgressState(message) {
+    const container = document.getElementById('previewRenderArea');
+    container.innerHTML = `
+        <div class="text-center text-muted py-5">
+            <i class="fas fa-spinner fa-spin fa-3x mb-3 text-teal d-block"></i>
+            <h6 class="font-weight-bold text-dark">${message}</h6>
+            <small class="text-muted">Mohon tunggu, proses mengekstrak file...</small>
+        </div>`;
+}
+
+async function handleFileUpload(input) {
+    const file = input.files[0];
+    if (!file) return;
+
+    const ext = file.name.split('.').pop().toLowerCase();
+    const container = document.getElementById('inputText');
+    
+    showProgressState("Mengekstrak Dokumen " + ext.toUpperCase() + "...");
+    container.innerText = "Sedang mengekstrak berkas, mohon tunggu...";
+    isAiProcessed = false; 
+
+    let reader = new FileReader();
+
+    if (ext === 'docx') {
+        if (typeof mammoth === 'undefined') {
+            alert("Library Mammoth.js belum siap.");
+            container.innerText = "";
+            renderPreview();
+            return;
+        }
+
+        reader.onload = async function(e) {
+            try {
+                let result = await mammoth.convertToHtml({ arrayBuffer: e.target.result });
+                if (result.value && result.value.trim() !== "") {
+                    let tempDiv = document.createElement('div');
+                    tempDiv.innerHTML = result.value;
+
+                    let ols = tempDiv.querySelectorAll('ol, ul');
+                    ols.forEach(ol => {
+                        let parentOl = ol.parentElement.closest('ol, ul');
+                        let lis = ol.querySelectorAll('li');
+
+                        lis.forEach((li, index) => {
+                            let p = document.createElement('p');
+                            if (parentOl || lis.length <= 5) {
+                                let prefix = String.fromCharCode(97 + (index % 26)) + ". ";
+                                p.innerHTML = prefix + li.innerHTML;
+                            } else {
+                                let prefix = (index + 1) + ". ";
+                                p.innerHTML = prefix + li.innerHTML;
+                            }
+                            li.parentNode.replaceChild(p, li);
+                        });
+                    });
+
+                    let cleanText = tempDiv.innerText || tempDiv.textContent;
+                    cleanText = cleanText.replace(/[\u00A0\u1680\u180E\u2000-\u200B\u202F\u205F\u3000\t]/g, ' ');
+                    cleanText = cleanText.replace(/\s+/g, ' ');
+                    
+                    cleanText = cleanText.replace(/\s+([a-eA-E][\.\)]\s*)/g, '\n$1 ');
+                    cleanText = cleanText.replace(/\s+(\d{1,3}[\.\)]\s*)/g, '\n\n$1 ');
+
+                    container.innerText = cleanText.trim();
+                    
+                    parsedData = [];
+                    parseLocalInstantly(cleanText);
+                    scheduleCacheLookup();
+                } else {
+                    alert("Teks dokumen kosong atau tidak terbaca.");
+                    container.innerText = "";
+                    renderPreview();
+                }
+            } catch (err) { 
+                alert("Gagal membaca berkas Word: " + err.message); 
+                container.innerText = "";
+                renderPreview();
+            }
+        };
+        reader.readAsArrayBuffer(file);
+
+    } else if (ext === 'pdf') {
+        if (typeof pdfjsLib === 'undefined') {
+            alert("Library PDF.js belum siap.");
+            container.innerText = "";
+            renderPreview();
+            return;
+        }
+
+        reader.onload = function(e) {
+            let typedarray = new Uint8Array(e.target.result);
+            pdfjsLib.getDocument({ data: typedarray }).promise.then(async function(pdf) {
+                let maxPages = pdf.numPages;
+                let fullText = "";
+                
+                for (let j = 1; j <= maxPages; j++) {
+                    try {
+                        showProgressState(`Mengekstrak PDF (Halaman ${j} dari${maxPages})...`);
+                        let page = await pdf.getPage(j);
+                        let tokenizedText = await page.getTextContent();
+                        let pageText = "";
+                        let lastY = null;
+                        
+                        for (let item of tokenizedText.items) {
+                            if (lastY !== null && Math.abs(item.transform[5] - lastY) > 5) {
+                                pageText += "\n";
+                            }
+                            pageText += item.str + " ";
+                            lastY = item.transform[5];
+                        }
+                        fullText += pageText + "\n\n";
+                    } catch (pageErr) {
+                        console.warn(pageErr);
+                    }
+                }
+                
+                if (fullText.trim() !== "") {
+                    container.innerText = fullText.trim();
+                    parsedData = [];
+                    parseLocalInstantly(fullText);
+                    scheduleCacheLookup();
+                } else {
+                    alert("PDF tidak memiliki layer teks.");
+                    container.innerText = "";
+                    renderPreview();
+                }
+            }).catch(err => {
+                alert("Gagal membaca PDF: " + err.message);
+                container.innerText = "";
+                renderPreview();
+            });
+        };
+        reader.readAsArrayBuffer(file);
+    }
+    input.value = '';
+}
+
+function uploadBatchImages(input) {
+    if (input.files && input.files.length > 0) {
+        Array.from(input.files).forEach(file => {
+            let reader = new FileReader();
+            reader.onload = (e) => insertImageToInput(e.target.result);
+            reader.readAsDataURL(file);
+        });
+    }
+    input.value = '';
+}
+
+function autoCleanAndParse() {
+    let container = document.getElementById('inputText');
+    let content = container.innerHTML.trim();
+    let hasContent = content.length > 0;
+
+    if (cacheLoaded) {
+        cacheLoaded = false;
+        isAiProcessed = false;
+        activeQuestionFingerprint = '';
+        setCacheStatus('', 'muted');
+    }
+
+    document.getElementById('btnAiAnswer').style.display = hasContent ? 'block' : 'none';
+    
+    if (!hasContent) {
+        parsedData = [];
+        isAiProcessed = false;
+        activeQuestionFingerprint = '';
+        setCacheStatus('', 'muted');
+        renderPreview();
+    } else {
+        if (!isAiProcessed) {
+            parseLocalInstantly(container.innerText);
+            scheduleCacheLookup();
+        }
+    }
+}
+
+function parseLocalInstantly(text) {
+    let rawText = text.trim();
+    if (!rawText) {
+        parsedData = [];
+        renderPreview();
+        return;
+    }
+
+    rawText = rawText.replace(/[\u00A0\u1680\u180E\u2000-\u200B\u202F\u205F\u3000\t]/g, ' '); 
+    rawText = rawText.replace(/\r\n/g, '\n').replace(/\r/g, '\n');
+
+    rawText = rawText.replace(/^(?:BERILAH\s+TANDA\s+SILANG[^\n]*|MATA\s+PELAJARAN[^\n]*|PENILAIAN\s+AKHIR[^\n]*|TAHUN\s+PELAJARAN[^\n]*|NAMA\s*:[^\n]*)\n+/gi, '');
+
+    if (!/^\d{1,3}[\.\)]/.test(rawText)) {
+        rawText = "1. " + rawText;
+    }
+
+    rawText = rawText.replace(/\s+([a-eA-E][\.\)]\s*)/g, '\n$1 ');
+    rawText = rawText.replace(/\s+(\d{1,3}[\.\)]\s*)/g, '\n\n$1 ');
+
+    let lines = rawText.split('\n');
+    let processedText = "";
+
+    lines.forEach(line => {
+        let trimmed = line.trim();
+        if (/^\d{1,3}[\.\)]\s*/.test(trimmed)) {
+            processedText += '\n===SOAL===\n' + trimmed + '\n';
+        } else {
+            processedText += line + '\n';
+        }
+    });
+
+    let rawBlocks = processedText.split('===SOAL===');
+    let items = [];
+    let realNumberCounter = 1;
+
+    rawBlocks.forEach(block => {
+        let cleanBlock = block.trim();
+        if (cleanBlock.length > 3) {
+            let parsedObj = extractQuestionAndOptions(cleanBlock, realNumberCounter);
+            if (parsedObj && parsedObj.question) {
+                items.push(parsedObj);
+                realNumberCounter++;
+            }
+        }
+    });
+
+    if (items.length > 0) {
+        parsedData = items;
+        renderPreview();
+    }
+}
+
+function extractQuestionAndOptions(chunkText, num) {
+    if (!chunkText) return null;
+
+    let cleanText = chunkText.trim();
+    cleanText = cleanText.replace(/^\d{1,3}[\.\)]\s*/, '').trim();
+
+    let optRegex = /(?:\n|^)\s*([a-eA-E])[\.\)]\s*/g;
+    let matches = [];
+    let m;
+
+    while ((m = optRegex.exec(cleanText)) !== null) {
+        matches.push({
+            index: m.index,
+            fullMatchLength: m[0].length
+        });
+    }
+
+    let questionText = "";
+    let options = [];
+
+    if (matches.length > 0) {
+        questionText = cleanText.substring(0, matches[0].index).trim();
+
+        let limitOptions = Math.min(matches.length, 5);
+        for (let i = 0; i < limitOptions; i++) {
+            let start = matches[i].index + matches[i].fullMatchLength;
+            let end = (i + 1 < matches.length) ? matches[i + 1].index : cleanText.length;
+            
+            let optVal = cleanText.substring(start, end).trim().replace(/\s+/g, ' ');
+            optVal = optVal.replace(/^[a-eA-E1-5][\.\)]\s*/, '').trim();
+
+            if (optVal) {
+                options.push(optVal);
+            }
+        }
+    } else {
+        questionText = cleanText;
+    }
+
+    questionText = questionText.replace(/\n+/g, ' ').replace(/\s+/g, ' ').trim();
+
+    return {
+        number: num,
+        question: questionText,
+        jenis: options.length > 0 ? 1 : 5,
+        options: options.length > 0 ? options : null,
+        key: null
+    };
+}
+
+function updateAIProgress(percent, message) {
+    const container = document.getElementById('previewRenderArea');
+    container.innerHTML = `
+        <div class="text-center py-5 px-4">
+            <i class="fas fa-brain fa-spin fa-3x mb-3 text-teal"></i>
+            <h5 class="font-weight-bold text-dark">${percent}%</h5>
+            <p class="text-muted font-weight-bold mb-3" style="font-size: 14px;">${message}</p>
+            <div class="progress shadow-sm" style="height: 15px; border-radius: 10px;">
+                <div class="progress-bar progress-bar-striped progress-bar-animated bg-teal" 
+                     role="progressbar" style="width: ${percent}%;"></div>
+            </div>
+            <small class="text-muted mt-2 d-block">Memproses analisis kunci jawaban via Multi-AI Engine...</small>
+        </div>`;
+}
+
+async function callGeminiApi(apiKey, model, promptText) {
+    let endpoint = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
+    let res = await fetch(endpoint, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+            contents: [{ parts: [{ text: promptText }] }],
+            generationConfig: { temperature: 0.1, responseMimeType: "application/json" }
+        })
+    });
+    if (!res.ok) throw new Error(`Gemini ${model} Error Status:${res.status}`);
+    let data = await res.json();
+    return data.candidates?.[0]?.content?.parts?.[0]?.text;
+}
+
+async function callOpenAiApi(apiKey, model, promptText) {
+    let res = await fetch("https://api.openai.com/v1/chat/completions", {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${apiKey}`
+        },
+        body: JSON.stringify({
+            model: model,
+            messages: [{ role: "user", content: promptText }],
+            temperature: 0.1,
+            response_format: { type: "json_object" }
+        })
+    });
+    if (!res.ok) throw new Error(`OpenAI ${model} Error Status:${res.status}`);
+    let data = await res.json();
+    return data.choices?.[0]?.message?.content;
+}
+
+async function callGroqApi(apiKey, model, promptText) {
+    let res = await fetch("https://api.groq.com/openai/v1/chat/completions", {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${apiKey}`
+        },
+        body: JSON.stringify({
+            model: model,
+            messages: [{ role: "user", content: promptText }],
+            temperature: 0.1,
+            response_format: { type: "json_object" }
+        })
+    });
+    if (!res.ok) throw new Error(`Groq ${model} Error Status:${res.status}`);
+    let data = await res.json();
+    return data.choices?.[0]?.message?.content;
+}
+
+async function callCerebrasApi(apiKey, model, promptText) {
+    let res = await fetch("https://api.cerebras.ai/v1/chat/completions", {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${apiKey}`
+        },
+        body: JSON.stringify({
+            model: model,
+            messages: [{ role: "user", content: promptText }],
+            temperature: 0.1
+        })
+    });
+    if (!res.ok) throw new Error(`Cerebras ${model} Error Status:${res.status}`);
+    let data = await res.json();
+    return data.choices?.[0]?.message?.content;
+}
+
+async function callGithubApi(apiKey, model, promptText) {
+    let res = await fetch("https://models.inference.ai.azure.com/chat/completions", {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${apiKey}`
+        },
+        body: JSON.stringify({
+            model: model,
+            messages: [{ role: "user", content: promptText }],
+            temperature: 0.1
+        })
+    });
+    if (!res.ok) throw new Error(`GitHub ${model} Error Status:${res.status}`);
+    let data = await res.json();
+    return data.choices?.[0]?.message?.content;
+}
+
+async function callOpenRouterApi(apiKey, model, promptText) {
+    let res = await fetch("https://openrouter.ai/api/v1/chat/completions", {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${apiKey}`
+        },
+        body: JSON.stringify({
+            model: model,
+            messages: [{ role: "user", content: promptText }],
+            temperature: 0.1
+        })
+    });
+    if (!res.ok) throw new Error(`OpenRouter ${model} Error Status:${res.status}`);
+    let data = await res.json();
+    return data.choices?.[0]?.message?.content;
+}
+
+async function callMistralApi(apiKey, model, promptText) {
+    let res = await fetch("https://api.mistral.ai/v1/chat/completions", {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${apiKey}`
+        },
+        body: JSON.stringify({
+            model: model,
+            messages: [{ role: "user", content: promptText }],
+            temperature: 0.1,
+            response_format: { type: "json_object" }
+        })
+    });
+    if (!res.ok) throw new Error(`Mistral ${model} Error Status:${res.status}`);
+    let data = await res.json();
+    return data.choices?.[0]?.message?.content;
+}
+
+async function callCloudflareApi(accountId, apiToken, model, promptText) {
+    let endpoint = `https://api.cloudflare.com/client/v4/accounts/${accountId}/ai/run/${model}`;
+    let res = await fetch(endpoint, {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${apiToken}`
+        },
+        body: JSON.stringify({
+            messages: [
+                { role: "system", content: "You are a helpful assistant that outputs strict JSON." },
+                { role: "user", content: promptText }
+            ]
+        })
+    });
+    if (!res.ok) throw new Error(`Cloudflare Workers AI ${model} Error Status:${res.status}`);
+    let data = await res.json();
+    return data.result?.response;
+}
+
+async function prosesDanRapikanDenganAI() {
+    const container = document.getElementById('inputText');
+    if (!parsedData || parsedData.length === 0) parseLocalInstantly(container.innerText);
+    if (parsedData.length === 0) return alert('Tidak ada soal yang terdeteksi.');
+
+    let providersChain = [];
+    try {
+        let chainStr = SERVER_KEYS.chain || localStorage.getItem('AI_PROVIDER_CHAIN') || '["gemini","openai","groq","cerebras","github","openrouter","mistral","cloudflare"]';
+        providersChain = typeof chainStr === 'string' ? JSON.parse(chainStr) : chainStr;
+    } catch(e) {
+        providersChain = ["gemini","openai","groq","cerebras","github","openrouter","mistral","cloudflare"];
+    }
+
+    let geminiKeys = getApiKeys('gemini');
+    let openaiKeys = getApiKeys('openai');
+    let groqKeys = getApiKeys('groq');
+    let cerebrasKeys = getApiKeys('cerebras');
+    let githubKeys = getApiKeys('github');
+    let openRouterKeys = getApiKeys('openrouter');
+    let mistralKeys = getApiKeys('mistral');
+    let cfAccountId = SERVER_KEYS.cloudflare_account || localStorage.getItem('CUSTOM_CLOUDFLARE_ACCOUNT_ID') || '';
+    let cfKeys = getApiKeys('cloudflare_key');
+
+    if (geminiKeys.length === 0 && openaiKeys.length === 0 && groqKeys.length === 0 && cerebrasKeys.length === 0 && githubKeys.length === 0 && openRouterKeys.length === 0 && mistralKeys.length === 0 && cfKeys.length === 0) {
+        alert("Harap masukkan minimal 1 API Key di menu Pengaturan!");
+        openApiKeyModal();
+        return;
+    }
+
+    const cached = await lookupConverterCache(true);
+    if (cached) {
+        alert(`Hasil ${parsedData.length} soal ditemukan di cache. Tidak ada request AI baru.`);
+        return;
+    }
+
+    activeQuestionFingerprint = await getQuestionFingerprint(parsedData);
+    setCacheStatus('<i class="fas fa-sync-alt fa-spin mr-1"></i> Belum ada cache. Menyiapkan proses AI...', 'info');
+
+    const btn = document.getElementById('btnAiAnswer');
+    btn.disabled = true;
+    btn.innerHTML = `<i class="fas fa-spinner fa-spin mr-2"></i> Menganalisis via Multi-AI Engine...`;
+
+    const totalSoal = parsedData.length;
+    const batchSize = 10; 
+    let hasilAI = [];
+
+    const delay = ms => new Promise(res => setTimeout(res, ms));
+
+    try {
+        for (let i = 0; i < totalSoal; i += batchSize) {
+            let chunkSoal = parsedData.slice(i, i + batchSize);
+            let startNo = i + 1;
+            let endNo = Math.min(i + batchSize, totalSoal);
+            let percent = Math.round((i / totalSoal) * 100);
+
+            updateAIProgress(percent, `Memproses Soal No. ${startNo} s.d ${endNo} dari${totalSoal}...`);
+
+            let promptText = `Kamu adalah sistem pemroses bank soal. Analisis dan formatkan potongan soal berikut menjadi JSON Array murni. Jika dalam soal terdapat struktur tabel, sertakan struktur tabel tersebut dalam tag HTML <table>...</table> yang bersih di dalam string "question".
+
+Potongan Soal (No ${startNo} - ${endNo}):${JSON.stringify(chunkSoal, null, 2)}
+
+ATURAN KETAT OUTPUT:
+1. Kembalikan HANYA JSON Array murni [ ... ].
+2. JANGAN tambahkan teks pembuka/penutup, markdown (\`\`\`json), atau keterangan apa pun.
+3. Tentukan jenis soal (1=PG Biasa, 2=PG Kompleks, 3=Menjodohkan, 4=Isian, 5=Uraian).
+4. Berikan kunci jawaban yang BENAR di field "key" HANYA berupa HURUF KAPITAL TUNGGAL dalam array. Contoh: ["A"] atau ["B"].
+5. JANGAN sertakan nomor urut soal di dalam teks "question" (hilangkan "1.", "2.", dst).
+6. Pada "options", tuliskan HANYA OPSI YANG ADA SESUAI SOAL ASLI. JANGAN menambahkan opsi jika tidak ada di soal asli!
+7. Tuliskan ISI OPSINYA SAJA tanpa huruf "A.", "B.", dst.
+8. Pastikan SEMUA teks bersih dari spasi berlebih, spasi tak terlihat (nbsp), dan tab.`;
+
+            let rawString = null;
+            let batchSuccess = false;
+
+            for (let prov of providersChain) {
+                if (batchSuccess) break;
+
+                if (prov === 'gemini' && geminiKeys.length > 0) {
+                    let models = ["gemini-2.5-flash", "gemini-2.5-pro"];
+                    for (let key of geminiKeys) {
+                        if (batchSuccess) break;
+                        for (let mod of models) {
+                            try {
+                                rawString = await callGeminiApi(key, mod, promptText);
+                                if (rawString) { batchSuccess = true; break; }
+                            } catch (e) {
+                                console.warn(`Gemini API/Model ${mod} gagal/limit:`, e.message);
+                            }
+                        }
+                    }
+                }
+                else if (prov === 'openai' && openaiKeys.length > 0) {
+                    let models = ["gpt-4o-mini", "gpt-4o"];
+                    for (let key of openaiKeys) {
+                        if (batchSuccess) break;
+                        for (let mod of models) {
+                            try {
+                                rawString = await callOpenAiApi(key, mod, promptText);
+                                if (rawString) { batchSuccess = true; break; }
+                            } catch (e) {
+                                console.warn(`OpenAI Model ${mod} gagal/limit:`, e.message);
+                            }
+                        }
+                    }
+                } 
+                else if (prov === 'groq' && groqKeys.length > 0) {
+                    let models = ["llama-3.3-70b-versatile", "llama-3.1-8b-instant"];
+                    for (let key of groqKeys) {
+                        if (batchSuccess) break;
+                        for (let mod of models) {
+                            try {
+                                rawString = await callGroqApi(key, mod, promptText);
+                                if (rawString) { batchSuccess = true; break; }
+                            } catch (e) {
+                                console.warn(`Groq Model ${mod} gagal/limit:`, e.message);
+                            }
+                        }
+                    }
+                }
+                else if (prov === 'cerebras' && cerebrasKeys.length > 0) {
+                    let models = ["llama-3.3-70b", "llama3.1-8b"];
+                    for (let key of cerebrasKeys) {
+                        if (batchSuccess) break;
+                        for (let mod of models) {
+                            try {
+                                rawString = await callCerebrasApi(key, mod, promptText);
+                                if (rawString) { batchSuccess = true; break; }
+                            } catch (e) {
+                                console.warn(`Cerebras Model ${mod} gagal/limit:`, e.message);
+                            }
+                        }
+                    }
+                }
+                else if (prov === 'github' && githubKeys.length > 0) {
+                    let models = ["gpt-4o-mini", "Phi-3.5-mini-instruct", "Llama-3.3-70B-Instruct"];
+                    for (let key of githubKeys) {
+                        if (batchSuccess) break;
+                        for (let mod of models) {
+                            try {
+                                rawString = await callGithubApi(key, mod, promptText);
+                                if (rawString) { batchSuccess = true; break; }
+                            } catch (e) {
+                                console.warn(`GitHub Model ${mod} gagal/limit:`, e.message);
+                            }
+                        }
+                    }
+                }
+                else if (prov === 'openrouter' && openRouterKeys.length > 0) {
+                    let models = ["deepseek/deepseek-chat", "meta-llama/llama-3.3-70b-instruct"];
+                    for (let key of openRouterKeys) {
+                        if (batchSuccess) break;
+                        for (let mod of models) {
+                            try {
+                                rawString = await callOpenRouterApi(key, mod, promptText);
+                                if (rawString) { batchSuccess = true; break; }
+                            } catch (e) {
+                                console.warn(`OpenRouter Model ${mod} gagal/limit:`, e.message);
+                            }
+                        }
+                    }
+                }
+                else if (prov === 'mistral' && mistralKeys.length > 0) {
+                    let models = ["mistral-small-latest", "mistral-large-latest"];
+                    for (let key of mistralKeys) {
+                        if (batchSuccess) break;
+                        for (let mod of models) {
+                            try {
+                                rawString = await callMistralApi(key, mod, promptText);
+                                if (rawString) { batchSuccess = true; break; }
+                            } catch (e) {
+                                console.warn(`Mistral Model ${mod} gagal/limit:`, e.message);
+                            }
+                        }
+                    }
+                }
+                else if (prov === 'cloudflare' && cfAccountId && cfKeys.length > 0) {
+                    let models = ["@cf/meta/llama-3.3-70b-instruct-fp8-fast", "@cf/meta/llama-3.1-8b-instruct"];
+                    for (let key of cfKeys) {
+                        if (batchSuccess) break;
+                        for (let mod of models) {
+                            try {
+                                rawString = await callCloudflareApi(cfAccountId, key, mod, promptText);
+                                if (rawString) { batchSuccess = true; break; }
+                            } catch (e) {
+                                console.warn(`Cloudflare Model ${mod} gagal/limit:`, e.message);
+                            }
+                        }
+                    }
+                }
+            }
+
+            if (!batchSuccess || !rawString) {
+                throw new Error(`Semua Provider & API Key yang dikonfigurasi mengalami limit atau error pada soal No ${startNo}-${endNo}. Silakan periksa kembali API Key Anda.`);
+            }
+
+            let firstBracket = rawString.indexOf('[');
+            let lastBracket = rawString.lastIndexOf(']');
+
+            if (firstBracket === -1 || lastBracket === -1) {
+                throw new Error(`Format JSON tidak valid pada No. ${startNo}-${endNo}`);
+            }
+
+            let cleanJsonString = rawString.substring(firstBracket, lastBracket + 1);
+            hasilAI = hasilAI.concat(JSON.parse(cleanJsonString));
+
+            if (i + batchSize < totalSoal) {
+                await delay(1000);
+            }
+        }
+
+        updateAIProgress(100, `Selesai! Berhasil menganalisis seluruh ${totalSoal} soal.`);
+
+        parsedData = hasilAI;
+        parsedData.forEach((item, index) => { 
+            item.number = index + 1; 
+            item.question = String(item.question || '').replace(/^\d+[\.\)]\s*/, '').trim();
+            item.images = item.images || []; 
+        });
+        isAiProcessed = true;
+        cacheLoaded = true;
+
+        await saveConverterCache(activeQuestionFingerprint, parsedData);
+
+        setTimeout(() => {
+            renderPreview();
+            alert(`Selesai! Berhasil memproses ${parsedData.length} soal menggunakan Rotasi Multi-AI Engine.`);
+        }, 400);
+
+    } catch (err) {
+        console.error(err);
+        alert('Gagal memproses soal: ' + err.message);
+        renderPreview();
+    } finally {
+        btn.disabled = false;
+        btn.innerHTML = '<i class="fas fa-robot mr-2"></i> Jalankan AI Generator & Kunci Jawaban Otomatis ✨';
+    }
+}
+
+function renderPreview() {
+    const container = document.getElementById('previewRenderArea');
+    const badge = document.getElementById('countBadge');
+    
+    if (isAiProcessed) {
+        badge.className = "badge badge-success px-2 py-1";
+        badge.innerText = parsedData.length + ' Soal Terverifikasi AI';
+    } else {
+        badge.className = "badge badge-warning px-2 py-1 text-dark";
+        badge.innerText = parsedData.length + ' Soal Terdeteksi (Draft)';
+    }
+
+    if (parsedData.length === 0) {
+        container.innerHTML = '<div class="text-center text-muted py-5"><i class="fas fa-magic fa-3x mb-3 text-teal d-block"></i>Tempelkan teks bank soal di sebelah kiri atau unggah dokumen.</div>';
+        return;
+    }
+
+    let html = '';
+    const typeBadges = {
+        1: '<span class="badge badge-primary badge-type">Pilihan Ganda (PG 1)</span>',
+        2: '<span class="badge badge-info badge-type">PG Kompleks (PG 2)</span>',
+        3: '<span class="badge badge-warning badge-type text-dark">Menjodohkan</span>',
+        4: '<span class="badge badge-success badge-type">Isian Singkat</span>',
+        5: '<span class="badge badge-danger badge-type">Uraian / Essai</span>'
+    };
+
+    parsedData.forEach((item) => {
+        let cleanQuestion = String(item.question || '').replace(/^\d+[\.\)]\s*/, '').trim();
+        html += `<div class="card mb-3 shadow-sm border">
+            <div class="card-header bg-white py-2 px-3 d-flex justify-content-between align-items-center">
+                <span class="font-weight-bold text-teal">No. ${item.number}</span>
+                ${isAiProcessed ? (typeBadges[item.jenis] || '') : '<span class="badge badge-secondary badge-type">Drafting</span>'}
+            </div>
+            <div class="card-body p-3">
+                <div class="mb-2 font-weight-bold text-dark">${cleanQuestion}</div>`;
+
+        if (item.options) {
+            html += '<div class="pl-2">';
+            item.options.forEach((opt, oIdx) => {
+                let char = String.fromCharCode(65 + oIdx);
+                let isCorrect = item.key && Array.isArray(item.key) && item.key.some(k => String(k).trim().toUpperCase() === char);
+                let cleanOptText = escapeHtml(opt).replace(/^[a-eA-E1-5][.)]\s*/, '').trim();
+
+                html += `<div class="${isCorrect ? 'text-success font-weight-bold' : 'text-muted'} mb-1">
+                    <small><b>${char}.</b> ${cleanOptText} ${isCorrect ? '<i class="fas fa-check-circle text-success ml-1"></i> <b>(Kunci AI)</b>' : ''}</small>
+                </div>`;
+            });
+            html += '</div>';
+        }
+        html += `</div></div>`;
+    });
+
+    container.innerHTML = html;
+}
+
+// CONVERT TO WORD GARUDA - RESPONSIVE LOADING, LANDSCAPE PERMANEN & TABEL TURUN
+async function convertToWordGaruda() {
+    if (!parsedData || parsedData.length === 0) {
+        alert("Belum ada soal untuk diunduh!");
+        return;
+    }
+
+    if (typeof docx === 'undefined' || typeof saveAs === 'undefined') {
+        alert("Library docx.js / FileSaver belum siap.");
+        return;
+    }
+
+    const btnDownload = document.getElementById('btnDownloadWord');
+    const originalText = btnDownload.innerHTML;
+    btnDownload.disabled = true;
+    btnDownload.innerHTML = `<i class="fas fa-spinner fa-spin mr-2"></i> Meng-generate File Word...`;
+
+    await new Promise(resolve => setTimeout(resolve, 100));
+
+    try {
+        const { Document, Packer, Paragraph, TextRun, Table, TableRow, TableCell, WidthType, ShadingType, BorderStyle, AlignmentType, VerticalAlign } = docx;
+
+        const FONT_NAME = "Calibri";
+        const FONT_SIZE = 24; 
+
+        const tableBorders = {
+            top: { style: BorderStyle.SINGLE, size: 4, color: "000000" },
+            bottom: { style: BorderStyle.SINGLE, size: 4, color: "000000" },
+            left: { style: BorderStyle.SINGLE, size: 4, color: "000000" },
+            right: { style: BorderStyle.SINGLE, size: 4, color: "000000" },
+            insideHorizontal: { style: BorderStyle.SINGLE, size: 4, color: "000000" },
+            insideVertical: { style: BorderStyle.SINGLE, size: 4, color: "000000" }
+        };
+
+        const tableRows = [];
+
+        // Header Row
+        const headerRow = new TableRow({
+            cantSplit: true,
+            children: [
+                new TableCell({ children: [new Paragraph({ children: [new TextRun({ text: "NO", bold: true, font: FONT_NAME, size: FONT_SIZE })], alignment: AlignmentType.CENTER })], width: { size: 5, unit: WidthType.PERCENTAGE }, shading: { fill: "B4C6E7", type: ShadingType.CLEAR }, verticalAlign: VerticalAlign.CENTER }),
+                new TableCell({ children: [new Paragraph({ children: [new TextRun({ text: "SOAL", bold: true, font: FONT_NAME, size: FONT_SIZE })], alignment: AlignmentType.CENTER })], width: { size: 45, unit: WidthType.PERCENTAGE }, shading: { fill: "B4C6E7", type: ShadingType.CLEAR }, verticalAlign: VerticalAlign.CENTER }),
+                new TableCell({ children: [new Paragraph({ children: [new TextRun({ text: "JENIS", bold: true, font: FONT_NAME, size: FONT_SIZE })], alignment: AlignmentType.CENTER })], width: { size: 8, unit: WidthType.PERCENTAGE }, shading: { fill: "B4C6E7", type: ShadingType.CLEAR }, verticalAlign: VerticalAlign.CENTER }),
+                new TableCell({ children: [new Paragraph({ children: [new TextRun({ text: "OPSI", bold: true, font: FONT_NAME, size: FONT_SIZE })], alignment: AlignmentType.CENTER })], width: { size: 7, unit: WidthType.PERCENTAGE }, shading: { fill: "B4C6E7", type: ShadingType.CLEAR }, verticalAlign: VerticalAlign.CENTER }),
+                new TableCell({ children: [new Paragraph({ children: [new TextRun({ text: "JAWABAN", bold: true, font: FONT_NAME, size: FONT_SIZE })], alignment: AlignmentType.CENTER })], width: { size: 25, unit: WidthType.PERCENTAGE }, shading: { fill: "B4C6E7", type: ShadingType.CLEAR }, verticalAlign: VerticalAlign.CENTER }),
+                new TableCell({ children: [new Paragraph({ children: [new TextRun({ text: "KUNCI", bold: true, font: FONT_NAME, size: FONT_SIZE })], alignment: AlignmentType.CENTER })], width: { size: 10, unit: WidthType.PERCENTAGE }, shading: { fill: "B4C6E7", type: ShadingType.CLEAR }, verticalAlign: VerticalAlign.CENTER })
+            ]
+        });
+        tableRows.push(headerRow);
+
+        function parseHtmlTableToDocx(htmlString) {
+            let docxElements = [];
+            let tempDiv = document.createElement('div');
+            tempDiv.innerHTML = htmlString;
+
+            let tableEl = tempDiv.querySelector('table');
+            if (tableEl) {
+                let clone = tempDiv.cloneNode(true);
+                let t = clone.querySelector('table');
+                if (t) t.remove();
+                let textBefore = clone.innerText.replace(/^\d+[\.\)]\s*/, '').trim();
+                if (textBefore) docxElements.push(new Paragraph({ children: [new TextRun({ text: textBefore, font: FONT_NAME, size: FONT_SIZE })] }));
+
+                let innerRows = [];
+                let rows = tableEl.querySelectorAll('tr');
+                rows.forEach(tr => {
+                    let cells = [];
+                    let cols = tr.querySelectorAll('th, td');
+                    cols.forEach(td => {
+                        cells.push(new TableCell({
+                            children: [new Paragraph({ children: [new TextRun({ text: td.innerText.trim(), font: FONT_NAME, size: FONT_SIZE })] })],
+                            borders: tableBorders
+                        }));
+                    });
+                    if (cells.length > 0) innerRows.push(new TableRow({ children: cells }));
+                });
+
+                if (innerRows.length > 0) {
+                    docxElements.push(new Table({ rows: innerRows, width: { size: 100, unit: WidthType.PERCENTAGE } }));
+                }
+            } else {
+                let cleanText = tempDiv.innerText.replace(/^\d+[\.\)]\s*/, '').trim();
+                docxElements.push(new Paragraph({ children: [new TextRun({ text: cleanText, font: FONT_NAME, size: FONT_SIZE })] }));
+            }
+
+            return docxElements;
+        }
+
+        parsedData.forEach((item) => {
+            let totalOptions = (item.options && item.options.length > 0) ? item.options.length : 5;
+            let cleanQuestionText = String(item.question || '').replace(/^\d+[\.\)]\s*/, '').trim();
+            let soalChildren = parseHtmlTableToDocx(cleanQuestionText);
+
+            for (let oIdx = 0; oIdx < totalOptions; oIdx++) {
+                let char = String.fromCharCode(65 + oIdx);
+                let isCorrect = item.key && Array.isArray(item.key) && item.key.some(k => String(k).trim().toUpperCase() === char);
+                let optText = (item.options && item.options[oIdx]) ? item.options[oIdx].replace(/^[a-eA-E1-5][.)]\s*/, '').trim() : '';
+
+                let cells = [];
+
+                if (oIdx === 0) {
+                    cells.push(
+                        new TableCell({ children: [new Paragraph({ children: [new TextRun({ text: String(item.number), font: FONT_NAME, size: FONT_SIZE })], alignment: AlignmentType.CENTER })], rowSpan: totalOptions, verticalAlign: VerticalAlign.CENTER }),
+                        new TableCell({ children: soalChildren, rowSpan: totalOptions, verticalAlign: VerticalAlign.CENTER }),
+                        new TableCell({ children: [new Paragraph({ children: [new TextRun({ text: String(item.jenis || 1), font: FONT_NAME, size: FONT_SIZE })], alignment: AlignmentType.CENTER })], rowSpan: totalOptions, verticalAlign: VerticalAlign.CENTER }),
+                        new TableCell({ children: [new Paragraph({ children: [new TextRun({ text: char, font: FONT_NAME, size: FONT_SIZE })], alignment: AlignmentType.CENTER })], verticalAlign: VerticalAlign.CENTER }),
+                        new TableCell({ children: [new Paragraph({ children: [new TextRun({ text: optText, font: FONT_NAME, size: FONT_SIZE })] })], verticalAlign: VerticalAlign.CENTER }),
+                        new TableCell({ children: [new Paragraph({ children: [new TextRun({ text: isCorrect ? "v" : "", font: FONT_NAME, size: FONT_SIZE })], alignment: AlignmentType.CENTER })], verticalAlign: VerticalAlign.CENTER })
+                    );
+                } else {
+                    cells.push(
+                        new TableCell({ children: [new Paragraph({ children: [new TextRun({ text: char, font: FONT_NAME, size: FONT_SIZE })], alignment: AlignmentType.CENTER })], verticalAlign: VerticalAlign.CENTER }),
+                        new TableCell({ children: [new Paragraph({ children: [new TextRun({ text: optText, font: FONT_NAME, size: FONT_SIZE })] })], verticalAlign: VerticalAlign.CENTER }),
+                        new TableCell({ children: [new Paragraph({ children: [new TextRun({ text: isCorrect ? "v" : "", font: FONT_NAME, size: FONT_SIZE })], alignment: AlignmentType.CENTER })], verticalAlign: VerticalAlign.CENTER })
+                    );
+                }
+
+                tableRows.push(new TableRow({ children: cells }));
+            }
+        });
+
+        const doc = new Document({
+            styles: {
+                default: {
+                    document: {
+                        run: {
+                            font: FONT_NAME,
+                            size: FONT_SIZE
+                        }
+                    }
+                }
+            },
+            sections: [{
+                properties: {
+                    page: {
+                        orientation: docx.PageOrientation.LANDSCAPE,
+                        size: {
+                            width: 16838,  
+                            height: 11906  
+                        },
+                        margin: {
+                            top: 1000,
+                            bottom: 1000,
+                            left: 1000,
+                            right: 1000
+                        }
+                    }
+                },
+                children: [
+                    new Paragraph({
+                        children: [new TextRun({ text: "I. Soal Pilihan Ganda (satu jawaban benar)", bold: true, font: FONT_NAME, size: FONT_SIZE })],
+                        spaceAfter: 100
+                    }),
+                    new Paragraph({
+                        children: [new TextRun({ text: "- Jenis Pilihan Ganda (PG 1) untuk pilihan ganda yang sudah ditentukan pilihan opsinya, misal 4 opsi (A,B,C,D) atau 5 opsi (A,B,C,D,E).", font: FONT_NAME, size: FONT_SIZE })],
+                        spaceAfter: 40
+                    }),
+                    new Paragraph({
+                        children: [
+                            new TextRun({ text: "- Kolom jenis harus diisi angka ", font: FONT_NAME, size: FONT_SIZE }),
+                            new TextRun({ text: "1", bold: true, font: FONT_NAME, size: FONT_SIZE })
+                        ],
+                        spaceAfter: 40
+                    }),
+                    new Paragraph({
+                        children: [new TextRun({ text: "- Biarkan OPSI JAWABAN kosong jika ada opsi yang tidak digunakan.", font: FONT_NAME, size: FONT_SIZE })],
+                        spaceAfter: 40
+                    }),
+                    new Paragraph({
+                        children: [new TextRun({ text: "- NOMOR soal yang tidak digunakan bisa dihapus atau dibiarkan kosong.", font: FONT_NAME, size: FONT_SIZE })],
+                        spaceAfter: 40
+                    }),
+                    new Paragraph({
+                        children: [new TextRun({ text: "- Soal dan jawaban bisa disisipi gambar", color: "00B050", font: FONT_NAME, size: FONT_SIZE })],
+                        spaceAfter: 40
+                    }),
+                    new Paragraph({
+                        children: [new TextRun({ text: "- KUNCI hanya diisi satu jawaban.", font: FONT_NAME, size: FONT_SIZE })],
+                        spaceAfter: 40
+                    }),
+                    new Paragraph({
+                        children: [
+                            new TextRun({ text: "- Beri tanda v pada opsi jawaban benar, (", font: FONT_NAME, size: FONT_SIZE }),
+                            new TextRun({ text: "v huruf kecil atau V huruf besar", bold: true, font: FONT_NAME, size: FONT_SIZE }),
+                            new TextRun({ text: ").", font: FONT_NAME, size: FONT_SIZE })
+                        ]
+                    }),
+                    new Paragraph({ children: [], spaceAfter: 150 }),
+                    new Table({
+                        rows: tableRows,
+                        borders: tableBorders,
+                        width: { size: 100, unit: WidthType.PERCENTAGE }
+                    })
+                ]
+            }]
+        });
+
+        const blob = await Packer.toBlob(doc);
+        saveAs(blob, "Soal_Converter.docx");
+
+    } catch (err) {
+        alert("Gagal mengunduh file Word: " + err.message);
+    } finally {
+        btnDownload.disabled = false;
+        btnDownload.innerHTML = originalText;
+    }
+}
+
+function clearAll() {
+    document.getElementById('inputText').innerHTML = '';
+    document.getElementById('btnAiAnswer').style.display = 'none';
+    parsedData = [];
+    isAiProcessed = false;
+    cacheLoaded = false;
+    activeQuestionFingerprint = '';
+    setCacheStatus('', 'muted');
+    renderPreview();
+}
+
+function escapeHtml(text) {
+    if (!text) return '';
+    return text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+}
+</script>

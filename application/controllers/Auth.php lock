@@ -1,0 +1,235 @@
+<?php
+/* ________________________________________
+    |                 GarudaCBT              |
+    |    https://github.com/garudacbt/cbt    |
+    |________________________________________|
+*/
+defined('BASEPATH') or exit('No direct script access allowed');
+
+class Auth extends CI_Controller {
+
+    public $data = array();
+
+    public function __construct() {
+        parent::__construct();
+        $this->load->database();
+        $this->load->library('form_validation');
+        $this->load->helper(['url', 'language', 'jam_ujian']);
+        $this->form_validation->set_error_delimiters($this->config->item('error_start_delimiter', 'ion_auth'), $this->config->item('error_end_delimiter', 'ion_auth'));
+        $this->lang->load('auth');
+    }
+
+    public function output_json($data) {
+        $this->output->set_content_type('application/json')->set_output(json_encode($data));
+    }
+
+    public function index() {
+        $this->load->model('Settings_model', 'settings');
+        if (count($this->db->list_tables()) == 0) {
+            redirect('install');
+        }
+        $setting = $this->settings->getSetting();
+        if ($setting == null) {
+            redirect('install');
+        }
+        if ($this->ion_auth->logged_in()) {
+            $user_id = $this->ion_auth->user()->row()->id;
+            $group = $this->ion_auth->get_users_groups($user_id)->row()->name;
+            redirect('dashboard');
+        }
+        $this->data['setting'] = $setting;
+        $this->data['identity'] = [
+            'name' => 'identity',
+            'id' => 'identity',
+            'type' => 'text',
+            'placeholder' => 'Username',
+            'autofocus' => 'autofocus',
+            'class' => 'form-control',
+            'autocomplete' => 'off'
+        ];
+        $this->data['password'] = [
+            'name' => 'password',
+            'id' => 'password',
+            'type' => 'password',
+            'placeholder' => 'Password',
+            'class' => 'form-control'
+        ];
+        $this->data['message'] = validation_errors() ? validation_errors() : $this->session->flashdata('message');
+
+        $this->load->view('_templates/auth/_header', $this->data);
+        $this->load->view('auth/login');
+        $this->load->view('_templates/auth/_footer');
+    }
+
+    // ==========================================
+    // FUNGSI CEK LOGIN
+    // ==========================================
+    public function cek_login() {
+        $this->form_validation->set_rules('identity', 'Username', 'required|trim');
+        $this->form_validation->set_rules('password', 'Password', 'required|trim');
+
+        if ($this->form_validation->run() === TRUE) {
+            $identity = $this->input->post('identity');
+            $remember = (bool)$this->input->post('remember');
+
+            if ($this->ion_auth->login($identity, $this->input->post('password'), $remember)) {
+                $this->cek_akses();
+            } else {
+                $data = [
+                    'status' => false,
+                    'failed' => $this->pesan_gagal_login($identity),
+                    'akses' => 'no attempts'
+                ];
+                $this->output_json($data);
+            }
+        } else {
+            $invalid = [
+                'identity' => form_error('identity'),
+                'password' => form_error('password')
+            ];
+            $data = [
+                'status' => false,
+                'invalid' => $invalid,
+                'akses' => 'no valid'
+            ];
+            $this->output_json($data);
+        }
+    }
+
+    // ==========================================
+    // PESAN GAGAL LOGIN YANG JELAS
+    // Membedakan: akun terkunci, akun nonaktif, username/password salah
+    // ==========================================
+    private function pesan_gagal_login($identity) {
+        // 1. Terkunci karena terlalu banyak percobaan gagal
+        if ($this->config->item('track_login_attempts', 'ion_auth')
+            && $this->ion_auth->is_max_login_attempts_exceeded($identity)) {
+            return 'Akun terkunci sementara karena terlalu banyak percobaan login gagal. Coba lagi beberapa saat.';
+        }
+
+        // 2. Akun belum aktif (kolom users.active = 0)
+        $err = trim(strip_tags((string) $this->ion_auth->errors()));
+        $teks_nonaktif = trim(strip_tags((string) $this->lang->line('login_unsuccessful_not_active')));
+        if ($err !== '' && (
+            ($teks_nonaktif !== '' && stripos($err, $teks_nonaktif) !== false)
+            || stripos($err, 'inactive') !== false
+            || stripos($err, 'not active') !== false
+        )) {
+            return 'Akun belum aktif. Hubungi administrator.';
+        }
+
+        // 3. Username atau password salah
+        return 'Incorrect Login';
+    }
+
+    public function cek_akses() {
+        if ($this->ion_auth->logged_in()) {
+            $role_akses = $this->input->post('role_akses');
+            $is_admin   = $this->ion_auth->is_admin();
+            $is_guru    = $this->ion_auth->in_group("guru");
+
+            // BLOKIR SISWA DI BROWSER ANDROID SAJA (laptop/PC tidak diblokir)
+            $is_siswa = (!$is_admin && !$is_guru);
+            if ($is_siswa && $this->is_android_browser()) {
+                $this->ion_auth->logout();
+                $this->output_json([
+                    "status" => false,
+                    "failed" => $this->pesan_blokir_android()
+                ]);
+                return;
+            }
+
+            // SISWA HANYA BOLEH LOGIN KE JADWAL YANG SEDANG BERLANGSUNG (tanggal + jam di menu Jadwal)
+            if ($is_siswa) {
+                $id_ujian = $this->input->post('id_ujian', true);
+                $boleh = false;
+                if ($id_ujian !== null && $id_ujian !== '') {
+                    foreach (jadwal_aktif_sekarang() as $j) {
+                        if ((string) $j['id_jadwal'] === (string) $id_ujian) {
+                            $boleh = true;
+                            break;
+                        }
+                    }
+                }
+                if (!$boleh) {
+                    $this->ion_auth->logout();
+                    $this->output_json([
+                        "status" => false,
+                        "failed" => jadwal_login_pesan()
+                    ]);
+                    return;
+                }
+            }
+
+            if ($role_akses === 'siswa' && ($is_admin || $is_guru)) {
+                $this->ion_auth->logout();
+                $this->output_json([
+                    "status" => false,
+                    "failed" => "Akun Manajemen/Guru tidak diizinkan masuk melalui jalur Siswa!"
+                ]);
+                return;
+            }
+
+            if ($role_akses === 'admin' && !$is_admin && !$is_guru) {
+                $this->ion_auth->logout();
+                $this->output_json([
+                    "status" => false,
+                    "failed" => "Akun Siswa tidak memiliki hak akses ke Panel Admin!"
+                ]);
+                return;
+            }
+
+            $status = true;
+            $this->load->model('Log_model', 'logging');
+            $this->logging->saveLog(1, "Login");
+            $url = "dashboard";
+        } else {
+            $status = false;
+            $url = "auth";
+        }
+
+        $data = [
+            'status' => $status,
+            'url' => $url,
+            'role' => $this->ion_auth->is_admin() ? 'admin' : ($this->ion_auth->in_group('guru') ? 'guru' : 'siswa')
+        ];
+        $this->output_json($data);
+    }
+
+    // ==========================================
+    // PENGATURAN BLOKIR SISWA DI BROWSER ANDROID
+    // ==========================================
+    // Penanda yang bisa ditambahkan aplikasi ke User-Agent (opsional).
+    private $app_marker = 'CBTApp';
+
+    // Set true SEMENTARA untuk menampilkan User-Agent di pesan error saat uji coba.
+    private $debug_ua = false;
+
+    // TRUE jika request datang dari browser Android (Chrome, Brave, dll), BUKAN dari aplikasi.
+    // - Laptop/PC/iPhone: User-Agent tidak mengandung "Android" -> tidak diblokir.
+    // - Aplikasi Android (WebView): User-Agent mengandung "; wv)" atau penanda CBTApp -> lolos.
+    private function is_android_browser() {
+        $ua = (string) $this->input->user_agent();
+
+        if ($ua === '' || stripos($ua, 'Android') === false) {
+            return false;
+        }
+
+        $is_app = (stripos($ua, $this->app_marker) !== false || stripos($ua, '; wv)') !== false);
+        return !$is_app;
+    }
+
+    private function pesan_blokir_android() {
+        $pesan = 'Siswa di Android hanya dapat login melalui aplikasi ujian.';
+        if ($this->debug_ua) {
+            $pesan .= ' UA: ' . $this->input->user_agent();
+        }
+        return $pesan;
+    }
+
+    public function logout() {
+        $this->ion_auth->logout();
+        // Dialihkan ke URL login dengan parameter role admin
+        redirect('login?role=admin', 'refresh');
+    }
+}

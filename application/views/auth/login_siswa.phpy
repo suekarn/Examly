@@ -1,0 +1,328 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login Siswa - C.B.S.A</title>
+    
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/4.6.2/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+    
+    <style>
+        html, body {
+            background-color: #f8fafc;
+            font-family: 'Segoe UI', Roboto, sans-serif;
+            margin: 0;
+            padding: 0;
+            min-height: 100vh;
+            /* SOLUSI UTAMA: Mengaktifkan scroll asli browser agar mouse wheel lancar di area mana saja */
+            overflow-y: auto !important; 
+        }
+
+        body {
+            position: relative;
+        }
+
+        /* 1. HEADER BIRU DI BELAKANG (Terkunci Mati Permanen) */
+        .header-top {
+            background-color: #326698 !important;
+            background-image: url('https://pusmendik.kemdikbud.go.id/an/images/bg-top.png') !important;
+            background-size: auto 100% !important; 
+            background-repeat: repeat-x !important;  
+            background-position: top left !important;
+            height: 160px !important; 
+            display: flex !important;
+            align-items: flex-start !important; 
+            padding: 12px 45px 0 85px !important; 
+            color: white !important;
+            /* DIKUNCI MATI: Tidak akan ikut bergerak sama sekali saat halaman di-scroll */
+            position: fixed !important; 
+            top: 0; left: 0; right: 0;
+            z-index: 1 !important; /* Diset ke lapisan belakang */
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        }
+
+        /* Ukuran Logo ANBK */
+        .header-logo img { 
+            height: 95px !important; 
+            width: auto !important;
+            margin-right: 25px !important; 
+        }
+
+        /* Penataan Teks Informasi Aplikasi */
+        .header-text {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            height: 95px; 
+        }
+
+        .header-text b {
+            font-size: 1.8rem !important; 
+            font-weight: 700;
+            display: block;
+            line-height: 1.1;
+        }
+
+        .header-text small {
+            font-size: 1.1rem !important; 
+            display: block;
+            opacity: 0.9;
+            margin-top: 4px;
+        }
+
+        /* 2. PEMBUNGKUS UTAMA (Mengikuti aliran scroll alami) */
+        .login-wrapper {
+            width: 100%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            /* Jarak padding atas disesuaikan agar card menimpa background biru di awal pemuatan */
+            padding-top: 110px; 
+            padding-bottom: 80px; 
+            padding-left: 20px;
+            padding-right: 20px;
+            box-sizing: border-box;
+            position: relative;
+            /* Z-index ditinggikan agar semua komponen form berada di atas lapisan background */
+            z-index: 10 !important; 
+        }
+
+        /* 3. KOTAK LOGIN SELAMAT DATANG (Meluncur ke depan menutupi logo saat di-scroll) */
+        .login-card {
+            background: #ffffff;
+            width: 100%;
+            max-width: 360px; 
+            padding: 30px 30px 40px 30px; 
+            border-radius: 26px; 
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.15); 
+            border: 1px solid #e2e8f0;
+            margin-top: 20px;
+        }
+
+        .login-card h2 { 
+            font-weight: 700; 
+            font-size: 1.6rem; 
+            color: #1e293b; 
+            margin-top: 0;
+            margin-bottom: 20px; 
+        }
+
+        /* Gaya Form Input Minimalis Garis Bawah */
+        .input-group-custom { 
+            position: relative; 
+            margin-bottom: 25px; 
+            border-bottom: 2px solid #e2e8f0; 
+            display: flex; 
+            align-items: center; 
+            padding-bottom: 6px;
+        }
+        
+        .input-group-custom i { 
+            color: #94a3b8; 
+            margin-right: 12px; 
+            width: 20px; 
+            text-align: center; 
+            font-size: 1.15rem;
+        }
+        
+        .input-group-custom .form-control { 
+            border: none !important; 
+            box-shadow: none !important; 
+            padding: 6px 0; 
+            height: auto; 
+            background: transparent !important; 
+            font-size: 1rem; 
+            color: #334155;
+        }
+
+        /* Khusus elemen select */
+        .input-group-custom select.form-control {
+            appearance: auto;
+            -webkit-appearance: auto;
+            -moz-appearance: auto;
+            cursor: pointer;
+        }
+
+        .input-group-custom .form-control::placeholder {
+            color: #cbd5e1;
+        }
+
+        /* Tombol Utama */
+        .btn-login { 
+            width: 100%; 
+            height: 48px; 
+            background: #326698; 
+            border: none; 
+            color: white; 
+            font-weight: 600; 
+            font-size: 1rem; 
+            border-radius: 6px; 
+            margin-top: 15px; 
+            transition: all 0.2s ease; 
+        }
+
+        .btn-login:hover {
+            background: #254d73;
+        }
+
+        .btn-login:disabled {
+            background: #cbd5e1;
+            cursor: not-allowed;
+        }
+
+        /* ==========================================================================
+           RESPONSIF UNTUK LAYAR HP (MOBILE)
+           ========================================================================== */
+        @media (max-width: 576px) {
+            .header-top {
+                height: 140px !important; 
+                padding: 8px 20px 0 40px !important;     
+                box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            }
+
+            .header-logo img { 
+                height: 60px !important;           
+                margin-right: 15px !important;     
+            }
+
+            .header-text {
+                height: 60px; 
+            }
+
+            .header-text b {
+                font-size: 1.3rem !important;      
+            }
+
+            .header-text small {
+                font-size: 0.9rem !important;      
+                margin-top: 2px;
+            }
+
+            .login-wrapper {
+                padding-top: 90px; 
+            }
+
+            .login-card {
+                max-width: 330px; 
+                padding: 25px 25px 35px 25px;                
+                border-radius: 20px;
+                box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+            }
+            
+            .login-card h2 {
+                font-size: 1.4rem;                 
+                margin-bottom: 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+
+<header class="header-top">
+    <div class="header-logo">
+        <img src="https://pusmendik.kemendikdasmen.go.id/an/images/logo-kemdikbud-71x72.png" alt="Logo">
+    </div>
+    <div class="header-text">
+        <b>Application</b>
+        <small>Based CAT</small>
+    </div>
+</header>
+
+<div class="login-wrapper">
+    <div class="login-card">
+        <h2 class="text-center">Selamat Datang</h2>
+        
+        <div id="infoMessage" class="mb-3">
+            <?php if (isset($message) && $message != ''): ?>
+                <div class="alert alert-danger text-center py-2 small"><?= $message; ?></div>
+            <?php endif; ?>
+        </div>
+
+        <?= form_open("login/proses_siswa", array('id' => 'login')); ?>
+            
+            <div class="input-group-custom">
+                <i class="fas fa-user-circle"></i>
+                <input type="text" name="identity" class="form-control" placeholder="Username" required autocomplete="off" autofocus>
+            </div>
+
+            <div class="input-group-custom">
+                <i class="fas fa-lock"></i>
+                <input type="password" name="password" id="password" class="form-control" placeholder="Password" required>
+                <i id="toggle-password" class="fas fa-eye" style="cursor:pointer; color:#94a3b8; margin-left: 10px;"></i>
+            </div>
+
+            <?php if (isset($jadwal) && !empty($jadwal)): ?>
+                <div class="input-group-custom">
+                    <i class="fas fa-book"></i>
+                    <select name="id_jadwal" id="id_jadwal" class="form-control" required>
+                        <option value="" disabled selected>-- Pilih Mata Pelajaran --</option>
+                        <?php foreach ($jadwal as $j): ?>
+                            <option value="<?= $j->id_ujian ?>"><?= $j->nama_mapel ?></option>
+                        <?php endforeach; ?>
+                    </select>
+                </div>
+            <?php else: ?>
+                <div class="alert alert-warning text-center py-2 small mb-3">
+                    <i class="fas fa-exclamation-triangle mr-1"></i> Tidak ada jadwal ujian yang aktif saat ini.
+                </div>
+            <?php endif; ?>
+
+            <button type="submit" id="submit" class="btn btn-login">
+                Login
+            </button>
+        <?= form_close(); ?>
+    </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+<script>
+    $(document).ready(function(){
+        
+        // 1. Logika Interaktif Lihat/Sembunyikan Password
+        $('#toggle-password').on('click', function () {
+            const field = $('#password');
+            const type = field.attr('type') === 'password' ? 'text' : 'password';
+            field.attr('type', type);
+            $(this).toggleClass('fa-eye fa-eye-slash');
+        });
+
+        // 2. Kirim Data Form via AJAX Async
+        $('form#login').on('submit', function(e){
+            e.preventDefault(); 
+            
+            var infobox = $('#infoMessage');
+            var btn = $('#submit');
+            
+            infobox.html('<div class="alert alert-info text-center py-2"><i class="fas fa-spinner fa-spin mr-2"></i>Memeriksa data...</div>');
+            btn.attr('disabled', 'disabled').text('Tunggu...');
+
+            $.ajax({
+                url: $(this).attr('action'),
+                type: 'POST',
+                data: $(this).serialize(),
+                dataType: 'json',
+                success: function(res){
+                    btn.removeAttr('disabled').text('Login');
+                    
+                    if(res.status){
+                        infobox.html('<div class="alert alert-success text-center py-2">Login Berhasil! Mengalihkan...</div>');
+                        localStorage.setItem('garudaCBT.login', '1');
+                        window.location.href = '<?= base_url() ?>' + res.url;
+                    } else {
+                        var msg = res.failed ? res.failed : 'Username atau Password Salah!';
+                        infobox.html('<div class="alert alert-danger text-center py-2">' + msg + '</div>');
+                    }
+                },
+                error: function(xhr, status, error) {
+                    btn.removeAttr('disabled').text('Login');
+                    console.log("Response Error Server:", xhr.responseText);
+                    infobox.html('<div class="alert alert-warning text-center py-2">Gagal membaca respon server. Hubungi Proktor/Teknisi.</div>');
+                }
+            });
+        });
+    });
+</script>
+
+</body>
+</html>

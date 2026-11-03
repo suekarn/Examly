@@ -1,0 +1,118 @@
+﻿<?php
+defined('BASEPATH') OR exit('No direct script access allowed');
+
+class Converter extends CI_Controller {
+
+    public function __construct() {
+        parent::__construct();
+        if (!$this->ion_auth->logged_in()) {
+            redirect('auth/login', 'refresh');
+        }
+
+        $this->load->model('Dashboard_model', 'dashboard');$this->load->model('Cbt_model', 'cbt');
+    }
+
+    public function index() {
+        // =========================================================================
+        // LOGIKA PENYIMPANAN API KEY KE DATABASE MYSQL
+        // =========================================================================
+        if ($this->input->post('action') === 'save_keys') {
+            $gemini             =$this->input->post('gemini', TRUE);
+            $openai             =$this->input->post('openai', TRUE); // <-- Ditambahkan
+            $groq               =$this->input->post('groq', TRUE);
+            $cerebras           =$this->input->post('cerebras', TRUE);
+            $github             =$this->input->post('github', TRUE);
+            $openrouter         =$this->input->post('openrouter', TRUE);
+            $mistral            =$this->input->post('mistral', TRUE);
+            $cloudflare_account =$this->input->post('cloudflare_account', TRUE);
+            $cloudflare_key     =$this->input->post('cloudflare_key', TRUE);
+            $chain              =$this->input->post('chain', TRUE);
+
+            if (!$this->db->table_exists('ai_config')) {$this->db->query("CREATE TABLE `ai_config` (
+                    `id` INT AUTO_INCREMENT PRIMARY KEY, 
+                    `key_name` VARCHAR(50) UNIQUE, 
+                    `key_value` TEXT
+                ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;");
+            }
+
+            $keysData = [
+                'gemini'             => $gemini,
+                'openai'             => $openai, // <-- Ditambahkan ke array simpan
+                'groq'               => $groq,
+                'cerebras'           => $cerebras,
+                'github'             => $github,
+                'openrouter'         => $openrouter,
+                'mistral'            => $mistral,
+                'cloudflare_account' => $cloudflare_account,
+                'cloudflare_key'     => $cloudflare_key,
+                'chain'              => $chain
+            ];
+
+            foreach ($keysData as$kName => $kVal) {$this->db->replace('ai_config', [
+                    'key_name'  => $kName,
+                    'key_value' => $kVal
+                ]);
+            }
+
+            $this->output
+                ->set_content_type('application/json')
+                ->set_output(json_encode([
+                    'status'  => 'success', 
+                    'message' => 'API Key berhasil disimpan permanen di Database Server!'
+                ]));
+            return;
+        }
+        // =========================================================================
+
+        $user    =$this->ion_auth->user()->row();
+        $setting =$this->db->get('setting')->row();
+
+        if ($this->ion_auth->is_admin()) {
+            $profile = method_exists($this->dashboard, 'getProfileAdmin') 
+                ? $this->dashboard->getProfileAdmin($user->id) 
+                : $user;
+        } else {
+            $profile = method_exists($this->dashboard, 'getProfileGuru') 
+                ? $this->dashboard->getProfileGuru($user->id) 
+                : $user;
+        }
+
+        $tp  =$this->db->get_where('master_tp', ['active' => 1])->row();
+        $smt =$this->db->get_where('master_smt', ['active' => 1])->row();
+
+        // Baca Simpanan Key dari Database
+        $savedKeys = [
+            'gemini'             => '', 
+            'openai'             => '', // <-- Key default OpenAI ditambahkan
+            'groq'               => '', 
+            'cerebras'           => '', 
+            'github'             => '',
+            'openrouter'         => '', 
+            'mistral'            => '',
+            'cloudflare_account' => '',
+            'cloudflare_key'     => '',
+            'chain'              => '["gemini","openai","groq","cerebras","github","openrouter","mistral","cloudflare"]' // <-- Tambah openai ke chain default
+        ];
+
+        if ($this->db->table_exists('ai_config')) {
+            $dbConfig =$this->db->get('ai_config')->result_array();
+            foreach ($dbConfig as $row) {$savedKeys[$row['key_name']] =$row['key_value'];
+            }
+        }
+
+        $data = [
+            'user'       => $user,
+            'title'      => 'Converter Soal',
+            'sub_title'  => 'Konversi Soal Teks/Docx ke CSV & Word GarudaCBT',
+            'setting'    => $setting,
+            'profile'    => $profile,
+            'tp'         => $tp,
+            'smt'        => $smt,
+            'tp_active'  => $tp,
+            'smt_active' => $smt,
+            'savedKeys'  => $savedKeys
+        ];
+
+        $this->load->view('_templates/dashboard/_header.php', $data);$this->load->view('converter/index', $data);$this->load->view('_templates/dashboard/_footer.php');
+    }
+}

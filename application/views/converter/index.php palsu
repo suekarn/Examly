@@ -1,0 +1,3701 @@
+<script>
+document.addEventListener("DOMContentLoaded", function() {
+    let currentTitle = document.title;
+    if (currentTitle.includes("<div") || currentTitle.includes("border:")) {
+        document.title = "AI Converter Soal";
+    }
+});
+</script>
+
+<style>
+/* =========================================================
+   DARK NEON GREEN / CYAN THEME
+   Visual-only theme layer: existing IDs, handlers and logic
+   are intentionally preserved.
+   ========================================================= */
+:root{
+    --neon:#00ff9c;
+    --neon-2:#00e5ff;
+    --neon-soft:#21f6b0;
+    --bg:#020b0a;
+    --bg-2:#061513;
+    --panel:#071b18;
+    --panel-2:#09231f;
+    --line:rgba(0,255,156,.34);
+    --line-cyan:rgba(0,229,255,.22);
+    --text:#ecfffa;
+    --muted:#8ab7ae;
+    --danger:#ff4f9a;
+    --warning:#ffd84d;
+}
+.content-wrapper{
+    position:relative;
+    min-height:100vh;
+    overflow-x:hidden;
+    background:
+        radial-gradient(circle at 12% 15%, rgba(0,255,156,.10), transparent 26%),
+        radial-gradient(circle at 90% 10%, rgba(0,229,255,.08), transparent 24%),
+        linear-gradient(180deg,#020b0a 0%,#03110f 45%,#020807 100%) !important;
+    color:var(--text) !important;
+}
+.content-wrapper:before{
+    content:"";
+    position:absolute;
+    inset:0;
+    pointer-events:none;
+    opacity:.30;
+    background-image:
+        linear-gradient(90deg,rgba(0,255,156,.09) 1px,transparent 1px),
+        linear-gradient(rgba(0,255,156,.055) 1px,transparent 1px);
+    background-size:72px 72px;
+    mask-image:linear-gradient(to bottom,black,transparent 88%);
+}
+.content-wrapper:after{
+    content:"";
+    position:absolute;
+    top:0;right:0;
+    width:42%;
+    height:240px;
+    pointer-events:none;
+    opacity:.28;
+    background:
+        linear-gradient(135deg,transparent 46%,rgba(0,255,156,.45) 47%,transparent 48%) 0 0/90px 90px,
+        linear-gradient(45deg,transparent 46%,rgba(0,229,255,.30) 47%,transparent 48%) 35px 35px/90px 90px;
+}
+.content-wrapper > *{position:relative;z-index:1}
+.text-teal{color:var(--neon)!important}
+.bg-teal{background:linear-gradient(135deg,#00e5a0,#00bfa6)!important;color:#00130e!important}
+.btn-teal{
+    background:linear-gradient(135deg,#00f0a4,#00c9b7)!important;
+    color:#00130e!important;
+    border:1px solid rgba(0,255,156,.65)!important;
+    font-weight:800;
+    box-shadow:0 0 14px rgba(0,255,156,.18);
+}
+.btn-teal:hover{filter:brightness(1.12);box-shadow:0 0 22px rgba(0,255,156,.30)}
+.card-teal.card-outline{
+    border:1px solid var(--line)!important;
+    border-top:1px solid var(--neon)!important;
+    border-radius:18px!important;
+    box-shadow:0 0 0 1px rgba(0,255,156,.06),0 0 28px rgba(0,255,156,.08)!important;
+    overflow:hidden;
+}
+.cursor-pointer{cursor:pointer}
+.badge-type{font-size:11px;padding:4px 8px}
+
+/* Main converter cards */
+.content-wrapper .card-teal .card-header,
+.content-wrapper .card-teal .card-footer,
+.content-wrapper .card-teal .card-body{
+    background:linear-gradient(180deg,rgba(5,28,24,.97),rgba(3,17,15,.98))!important;
+    color:var(--text)!important;
+    border-color:rgba(0,255,156,.18)!important;
+}
+.content-wrapper .card-teal .card-header{
+    min-height:58px;
+    border-bottom:1px solid rgba(0,255,156,.22)!important;
+}
+.content-wrapper .card-teal .card-title,
+.content-wrapper .card-teal label,
+.content-wrapper .card-teal .text-dark{color:#e9fff9!important}
+.content-wrapper .card-teal .text-muted{color:#7faea4!important}
+.content-wrapper .card-teal .form-control,
+.content-wrapper .card-teal .custom-select{
+    background:#041310!important;
+    color:#dffef5!important;
+    border:1px solid rgba(0,255,156,.30)!important;
+}
+.content-wrapper .card-teal .form-control:focus,
+.content-wrapper .card-teal .custom-select:focus{
+    border-color:var(--neon)!important;
+    box-shadow:0 0 0 .12rem rgba(0,255,156,.13),0 0 18px rgba(0,255,156,.12)!important;
+}
+.terminal-input{
+    height:420px;
+    overflow-y:auto;
+    font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,monospace;
+    font-size:13px;
+    line-height:1.6;
+    white-space:pre-wrap;
+    background:
+        radial-gradient(circle at 15% 10%,rgba(0,255,156,.06),transparent 25%),
+        #020d0c!important;
+    color:#d9fff4!important;
+    border:1px solid rgba(0,255,156,.42)!important;
+    box-shadow:inset 0 0 28px rgba(0,255,156,.035),0 0 18px rgba(0,255,156,.05)!important;
+    border-radius:12px!important;
+}
+.terminal-input:focus{
+    border-color:var(--neon)!important;
+    box-shadow:0 0 0 .12rem rgba(0,255,156,.12),inset 0 0 25px rgba(0,255,156,.04)!important;
+}
+.terminal-input table,#previewRenderArea table{border-collapse:collapse;margin:8px 0;width:100%}
+.terminal-input th,.terminal-input td,#previewRenderArea th,#previewRenderArea td{
+    border:1px solid rgba(0,255,156,.22);
+    padding:4px 8px;
+    font-size:12px;
+}
+#previewRenderArea{
+    background:
+        radial-gradient(circle at 50% 35%,rgba(0,255,156,.08),transparent 30%),
+        #020d0c!important;
+    color:#eafff8!important;
+    border:1px solid rgba(0,255,156,.38)!important;
+}
+#previewRenderArea .preview-question{
+    line-height:1.55;margin-bottom:10px!important;word-break:normal;overflow-wrap:anywhere
+}
+#previewRenderArea .preview-options{display:block;margin:6px 0 0;padding-left:0}
+#previewRenderArea .preview-option{
+    display:block!important;width:100%;margin:0 0 7px!important;padding:4px 8px 4px 4px;
+    line-height:1.5;white-space:normal;word-break:normal;overflow-wrap:anywhere
+}
+#previewRenderArea .preview-option-label{display:inline-block;min-width:24px;margin-right:8px;font-weight:700;color:var(--neon)}
+#previewRenderArea .preview-option-text{display:inline}
+#previewRenderArea img{max-width:100%;height:auto;vertical-align:middle;border-radius:4px}
+#previewRenderArea .preview-img{margin:6px 0;border:1px solid rgba(0,255,156,.22);background:#fff}
+#previewRenderArea .preview-option .preview-img{margin:2px 6px 2px 0}
+/* Rumus / equation Word (KaTeX) */
+#previewRenderArea .preview-eq,.terminal-input .eq-token{display:inline-block;vertical-align:middle;white-space:nowrap;max-width:100%}
+#previewRenderArea .preview-eq .katex,.terminal-input .eq-token .katex{font-size:1.1em;text-indent:0}
+.terminal-input .eq-token{padding:0 2px;cursor:default}
+.eq-fallback{font-family:monospace;font-style:italic}
+.content-wrapper .btn-primary{
+    background:linear-gradient(135deg,#005cff,#006eff)!important;
+    border-color:#00b8ff!important;
+    box-shadow:0 0 16px rgba(0,140,255,.18);
+}
+.content-wrapper .btn-warning{
+    background:linear-gradient(135deg,#ffd93d,#ffb400)!important;
+    border-color:#ffe26a!important;
+    color:#111!important;
+}
+.content-wrapper .btn-outline-danger{
+    color:#ff62a5!important;border-color:#ff3f8f!important;background:rgba(255,30,120,.05)!important
+}
+.content-wrapper .badge-warning{background:#ffd21c!important;color:#111!important}
+
+/* Dark table / form helpers */
+.content-wrapper .table{color:#dffef5!important}
+.content-wrapper .table thead th{background:#071d19!important;color:#8fffe0!important;border-color:rgba(0,255,156,.22)!important}
+.content-wrapper .table td{border-color:rgba(0,255,156,.15)!important}
+.content-wrapper .table-hover tbody tr:hover{background:rgba(0,255,156,.06)!important}
+.content-wrapper .alert-light{background:#071d19!important;color:#a9d8ce!important;border-color:rgba(0,255,156,.18)!important}
+.content-wrapper hr{border-color:rgba(0,255,156,.16)!important}
+.content-wrapper code{color:#8fffe0;background:#041713}
+.content-wrapper .custom-control-label{color:#dffef5!important}
+.content-wrapper .btn-outline-secondary{color:#a9d8ce;border-color:rgba(0,255,156,.25)}
+.content-wrapper .btn-outline-secondary:hover{background:rgba(0,255,156,.10);color:#fff}
+
+/* Modal */
+#apiKeyModal .modal-content{
+    background:linear-gradient(180deg,#061a17,#020d0c)!important;
+    color:#eafff8!important;
+    border:1px solid rgba(0,255,156,.35)!important;
+    border-radius:16px;
+    box-shadow:0 0 45px rgba(0,255,156,.15);
+}
+#apiKeyModal .modal-header{border-bottom:1px solid rgba(0,255,156,.22)!important}
+#apiKeyModal .modal-footer{border-top:1px solid rgba(0,255,156,.18)!important}
+#apiKeyModal .text-dark,#apiKeyModal label{color:#eafff8!important}
+#apiKeyModal .text-muted{color:#83aaa2!important}
+#apiKeyModal .form-control{
+    background:#03110f!important;color:#eafff8!important;border-color:rgba(0,255,156,.28)!important
+}
+#apiKeyModal .card.bg-light{background:#071d19!important;color:#eafff8!important;border-color:rgba(0,255,156,.22)!important}
+
+/* Scrollbars */
+.content-wrapper ::-webkit-scrollbar{width:8px;height:8px}
+.content-wrapper ::-webkit-scrollbar-track{background:#020a09}
+.content-wrapper ::-webkit-scrollbar-thumb{background:linear-gradient(#00e5a0,#00aebf);border-radius:10px}
+
+/* Responsive */
+@media(max-width:768px){
+    .terminal-input{height:360px}
+}
+</style>
+
+<div class="content-wrapper pt-3">
+<style>
+/* =========================================================
+   SMART AI API MANAGER — HEADER MATCH TO REFERENCE IMAGE
+   ========================================================= */
+.smart-manager{
+    margin:0 auto 18px;
+    padding:0 18px;
+    max-width:1500px;
+}
+.smart-hero{
+    position:relative;
+    overflow:hidden;
+    padding:14px 18px 12px;
+    color:#ecfffa;
+    border-radius:0 0 18px 18px;
+    border:1px solid rgba(0,255,156,.30);
+    border-top:1px solid rgba(0,255,156,.16);
+    background:
+        radial-gradient(circle at 12% 20%,rgba(0,255,156,.12),transparent 23%),
+        radial-gradient(circle at 82% 15%,rgba(0,229,255,.10),transparent 25%),
+        linear-gradient(180deg,rgba(3,17,15,.98),rgba(2,12,11,.98));
+    box-shadow:0 0 30px rgba(0,255,156,.08),inset 0 -1px 0 rgba(0,255,156,.10);
+}
+.smart-hero:before{
+    content:"";
+    position:absolute;
+    inset:0;
+    opacity:.22;
+    pointer-events:none;
+    background:
+        linear-gradient(135deg,transparent 45%,rgba(0,255,156,.55) 46%,transparent 47%) 0 0/110px 70px,
+        linear-gradient(45deg,transparent 45%,rgba(0,229,255,.35) 46%,transparent 47%) 35px 20px/120px 80px;
+}
+.smart-hero:after{
+    content:"";
+    position:absolute;
+    width:360px;height:160px;
+    right:-80px;top:-95px;
+    border-radius:50%;
+    background:rgba(0,255,156,.08);
+    filter:blur(2px);
+    pointer-events:none;
+}
+.smart-topbar{
+    position:relative;
+    z-index:2;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    gap:18px;
+    min-height:58px;
+}
+.smart-brand{
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    gap:12px;
+    min-width:0;
+    text-align:center;
+}
+.smart-brand-mark{
+    width:42px;height:42px;
+    flex:0 0 42px;
+    border-radius:12px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    color:#03130f;
+    font-size:20px;
+    background:linear-gradient(145deg,#00ffb0,#00bfa8);
+    box-shadow:0 0 18px rgba(0,255,156,.38),inset 0 0 0 1px rgba(255,255,255,.24);
+}
+.smart-brand-copy{min-width:0}
+.smart-title{
+    font-size:21px;
+    line-height:1.1;
+    font-weight:900;
+    letter-spacing:.1px;
+    color:#eafff7;
+    text-shadow:0 0 14px rgba(0,255,156,.20);
+}
+.smart-sub{
+    margin-top:4px;
+    color:#77bcb0;
+    font-size:11px;
+    letter-spacing:.25px;
+}
+.smart-header-actions{
+    display:flex;
+    align-items:center;
+    gap:10px;
+}
+.smart-live-card,.smart-clock-card{
+    min-height:48px;
+    border:1px solid rgba(0,255,156,.24);
+    border-radius:12px;
+    background:rgba(3,22,18,.80);
+    box-shadow:inset 0 0 20px rgba(0,255,156,.035),0 0 18px rgba(0,255,156,.05);
+}
+.smart-live-card{
+    display:flex;align-items:center;gap:9px;padding:7px 13px;
+}
+.smart-live-dot{
+    width:11px;height:11px;border-radius:50%;
+    background:#00ff9c;
+    box-shadow:0 0 0 4px rgba(0,255,156,.10),0 0 16px rgba(0,255,156,.85);
+    animation:smartPulse 1.8s infinite;
+}
+.smart-live-text strong{display:block;font-size:12px;color:#eafff7}
+.smart-live-text span{display:block;font-size:10px;color:#76c5b6;margin-top:1px}
+.smart-clock-card{
+    min-width:116px;
+    padding:7px 12px;
+    display:flex;
+    align-items:center;
+    gap:8px;
+}
+.smart-clock-card i{font-size:23px;color:#00e5ff;text-shadow:0 0 12px rgba(0,229,255,.55)}
+.smart-clock-time{font-size:13px;font-weight:900;color:#eafff7;font-variant-numeric:tabular-nums}
+.smart-clock-date{font-size:9px;color:#76c5b6;margin-top:1px}
+@keyframes smartPulse{
+    0%,100%{box-shadow:0 0 0 4px rgba(0,255,156,.10),0 0 10px rgba(0,255,156,.55)}
+    50%{box-shadow:0 0 0 6px rgba(0,255,156,.06),0 0 22px rgba(0,255,156,.95)}
+}
+.smart-nav{
+    position:relative;
+    z-index:2;
+    display:flex;
+    gap:8px;
+    flex-wrap:wrap;
+    margin-top:12px;
+    justify-content:center;
+    align-items:center;
+}
+.smart-nav button{
+    border:1px solid rgba(0,255,156,.26);
+    background:linear-gradient(180deg,rgba(9,46,39,.92),rgba(4,25,22,.92));
+    color:#dffef5;
+    border-radius:10px;
+    padding:10px 16px;
+    min-height:44px;
+    font-size:14px;
+    font-weight:800;
+    letter-spacing:.1px;
+    box-shadow:inset 0 0 12px rgba(0,255,156,.035),0 0 8px rgba(0,255,156,.03);
+    transition:.18s ease;
+}
+.smart-nav button i{color:#75ffe0;margin-right:5px}
+.smart-nav button.active,
+.smart-nav button:hover{
+    color:#00130e;
+    border-color:#00ffb0;
+    background:linear-gradient(135deg,#00ffad,#00cfc0);
+    box-shadow:0 0 16px rgba(0,255,156,.34),inset 0 0 0 1px rgba(255,255,255,.24);
+}
+.smart-nav button.active i,.smart-nav button:hover i{color:#00130e}
+.smart-panel{display:none;margin-top:10px}
+.smart-panel.active{display:block}
+.smart-stat{
+    border:1px solid rgba(0,255,156,.20)!important;
+    border-radius:12px;
+    background:linear-gradient(180deg,#071c18,#04110f)!important;
+    color:#eafff8;
+    box-shadow:0 4px 20px rgba(0,0,0,.25);
+}
+.smart-stat .num{font-size:24px;font-weight:900;color:#eafff8}
+.smart-stat small,.smart-card .text-muted{color:#78a9a0!important}
+.smart-card{
+    border:1px solid rgba(0,255,156,.22)!important;
+    border-radius:12px;
+    overflow:hidden;
+    background:#04120f!important;
+    color:#eafff8;
+    box-shadow:0 5px 22px rgba(0,0,0,.24);
+}
+.smart-card .card-header{
+    background:linear-gradient(180deg,#09231f,#061713)!important;
+    color:#eafff8!important;
+    border-bottom:1px solid rgba(0,255,156,.18)!important;
+}
+.smart-card .card-body{background:#04120f!important}
+.smart-status{font-size:10px;font-weight:800;border-radius:20px;padding:4px 8px}
+.smart-status.healthy{background:rgba(0,255,156,.13);color:#43ffb9;border:1px solid rgba(0,255,156,.20)}
+.smart-status.cooldown,.smart-status.rate_limited{background:rgba(255,216,77,.12);color:#ffe27b}
+.smart-status.error,.smart-status.disabled,.smart-status.invalid_key{background:rgba(255,79,154,.12);color:#ff75b3}
+.smart-status.model_error{background:rgba(133,113,255,.13);color:#a99dff}
+.smart-status.unknown{background:rgba(148,180,174,.10);color:#9abcb5}
+.smart-table{font-size:12px}
+.smart-table th{white-space:nowrap;background:#061a17!important;color:#7fffe0!important;border-color:rgba(0,255,156,.18)!important}
+.smart-table td{border-color:rgba(0,255,156,.12)!important;color:#d7f9f0!important}
+.smart-table tbody tr:hover{background:rgba(0,255,156,.055)!important}
+.smart-mono{font-family:ui-monospace,SFMono-Regular,Menlo,monospace}
+.smart-log{max-height:360px;overflow:auto}
+.smart-progress{height:7px;border-radius:20px;background:#09231f;overflow:hidden}
+.smart-progress>span{display:block;height:100%;background:linear-gradient(90deg,#00e5ff,#00ff9c);box-shadow:0 0 10px rgba(0,255,156,.45)}
+.smart-health-grid{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:10px;margin-bottom:12px}
+.smart-health-mini{
+    border:1px solid rgba(0,255,156,.18);
+    border-radius:11px;padding:11px;
+    background:#061a17;
+}
+.smart-health-mini .v{font-size:20px;font-weight:900;color:#eafff8}
+.smart-health-mini .l{font-size:10px;color:#6faaa0;text-transform:uppercase;font-weight:800;letter-spacing:.3px}
+.smart-http{font-size:10px;font-weight:800;border-radius:6px;padding:3px 6px;background:#0b211d;color:#8bb8af}
+.smart-http.ok{background:rgba(0,255,156,.12);color:#43ffb9}
+.smart-http.bad{background:rgba(255,79,154,.12);color:#ff75b3}
+.smart-refreshing{opacity:.6;pointer-events:none;transition:opacity .15s ease}
+
+/* ===== Ringkasan Pemakaian Provider: bar persen limit ===== */
+.sq-legend{display:flex;flex-wrap:wrap;gap:6px 16px;font-size:11px;color:#8ab7ae;margin-bottom:12px}
+.sq-legend i{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:5px;vertical-align:-1px}
+.sq-item{--c1:#00ff9c;--c2:#00e5ff;--glow:rgba(0,255,156,.45);
+    padding:12px 14px 11px;margin-bottom:10px;border-radius:12px;
+    border:1px solid rgba(0,255,156,.16);
+    background:linear-gradient(180deg,#071c18,#04110f)}
+.sq-item.sq-mid{--c1:#ffd84d;--c2:#ffb400;--glow:rgba(255,200,40,.45);border-color:rgba(255,216,77,.25)}
+.sq-item.sq-high{--c1:#ff9f43;--c2:#ff6b3d;--glow:rgba(255,120,60,.5);border-color:rgba(255,140,60,.32)}
+.sq-item.sq-full{--c1:#ff4f9a;--c2:#ff2e63;--glow:rgba(255,50,110,.55);border-color:rgba(255,79,154,.45)}
+.sq-head{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:8px}
+.sq-name{font-weight:800;font-size:13px;color:#eafff8;display:flex;align-items:center;gap:8px;flex-wrap:wrap;min-width:0}
+.sq-chip{font-size:10px;font-weight:800;padding:3px 9px;border-radius:20px;color:var(--c1);
+    background:rgba(255,255,255,.04);border:1px solid var(--c1);letter-spacing:.2px}
+.sq-pct{font-size:22px;font-weight:900;line-height:1;color:var(--c1);text-shadow:0 0 14px var(--glow);font-variant-numeric:tabular-nums}
+.sq-pct small{font-size:12px;font-weight:800;margin-left:1px}
+.sq-track{position:relative;height:14px;border-radius:20px;background:#08201c;overflow:hidden;
+    box-shadow:inset 0 1px 4px rgba(0,0,0,.55),0 0 0 1px rgba(0,255,156,.10)}
+.sq-fill{display:block;height:100%;min-width:0;border-radius:20px;
+    background:linear-gradient(90deg,var(--c1),var(--c2));
+    box-shadow:0 0 12px var(--glow);
+    animation:sqGrow .9s cubic-bezier(.2,.8,.2,1)}
+.sq-item.sq-full .sq-fill{animation:sqGrow .9s cubic-bezier(.2,.8,.2,1),sqPulse 1.6s ease-in-out infinite .9s}
+.sq-mark{position:absolute;top:0;bottom:0;width:1px;background:rgba(255,255,255,.22)}
+.sq-scale{display:flex;justify-content:space-between;font-size:9px;color:#5f8f86;margin:3px 1px 0}
+.sq-meta{display:flex;flex-wrap:wrap;gap:4px 16px;margin-top:7px;font-size:11px;color:#8ab7ae}
+.sq-meta b{color:#eafff8}
+@keyframes sqGrow{from{width:0}}
+@keyframes sqPulse{0%,100%{filter:brightness(1)}50%{filter:brightness(1.35)}}
+@media(max-width:992px){
+    .smart-header-actions{gap:6px}
+    .smart-live-card{display:none}
+    .smart-health-grid{grid-template-columns:repeat(3,minmax(0,1fr))}
+}
+@media(max-width:768px){
+    .smart-manager{padding:0 8px}
+    .smart-topbar{align-items:flex-start}
+    .smart-brand-mark{width:38px;height:38px;flex-basis:38px}
+    .smart-title{font-size:17px}
+    .smart-sub{font-size:9px}
+    .smart-clock-card{min-width:96px}
+    .smart-clock-card i{font-size:19px}
+    .smart-clock-time{font-size:11px}
+    .smart-nav{overflow-x:auto;flex-wrap:nowrap;justify-content:flex-start;padding-bottom:3px}
+    .smart-nav button{white-space:nowrap}
+}
+@media(max-width:576px){
+    .smart-clock-card{padding:6px 8px}
+    .smart-clock-date{font-size:8px}
+    .smart-health-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+}
+
+/* ===== Premium navigation: efek sentuh + dropdown di layar kecil ===== */
+.smart-navwrap{position:relative;z-index:5}
+.smart-nav-toggle{display:none}
+.smart-nav button{position:relative;overflow:hidden;-webkit-tap-highlight-color:transparent;touch-action:manipulation;cursor:pointer}
+.smart-nav button:active{transform:scale(.95)}
+.smart-nav button .rip{position:absolute;border-radius:50%;background:rgba(255,255,255,.55);transform:scale(0);animation:snRip .55s ease-out forwards;pointer-events:none}
+@keyframes snRip{to{transform:scale(1);opacity:0}}
+@keyframes snDrop{from{opacity:0;transform:translateY(-8px) scale(.98)}to{opacity:1;transform:none}}
+@keyframes snItem{from{opacity:0;transform:translateX(-10px)}to{opacity:1;transform:none}}
+@media(max-width:768px){
+  .smart-nav-toggle{
+    display:flex;align-items:center;justify-content:space-between;width:100%;margin-top:12px;
+    min-height:48px;padding:10px 16px;border-radius:14px;color:#eafff7;font-size:15px;font-weight:800;
+    border:1px solid rgba(0,255,156,.4);
+    background:linear-gradient(135deg,rgba(9,56,47,.96),rgba(4,25,22,.96));
+    box-shadow:0 0 18px rgba(0,255,156,.14),inset 0 0 0 1px rgba(255,255,255,.05);
+    -webkit-tap-highlight-color:transparent;touch-action:manipulation;transition:.2s ease;
+  }
+  .smart-nav-toggle:active{transform:scale(.98)}
+  .smart-nav-toggle .snt-left{display:flex;align-items:center;gap:10px}
+  .smart-nav-toggle .snt-left i{color:#00ffb0;font-size:16px;width:20px;text-align:center}
+  .smart-nav-toggle .snt-caret{color:#75ffe0;font-size:13px;transition:transform .28s ease}
+  .smart-navwrap.open .smart-nav-toggle{border-color:#00ffb0;box-shadow:0 0 24px rgba(0,255,156,.32)}
+  .smart-navwrap.open .snt-caret{transform:rotate(180deg)}
+  .smart-navwrap .smart-nav{
+    display:none;position:relative;margin:8px 0 0;padding:8px;
+    flex-direction:column;flex-wrap:nowrap;align-items:stretch;justify-content:flex-start;gap:4px;
+    overflow:visible;max-height:70vh;overflow-y:auto;-webkit-overflow-scrolling:touch;
+    border-radius:16px;border:1px solid rgba(0,255,156,.35);
+    background:rgba(4,22,19,.94);-webkit-backdrop-filter:blur(16px);backdrop-filter:blur(16px);
+    box-shadow:0 18px 40px rgba(0,0,0,.55),0 0 26px rgba(0,255,156,.18);
+  }
+  .smart-navwrap.open .smart-nav{display:flex;animation:snDrop .24s ease-out}
+  .smart-navwrap .smart-nav button{
+    display:flex;align-items:center;width:100%;text-align:left;white-space:nowrap;
+    min-height:48px;padding:12px 14px;font-size:15px;border-radius:11px;border-color:transparent;
+    background:transparent;box-shadow:none;
+  }
+  .smart-navwrap.open .smart-nav button{animation:snItem .28s ease-out both}
+  .smart-navwrap.open .smart-nav button:nth-child(1){animation-delay:.02s}
+  .smart-navwrap.open .smart-nav button:nth-child(2){animation-delay:.05s}
+  .smart-navwrap.open .smart-nav button:nth-child(3){animation-delay:.08s}
+  .smart-navwrap.open .smart-nav button:nth-child(4){animation-delay:.11s}
+  .smart-navwrap.open .smart-nav button:nth-child(5){animation-delay:.14s}
+  .smart-navwrap.open .smart-nav button:nth-child(6){animation-delay:.17s}
+  .smart-navwrap.open .smart-nav button:nth-child(7){animation-delay:.2s}
+  .smart-navwrap.open .smart-nav button:nth-child(8){animation-delay:.23s}
+  .smart-navwrap .smart-nav button i{width:24px;margin-right:12px;text-align:center;font-size:16px}
+  .smart-navwrap .smart-nav button.active{box-shadow:0 0 14px rgba(0,255,156,.3)}
+}
+
+/* =========================================================
+   HERO PREMIUM — aurora, grid bergerak, logo ber-ring, judul shimmer
+   (visual saja, tidak mengubah logika)
+   ========================================================= */
+.smart-hero{
+    padding:26px 18px 16px;
+    border-radius:0 0 22px 22px;
+    background:
+        radial-gradient(circle at 12% 20%,rgba(0,255,156,.16),transparent 28%),
+        radial-gradient(circle at 85% 10%,rgba(0,229,255,.16),transparent 30%),
+        linear-gradient(180deg,#031411,#020c0b);
+    box-shadow:0 0 0 1px rgba(0,255,156,.18),0 10px 50px rgba(0,255,156,.12),0 0 90px rgba(0,229,255,.06),inset 0 -1px 0 rgba(0,255,156,.14);
+}
+/* garis tepi neon berjalan */
+.smart-hero .sh-edge{
+    position:absolute;left:0;right:0;bottom:0;height:2px;z-index:3;pointer-events:none;
+    background:linear-gradient(90deg,transparent,#00ff9c,#00e5ff,#00ff9c,transparent);
+    background-size:240% 100%;animation:shEdge 5s linear infinite;
+    box-shadow:0 0 14px rgba(0,255,156,.7);
+}
+/* aurora */
+.smart-hero .sh-aurora{
+    position:absolute;inset:-40%;z-index:0;pointer-events:none;opacity:.55;filter:blur(38px);
+    background:
+        radial-gradient(40% 35% at 20% 40%,rgba(0,255,156,.35),transparent 70%),
+        radial-gradient(35% 40% at 75% 55%,rgba(0,229,255,.30),transparent 70%),
+        radial-gradient(30% 30% at 50% 20%,rgba(120,90,255,.18),transparent 70%);
+    animation:shAurora 14s ease-in-out infinite alternate;
+}
+/* grid perspektif halus */
+.smart-hero .sh-grid{
+    position:absolute;inset:0;z-index:0;pointer-events:none;opacity:.16;
+    background-image:
+        linear-gradient(rgba(0,255,156,.55) 1px,transparent 1px),
+        linear-gradient(90deg,rgba(0,255,156,.55) 1px,transparent 1px);
+    background-size:38px 38px;
+    -webkit-mask-image:radial-gradient(ellipse at 50% 40%,#000 15%,transparent 70%);
+            mask-image:radial-gradient(ellipse at 50% 40%,#000 15%,transparent 70%);
+    animation:shGrid 9s linear infinite;
+}
+/* garis scan */
+.smart-hero .sh-scan{
+    position:absolute;top:0;bottom:0;width:140px;left:-160px;z-index:1;pointer-events:none;
+    background:linear-gradient(90deg,transparent,rgba(0,255,156,.10),rgba(0,229,255,.18),transparent);
+    transform:skewX(-18deg);animation:shScan 7s ease-in-out infinite;
+}
+/* partikel */
+.smart-hero .sh-dots{position:absolute;inset:0;z-index:1;pointer-events:none;overflow:hidden}
+.smart-hero .sh-dots i{
+    position:absolute;bottom:-10px;width:4px;height:4px;border-radius:50%;
+    background:#00ff9c;box-shadow:0 0 10px #00ff9c;opacity:0;animation:shRise 8s linear infinite;
+}
+.smart-hero .sh-dots i:nth-child(1){left:6%;animation-delay:0s}
+.smart-hero .sh-dots i:nth-child(2){left:17%;animation-delay:2.1s;background:#00e5ff;box-shadow:0 0 10px #00e5ff}
+.smart-hero .sh-dots i:nth-child(3){left:29%;animation-delay:4.4s}
+.smart-hero .sh-dots i:nth-child(4){left:41%;animation-delay:1.2s;background:#00e5ff;box-shadow:0 0 10px #00e5ff}
+.smart-hero .sh-dots i:nth-child(5){left:55%;animation-delay:5.6s}
+.smart-hero .sh-dots i:nth-child(6){left:67%;animation-delay:3.1s;background:#00e5ff;box-shadow:0 0 10px #00e5ff}
+.smart-hero .sh-dots i:nth-child(7){left:78%;animation-delay:6.5s}
+.smart-hero .sh-dots i:nth-child(8){left:90%;animation-delay:1.8s;background:#00e5ff;box-shadow:0 0 10px #00e5ff}
+
+.smart-topbar{min-height:84px}
+.smart-brand{gap:18px}
+
+/* logo dengan ring berputar */
+.smart-brand-mark{
+    position:relative;width:62px;height:62px;flex:0 0 62px;border-radius:18px;font-size:28px;
+    background:linear-gradient(145deg,#00ffb8,#00c2b0 60%,#00a8c8);
+    box-shadow:0 0 28px rgba(0,255,156,.55),0 0 60px rgba(0,229,255,.25),inset 0 0 0 1px rgba(255,255,255,.35);
+    animation:shFloat 4.5s ease-in-out infinite;
+}
+.smart-brand-mark:before{
+    content:"";position:absolute;inset:-6px;border-radius:23px;padding:2px;pointer-events:none;
+    background:conic-gradient(from 0deg,transparent 0 55%,#00ff9c 75%,#00e5ff 90%,transparent 100%);
+    -webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);
+    -webkit-mask-composite:xor;mask-composite:exclude;
+    animation:shSpin 3.2s linear infinite;
+}
+.smart-brand-mark:after{
+    content:"";position:absolute;inset:0;border-radius:18px;pointer-events:none;
+    background:linear-gradient(120deg,transparent 30%,rgba(255,255,255,.55) 50%,transparent 70%);
+    background-size:250% 100%;animation:shGloss 3.6s ease-in-out infinite;
+}
+.smart-brand-mark i{position:relative;z-index:1;filter:drop-shadow(0 2px 4px rgba(0,60,40,.35))}
+
+/* judul */
+.smart-brand-copy{text-align:left}
+.smart-title{
+    font-size:40px;line-height:1;font-weight:900;letter-spacing:-.5px;
+    display:flex;align-items:center;gap:12px;flex-wrap:wrap;
+    background:linear-gradient(90deg,#eafff7 0%,#00ff9c 28%,#00e5ff 50%,#00ff9c 72%,#eafff7 100%);
+    background-size:260% 100%;
+    -webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;color:transparent;
+    animation:shShine 6s linear infinite;
+    filter:drop-shadow(0 0 16px rgba(0,255,156,.35));
+}
+.smart-title .st-badge{
+    -webkit-text-fill-color:#03130f;color:#03130f;filter:none;
+    font-size:11px;font-weight:900;letter-spacing:1.4px;padding:5px 10px;border-radius:999px;
+    background:linear-gradient(135deg,#00ff9c,#00e5ff);
+    box-shadow:0 0 16px rgba(0,255,156,.55);
+    animation:shBadge 2.4s ease-in-out infinite;
+}
+.smart-sub{margin-top:10px;display:flex;flex-wrap:wrap;gap:8px;font-size:12px}
+.smart-sub .sc{
+    display:inline-flex;align-items:center;gap:7px;padding:5px 12px;border-radius:999px;
+    color:#bff7e6;letter-spacing:.3px;font-weight:600;
+    background:rgba(0,255,156,.07);border:1px solid rgba(0,255,156,.28);
+    backdrop-filter:blur(4px);transition:.25s;
+}
+.smart-sub .sc i{color:#00e5ff;text-shadow:0 0 10px rgba(0,229,255,.8)}
+.smart-sub .sc:hover{transform:translateY(-2px);background:rgba(0,255,156,.16);box-shadow:0 0 18px rgba(0,255,156,.3)}
+
+@keyframes shSpin{to{transform:rotate(360deg)}}
+@keyframes shFloat{0%,100%{transform:translateY(0)}50%{transform:translateY(-4px)}}
+@keyframes shGloss{0%,60%{background-position:150% 0}100%{background-position:-100% 0}}
+@keyframes shShine{to{background-position:260% 0}}
+@keyframes shBadge{0%,100%{box-shadow:0 0 10px rgba(0,255,156,.4)}50%{box-shadow:0 0 22px rgba(0,229,255,.9)}}
+@keyframes shEdge{to{background-position:240% 0}}
+@keyframes shAurora{0%{transform:translate3d(-4%,-2%,0) rotate(0)}100%{transform:translate3d(4%,3%,0) rotate(8deg)}}
+@keyframes shGrid{to{background-position:38px 38px}}
+@keyframes shScan{0%{left:-160px}55%,100%{left:110%}}
+@keyframes shRise{0%{transform:translateY(0);opacity:0}10%{opacity:.9}100%{transform:translateY(-150px);opacity:0}}
+@media(max-width:768px){
+    .smart-hero{padding:18px 12px 12px}
+    .smart-brand{gap:12px}
+    .smart-brand-mark{width:48px;height:48px;flex-basis:48px;font-size:22px;border-radius:14px}
+    .smart-title{font-size:26px}
+    .smart-sub{font-size:10px;gap:6px}
+    .smart-sub .sc{padding:4px 9px}
+}
+@media(prefers-reduced-motion:reduce){
+    .smart-hero *,.smart-hero:before,.smart-hero:after{animation:none!important}
+}
+
+/* logo animasi di samping SMART */
+.smart-title .st-orbit{
+    -webkit-text-fill-color:#00ff9c;color:#00ff9c;filter:none;
+    position:relative;width:40px;height:40px;flex:0 0 40px;border-radius:50%;
+    display:inline-flex;align-items:center;justify-content:center;font-size:17px;
+    background:radial-gradient(circle,rgba(0,255,156,.22),rgba(0,255,156,.04) 70%);
+    border:1px solid rgba(0,255,156,.45);
+    box-shadow:0 0 18px rgba(0,255,156,.45),inset 0 0 12px rgba(0,229,255,.25);
+    animation:shOrbitPulse 2.6s ease-in-out infinite;
+}
+.smart-title .st-orbit i{text-shadow:0 0 12px #00ff9c;animation:shChip 2.6s ease-in-out infinite}
+.smart-title .st-orbit b{
+    position:absolute;inset:-7px;border-radius:50%;pointer-events:none;
+    border:1px dashed rgba(0,229,255,.55);animation:shSpin 5s linear infinite;
+}
+.smart-title .st-orbit b:before{
+    content:"";position:absolute;top:-4px;left:50%;margin-left:-4px;width:8px;height:8px;border-radius:50%;
+    background:#00e5ff;box-shadow:0 0 12px #00e5ff,0 0 24px #00e5ff;
+}
+.smart-title .st-orbit b+b{inset:-14px;border:1px dotted rgba(0,255,156,.35);animation:shSpin 8s linear infinite reverse}
+.smart-title .st-orbit b+b:before{background:#00ff9c;box-shadow:0 0 12px #00ff9c;width:6px;height:6px;margin-left:-3px;top:-3px}
+@keyframes shOrbitPulse{0%,100%{box-shadow:0 0 14px rgba(0,255,156,.4),inset 0 0 10px rgba(0,229,255,.2)}50%{box-shadow:0 0 28px rgba(0,255,156,.8),inset 0 0 16px rgba(0,229,255,.45)}}
+@keyframes shChip{0%,100%{transform:scale(1)}50%{transform:scale(1.18)}}
+@media(max-width:768px){.smart-title .st-orbit{width:30px;height:30px;flex-basis:30px;font-size:13px}}
+
+/* badge "Soal Terdeteksi" */
+#countBadge.count-pill{
+    position:relative;display:inline-flex;align-items:center;gap:10px;
+    padding:5px 14px 5px 6px;border-radius:999px;overflow:hidden;
+    font-weight:800;line-height:1;white-space:nowrap;border:1px solid var(--cp-b);
+    color:var(--cp-c);background:linear-gradient(135deg,var(--cp-bg1),var(--cp-bg2));
+    box-shadow:0 0 18px var(--cp-glow),inset 0 0 12px rgba(255,255,255,.04);
+    transition:box-shadow .3s,border-color .3s;
+}
+#countBadge.count-pill:before{
+    content:"";position:absolute;top:0;bottom:0;left:-60%;width:40%;pointer-events:none;
+    background:linear-gradient(90deg,transparent,rgba(255,255,255,.28),transparent);
+    transform:skewX(-20deg);animation:cpShine 3.4s ease-in-out infinite;
+}
+#countBadge.count-pill.idle{--cp-c:#8ab7ae;--cp-b:rgba(138,183,174,.35);--cp-bg1:rgba(10,30,27,.9);--cp-bg2:rgba(8,24,21,.9);--cp-glow:rgba(0,0,0,0)}
+#countBadge.count-pill.idle:before{display:none}
+#countBadge.count-pill.draft{--cp-c:#ffe27a;--cp-b:rgba(255,216,77,.6);--cp-bg1:rgba(60,45,0,.75);--cp-bg2:rgba(40,30,0,.85);--cp-glow:rgba(255,216,77,.35)}
+#countBadge.count-pill.ok{--cp-c:#7dffc9;--cp-b:rgba(0,255,156,.65);--cp-bg1:rgba(0,60,40,.75);--cp-bg2:rgba(0,40,28,.85);--cp-glow:rgba(0,255,156,.45)}
+#countBadge .cp-ico{
+    position:relative;width:30px;height:30px;border-radius:50%;flex:0 0 30px;
+    display:flex;align-items:center;justify-content:center;font-size:13px;color:#06140f;
+    background:linear-gradient(145deg,var(--cp-c),var(--cp-b));
+}
+#countBadge .cp-ico:after{
+    content:"";position:absolute;inset:-4px;border-radius:50%;border:2px solid var(--cp-c);opacity:0;
+    animation:cpPing 2s ease-out infinite;
+}
+#countBadge.idle .cp-ico{background:rgba(138,183,174,.25);color:#8ab7ae}
+#countBadge.idle .cp-ico:after{display:none}
+#countBadge .cp-num{font-size:22px;font-weight:900;font-variant-numeric:tabular-nums;color:#fff;text-shadow:0 0 12px var(--cp-c)}
+#countBadge.idle .cp-num{color:#8ab7ae;text-shadow:none}
+#countBadge .cp-txt{display:flex;flex-direction:column;gap:3px;text-align:left}
+#countBadge .cp-txt b{font-size:11px;letter-spacing:.6px;text-transform:uppercase}
+#countBadge .cp-txt small{font-size:9px;letter-spacing:1.2px;font-weight:800;opacity:.85}
+#countBadge.pop{animation:cpPop .45s ease}
+@keyframes cpShine{0%,55%{left:-60%}100%{left:130%}}
+@keyframes cpPing{0%{transform:scale(.8);opacity:.8}100%{transform:scale(1.7);opacity:0}}
+@keyframes cpPop{0%{transform:scale(1)}40%{transform:scale(1.12)}100%{transform:scale(1)}}
+@media(prefers-reduced-motion:reduce){#countBadge,#countBadge *{animation:none!important}}
+</style>
+
+<div class="smart-manager container-fluid">
+  <div class="smart-hero">
+    <span class="sh-aurora"></span><span class="sh-grid"></span><span class="sh-scan"></span>
+    <span class="sh-dots"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></span>
+    <span class="sh-edge"></span>
+    <div class="smart-topbar">
+      <div class="smart-brand">
+        <div class="smart-brand-mark"><i class="fas fa-shield-alt"></i></div>
+        <div class="smart-brand-copy">
+          <div class="smart-title">AI Converter <span class="st-badge">SMART</span><span class="st-orbit" aria-hidden="true"><i class="fas fa-microchip"></i><b></b><b></b></span></div>
+        </div>
+      </div>
+    </div>
+    <div class="smart-navwrap" id="smartNavWrap">
+    <button type="button" class="smart-nav-toggle" id="smartNavToggle" aria-haspopup="true" aria-expanded="false">
+      <span class="snt-left"><i class="fas fa-bars" id="smartNavIcon"></i><span id="smartNavLabel">Menu</span></span>
+      <i class="fas fa-chevron-down snt-caret"></i>
+    </button>
+    <div class="smart-nav" id="smartNav">
+      <button data-tab="dashboard"><i class="fas fa-home"></i>Dashboard</button>
+      <button data-tab="providers"><i class="fas fa-network-wired"></i>Providers</button>
+      <button data-tab="keys"><i class="fas fa-key"></i>API Keys</button>
+      <button data-tab="models"><i class="fas fa-cubes"></i>Models</button>
+      <button data-tab="health"><i class="fas fa-heartbeat"></i>Health Check</button>
+      <button data-tab="usage"><i class="fas fa-chart-line"></i>Usage</button>
+      <button data-tab="logs"><i class="fas fa-list-alt"></i>Logs</button>
+      <button data-tab="settings"><i class="fas fa-sliders-h"></i>Settings</button>
+    </div>
+    </div>
+  </div>
+
+  <div id="smart-dashboard" class="smart-panel">
+    <div class="row mt-2">
+      <div class="col-md-3 col-6"><div class="card smart-stat"><div class="card-body p-3"><small class="text-muted">Providers</small><div class="num" id="smProviders">0</div></div></div></div>
+      <div class="col-md-3 col-6"><div class="card smart-stat"><div class="card-body p-3"><small class="text-muted">API Keys Aktif</small><div class="num" id="smKeys">0</div></div></div></div>
+      <div class="col-md-3 col-6"><div class="card smart-stat"><div class="card-body p-3"><small class="text-muted">Request</small><div class="num" id="smRequests">0</div></div></div></div>
+      <div class="col-md-3 col-6"><div class="card smart-stat"><div class="card-body p-3"><small class="text-muted">Success Rate</small><div class="num text-success" id="smSuccess">0%</div></div></div></div>
+    </div>
+    <div class="card smart-card mt-2"><div class="card-header bg-white font-weight-bold"><i class="fas fa-brain text-teal mr-1"></i> Smart Routing Status</div><div class="card-body p-0"><div class="table-responsive"><table class="table table-hover smart-table mb-0"><thead><tr><th>Provider</th><th>Keys</th><th>Healthy</th><th>Cooldown</th><th>Priority</th><th>Status</th></tr></thead><tbody id="smProviderRows"><tr><td colspan="6" class="text-center text-muted p-4">Memuat...</td></tr></tbody></table></div></div></div>
+  </div>
+
+  <div id="smart-providers" class="smart-panel"><div class="card smart-card"><div class="card-header bg-white font-weight-bold">Providers & Smart Priority</div><div class="card-body"><div class="table-responsive"><table class="table smart-table"><thead><tr><th>Provider</th><th>Enabled</th><th>Priority</th><th>Models</th><th>Action</th></tr></thead><tbody id="smProvidersRows"></tbody></table></div></div></div></div>
+  <div id="smart-keys" class="smart-panel"><div class="card smart-card"><div class="card-header bg-white font-weight-bold d-flex justify-content-between"><span>API Keys</span><button class="btn btn-teal btn-sm" onclick="openApiKeyModal()"><i class="fas fa-key mr-1"></i> Kelola Key</button></div><div class="card-body"><div class="alert alert-light border small mb-2">Key lama tetap digunakan. Smart Manager menambahkan status health, cooldown, statistik sukses/gagal, dan urutan otomatis.</div><div class="table-responsive"><table class="table smart-table"><thead><tr><th>Provider</th><th>Key</th><th>Status</th><th>Request</th><th>Success</th><th>Last Use</th></tr></thead><tbody id="smKeyRows"></tbody></table></div></div></div></div>
+  <div id="smart-models" class="smart-panel"><div class="card smart-card"><div class="card-header bg-white font-weight-bold d-flex justify-content-between align-items-center flex-wrap"><span>Model Manager</span><span><button class="btn btn-xs btn-outline-primary mr-1" onclick="smartTestAllModels()" id="btnTestAllModels"><i class="fas fa-vial mr-1"></i>Tes Semua Model</button><button class="btn btn-xs btn-outline-warning mr-1" onclick="smartModelBulk('disable_failed')"><i class="fas fa-ban mr-1"></i>Matikan yang Error</button><button class="btn btn-xs btn-outline-success" onclick="smartModelBulk('enable_all')"><i class="fas fa-power-off mr-1"></i>Aktifkan Semua</button></span></div><div class="card-body"><div id="smModelSummary" class="small text-muted mb-2"></div><div class="table-responsive"><table class="table smart-table"><thead><tr><th>Provider</th><th>Model</th><th>Urutan</th><th>Status</th><th>Hasil Tes</th><th>Success</th><th>Failed</th><th>Aksi</th></tr></thead><tbody id="smModelRows"></tbody></table></div><div class="small text-muted mt-2">Model yang <b>Mati</b> tidak dipakai saat konversi maupun Health Check. Urutan ▲▼ menentukan model yang dicoba lebih dulu dalam satu provider.</div></div></div></div>
+  <div id="smart-health" class="smart-panel"><div class="card smart-card"><div class="card-header bg-white font-weight-bold d-flex justify-content-between"><span><i class="fas fa-heartbeat text-danger mr-1"></i> Health Check</span><button class="btn btn-warning btn-sm" onclick="smartHealthAll()">Tes Semua Key</button></div><div class="card-body"><div id="smHealthSummary" class="small text-muted mb-2"></div>
+<div class="smart-health-grid">
+  <div class="smart-health-mini"><div class="l">Healthy</div><div class="v text-success" id="smHealthHealthy">0</div></div>
+  <div class="smart-health-mini"><div class="l">Cooldown</div><div class="v text-warning" id="smHealthCooldown">0</div></div>
+  <div class="smart-health-mini"><div class="l">Error</div><div class="v text-danger" id="smHealthError">0</div></div>
+  <div class="smart-health-mini"><div class="l">Disabled</div><div class="v text-secondary" id="smHealthDisabled">0</div></div>
+  <div class="smart-health-mini"><div class="l">HTTP Error</div><div class="v text-danger" id="smHealthHttpError">0</div></div>
+</div>
+<div class="table-responsive"><table class="table smart-table">
+<thead><tr><th>Provider</th><th>Key</th><th>Model</th><th>Status</th><th>HTTP</th><th>Response</th><th>Pesan</th><th>Checked</th><th></th></tr></thead>
+<tbody id="smHealthRows"></tbody></table></div></div></div></div>
+  <div id="smart-usage" class="smart-panel"><div class="row"><div class="col-12"><div class="card smart-card"><div class="card-header bg-white font-weight-bold"><i class="fas fa-tachometer-alt text-teal mr-1"></i> Ringkasan Pemakaian Provider <small class="text-muted ml-2">Limit harian • reset otomatis 00:00</small></div><div class="card-body"><div class="sq-legend"><span><i style="background:#00ff9c"></i>Aman (&lt; 60%)</span><span><i style="background:#ffd84d"></i>Mulai ramai (60–84%)</span><span><i style="background:#ff7a45"></i>Hampir habis (85–99%)</span><span><i style="background:#ff4f9a"></i>Limit tercapai (100%)</span></div><div id="smUsageBars"></div><div class="small text-muted mt-1">Persen = jumlah request konversi hari ini ÷ limit harian provider. Atur limit di tab <b>Settings</b>.</div></div></div></div></div></div>
+  <div id="smart-logs" class="smart-panel"><div class="card smart-card"><div class="card-header bg-white d-flex justify-content-between"><span class="font-weight-bold">Activity & Error Logs</span><button class="btn btn-outline-danger btn-sm" onclick="smartClearLogs()">Bersihkan Log</button></div><div class="card-body smart-log"><div class="table-responsive"><table class="table smart-table"><thead><tr><th>Waktu</th><th>Level</th><th>Provider</th><th>Model</th><th>Event</th><th>Message</th></tr></thead><tbody id="smLogRows"></tbody></table></div></div></div></div>
+  <div id="smart-settings" class="smart-panel"><div class="card smart-card"><div class="card-header bg-white font-weight-bold">Smart Routing Settings</div><div class="card-body"><div class="row"><div class="col-md-3"><label>Cooldown (detik)</label><input id="smCooldown" type="number" class="form-control form-control-sm" value="60"></div><div class="col-md-3"><label>Max Retry / Batch</label><input id="smRetry" type="number" class="form-control form-control-sm" value="3"></div><div class="col-md-3"><label>Mode Routing</label><select id="smRouting" class="form-control form-control-sm"><option value="smart">Smart Health + Priority</option><option value="chain">Manual Provider Chain</option><option value="speed">Response Speed</option></select></div><div class="col-md-3 d-flex align-items-end"><button class="btn btn-teal btn-sm btn-block" onclick="smartSaveSettings()">Simpan Settings</button></div></div><hr><div class="font-weight-bold small mb-1"><i class="fas fa-tachometer-alt text-teal mr-1"></i>Limit Request Harian per Provider</div><div class="small text-muted mb-2">Dipakai untuk bar persen di tab Usage. Sesuaikan dengan kuota paket/free-tier masing-masing provider, lalu klik <b>Simpan Settings</b>.</div><div class="row" id="smLimitInputs"></div><hr><div class="small text-muted">Smart mode akan mengutamakan provider/key yang sehat, kemudian menggunakan chain lama sebagai fallback. Sistem lama tetap berjalan sebagai mesin kompatibilitas.</div></div></div></div>
+</div>
+
+    <section class="content">
+        <div class="container-fluid">
+            <div class="row">
+                <div class="col-lg-6 col-md-12">
+                    <div class="card card-teal card-outline shadow-sm">
+                        <div class="card-header bg-light d-flex align-items-center py-2">
+                            <h3 class="card-title font-weight-bold text-dark mb-0" style="font-size: 15px;">
+                                <i class="fas fa-paste text-teal mr-1"></i> Input Bank Soal Mentah
+                            </h3>
+                            <div class="card-tools ml-auto">
+                                <button type="button" onclick="clearAll()" class="btn btn-xs btn-outline-danger">
+                                    <i class="fas fa-trash mr-1"></i> Bersihkan
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="card-body bg-light border-bottom py-2 px-3">
+                            <div class="row">
+                                <div class="col-6">
+                                    <label class="btn btn-primary btn-xs btn-block mb-0 shadow-sm cursor-pointer" for="fileImporter">
+                                        <i class="fas fa-file-upload mr-1"></i> Import Word / PDF
+                                        <input type="file" id="fileImporter" accept=".docx,.pdf" style="display: none;" onchange="handleFileUpload(this)">
+                                    </label>
+                                </div>
+                                <div class="col-6">
+                                    <label class="btn btn-teal btn-xs btn-block mb-0 shadow-sm cursor-pointer" for="batchImageUploader">
+                                        <i class="fas fa-images mr-1"></i> Upload Gambar (Batch)
+                                        <input type="file" id="batchImageUploader" multiple accept="image/*" style="display: none;" onchange="uploadBatchImages(this)">
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="card-body">
+                            <div id="inputText" contenteditable="true" class="form-control terminal-input" oninput="autoCleanAndParse()"></div>
+                            <small class="text-muted mt-2 d-block">
+                                <i class="fas fa-info-circle text-teal"></i> Tempel teks atau gunakan tombol upload di atas.
+                            </small>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-lg-6 col-md-12">
+                    <div class="card card-teal card-outline shadow-sm">
+                        <div class="card-header d-flex align-items-center bg-light py-2">
+                            <h3 class="card-title font-weight-bold text-dark mb-0" style="font-size: 15px;">
+                                <i class="fas fa-check-circle text-teal mr-1"></i> Preview Struktur & Kunci Jawaban
+                            </h3>
+                            <div class="card-tools ml-auto">
+                                <span class="count-pill idle" id="countBadge"><span class="cp-ico"><i class="fas fa-search"></i></span><span class="cp-num">0</span><span class="cp-txt"><b>Soal Terdeteksi</b><small>MENUNGGU INPUT</small></span></span>
+                            </div>
+                        </div>
+                        
+                        <div class="card-body p-3" id="previewRenderArea" style="height: 415px; overflow-y: auto; background-color: #f8f9fa;">
+                            <div class="text-center text-muted py-5">
+                                <i class="fas fa-magic fa-3x mb-3 text-teal d-block"></i>
+                                Tempelkan teks bank soal di sebelah kiri atau unggah dokumen untuk memulai.
+                            </div>
+                        </div>
+
+                        <div class="card-footer bg-white py-2">
+                            <div id="cacheStatus" class="small text-muted mb-2" style="display:none;"></div>
+                            <button type="button" onclick="prosesDanRapikanDenganAI()" id="btnAiAnswer" class="btn btn-warning btn-block font-weight-bold py-2 mb-2 shadow-sm text-dark" style="display:none;">
+                                <i class="fas fa-robot mr-2"></i> Jalankan AI Generator & Kunci Jawaban Otomatis ✨
+                            </button>
+                            <button type="button" onclick="convertToWordGaruda()" id="btnDownloadWord" class="btn btn-primary btn-block font-weight-bold py-2 shadow-sm">
+                                <i class="fas fa-file-word mr-2"></i> Download Soal (.docx)
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+</div>
+
+<!-- Modal Setting Multi-API Key & Provider Rotation -->
+<div class="modal fade" id="apiKeyModal" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg" role="document">
+        <div class="modal-content">
+            <div class="modal-header bg-teal text-white py-2">
+                <h5 class="modal-title font-weight-bold" style="font-size: 16px;">
+                    <i class="fas fa-sync-alt mr-2"></i>Pengaturan Multi-API Key & Rotasi Provider AI
+                </h5>
+                <button type="button" class="close text-white" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body" style="max-height: 75vh; overflow-y: auto;">
+                <p class="text-muted mb-3" style="font-size: 12px;">
+                    <i class="fas fa-info-circle text-teal"></i> Anda dapat memasukkan beberapa API Key per provider dipisahkan dengan tanda koma (<code>,</code>).
+                </p>
+
+                <!-- Google Gemini -->
+                <div class="form-group mb-3">
+                    <label class="font-weight-bold text-dark mb-1" style="font-size: 13px;">Google Gemini API Key(s):</label>
+                    <div class="input-group input-group-sm">
+                        <input type="password" id="inputGeminiKey" class="form-control" placeholder="AIzaSy1..., AIzaSy2...">
+                        <div class="input-group-append">
+                            <button class="btn btn-outline-secondary" type="button" title="Salin API Key" onclick="copyToClipboard('inputGeminiKey', this)"><i class="fas fa-copy"></i></button>
+                            <button class="btn btn-outline-secondary" type="button" title="Lihat/Sembunyikan" onclick="toggleVisibility('inputGeminiKey', this)"><i class="fas fa-eye"></i></button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- OpenAI -->
+                <div class="form-group mb-3">
+                    <label class="font-weight-bold text-dark mb-1" style="font-size: 13px;">OpenAI API Key(s):</label>
+                    <div class="input-group input-group-sm">
+                        <input type="password" id="inputOpenaiKey" class="form-control" placeholder="sk-proj-1..., sk-proj-2...">
+                        <div class="input-group-append">
+                            <button class="btn btn-outline-secondary" type="button" title="Salin API Key" onclick="copyToClipboard('inputOpenaiKey', this)"><i class="fas fa-copy"></i></button>
+                            <button class="btn btn-outline-secondary" type="button" title="Lihat/Sembunyikan" onclick="toggleVisibility('inputOpenaiKey', this)"><i class="fas fa-eye"></i></button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Groq -->
+                <div class="form-group mb-3">
+                    <label class="font-weight-bold text-dark mb-1" style="font-size: 13px;">Groq API Key(s):</label>
+                    <div class="input-group input-group-sm">
+                        <input type="password" id="inputGroqKey" class="form-control" placeholder="gsk_1..., gsk_2...">
+                        <div class="input-group-append">
+                            <button class="btn btn-outline-secondary" type="button" title="Salin API Key" onclick="copyToClipboard('inputGroqKey', this)"><i class="fas fa-copy"></i></button>
+                            <button class="btn btn-outline-secondary" type="button" title="Lihat/Sembunyikan" onclick="toggleVisibility('inputGroqKey', this)"><i class="fas fa-eye"></i></button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Pollinations.ai -->
+                <div class="form-group mb-3">
+                    <label class="font-weight-bold text-dark mb-1" style="font-size: 13px;">Pollinations.ai API Key(s):</label>
+                    <div class="input-group input-group-sm">
+                        <input type="password" id="inputPollinationsKey" class="form-control" placeholder="sk_..., sk_...">
+                        <div class="input-group-append">
+                            <button class="btn btn-outline-secondary" type="button" title="Salin API Key" onclick="copyToClipboard('inputPollinationsKey', this)"><i class="fas fa-copy"></i></button>
+                            <button class="btn btn-outline-secondary" type="button" title="Lihat/Sembunyikan" onclick="toggleVisibility('inputPollinationsKey', this)"><i class="fas fa-eye"></i></button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- OpenRouter -->
+                <div class="form-group mb-3">
+                    <label class="font-weight-bold text-dark mb-1" style="font-size: 13px;">OpenRouter API Key(s):</label>
+                    <div class="input-group input-group-sm">
+                        <input type="password" id="inputOpenRouterKey" class="form-control" placeholder="sk-or-v1-1..., sk-or-v1-2...">
+                        <div class="input-group-append">
+                            <button class="btn btn-outline-secondary" type="button" title="Salin API Key" onclick="copyToClipboard('inputOpenRouterKey', this)"><i class="fas fa-copy"></i></button>
+                            <button class="btn btn-outline-secondary" type="button" title="Lihat/Sembunyikan" onclick="toggleVisibility('inputOpenRouterKey', this)"><i class="fas fa-eye"></i></button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Mistral AI -->
+                <div class="form-group mb-3">
+                    <label class="font-weight-bold text-dark mb-1" style="font-size: 13px;">Mistral AI API Key(s):</label>
+                    <div class="input-group input-group-sm">
+                        <input type="password" id="inputMistralKey" class="form-control" placeholder="mistral_api_key_1, mistral_api_key_2...">
+                        <div class="input-group-append">
+                            <button class="btn btn-outline-secondary" type="button" title="Salin API Key" onclick="copyToClipboard('inputMistralKey', this)"><i class="fas fa-copy"></i></button>
+                            <button class="btn btn-outline-secondary" type="button" title="Lihat/Sembunyikan" onclick="toggleVisibility('inputMistralKey', this)"><i class="fas fa-eye"></i></button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Cloudflare Workers AI -->
+                <div class="card bg-light border p-2 mb-3">
+                    <div class="form-group mb-2">
+                        <label class="font-weight-bold text-dark mb-1" style="font-size: 13px;">Cloudflare Account ID:</label>
+                        <input type="text" id="inputCloudflareAccountId" class="form-control form-control-sm" placeholder="Contoh: 843abf...">
+                    </div>
+                    <div class="form-group mb-0">
+                        <label class="font-weight-bold text-dark mb-1" style="font-size: 13px;">Cloudflare API Token(s):</label>
+                        <div class="input-group input-group-sm">
+                            <input type="password" id="inputCloudflareKey" class="form-control" placeholder="cf_token_1, cf_token_2...">
+                            <div class="input-group-append">
+                                <button class="btn btn-outline-secondary" type="button" title="Salin Token" onclick="copyToClipboard('inputCloudflareKey', this)"><i class="fas fa-copy"></i></button>
+                                <button class="btn btn-outline-secondary" type="button" title="Lihat/Sembunyikan" onclick="toggleVisibility('inputCloudflareKey', this)"><i class="fas fa-eye"></i></button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Provider Chain -->
+                <div class="form-group mb-2">
+                    <label class="font-weight-bold text-dark mb-1" style="font-size: 13px;">Prioritas Urutan Provider AI (Fallback Hierarchy):</label>
+                    <div class="custom-control custom-checkbox mb-1">
+                        <input type="checkbox" class="custom-control-input provider-chain-item" id="prov1" value="gemini" checked>
+                        <label class="custom-control-label font-weight-bold text-dark" for="prov1">1. Google Gemini <span class="badge badge-primary">Utama</span></label>
+                    </div>
+                    <div class="custom-control custom-checkbox mb-1">
+                        <input type="checkbox" class="custom-control-input provider-chain-item" id="prov_openai" value="openai" checked>
+                        <label class="custom-control-label font-weight-bold text-dark" for="prov_openai">2. OpenAI (GPT-4o/Mini) <span class="badge badge-success">Cadangan 1</span></label>
+                    </div>
+                    <div class="custom-control custom-checkbox mb-1">
+                        <input type="checkbox" class="custom-control-input provider-chain-item" id="prov2" value="groq" checked>
+                        <label class="custom-control-label font-weight-bold text-dark" for="prov2">3. Groq AI <span class="badge badge-info">Cadangan 2</span></label>
+                    </div>
+                    <div class="custom-control custom-checkbox mb-1">
+                        <input type="checkbox" class="custom-control-input provider-chain-item" id="prov4" value="pollinations" checked>
+                        <label class="custom-control-label font-weight-bold text-dark" for="prov4">4. Pollinations.ai <span class="badge badge-dark">Cadangan 3</span></label>
+                    </div>
+                    <div class="custom-control custom-checkbox mb-1">
+                        <input type="checkbox" class="custom-control-input provider-chain-item" id="prov5" value="openrouter" checked>
+                        <label class="custom-control-label font-weight-bold text-dark" for="prov5">5. OpenRouter <span class="badge badge-warning">Cadangan 4</span></label>
+                    </div>
+                    <div class="custom-control custom-checkbox mb-1">
+                        <input type="checkbox" class="custom-control-input provider-chain-item" id="prov6" value="mistral" checked>
+                        <label class="custom-control-label font-weight-bold text-dark" for="prov6">6. Mistral AI <span class="badge badge-secondary">Cadangan 5</span></label>
+                    </div>
+                    <div class="custom-control custom-checkbox mb-1">
+                        <input type="checkbox" class="custom-control-input provider-chain-item" id="prov7" value="cloudflare" checked>
+                        <label class="custom-control-label font-weight-bold text-dark" for="prov7">7. Cloudflare Workers AI <span class="badge badge-warning text-dark">Cadangan 6</span></label>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer py-2">
+                <button type="button" class="btn btn-secondary btn-sm" data-dismiss="modal">Batal</button>
+                <button type="button" class="btn btn-teal btn-sm font-weight-bold px-3" onclick="saveApiKeyModal()">
+                    <i class="fas fa-check mr-1"></i> Simpan Pengaturan
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.6.0/mammoth.browser.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js"></script>
+<script src="https://unpkg.com/docx@7.8.2/build/index.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/katex.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/katex.min.js"></script>
+
+<script>
+const SERVER_KEYS = <?= json_encode($savedKeys ?? ['gemini'=>'','openai'=>'','groq'=>'','pollinations'=>'','openrouter'=>'','mistral'=>'','cloudflare_account'=>'','cloudflare_key'=>'','chain'=>'["gemini","openai","groq","pollinations","openrouter","mistral","cloudflare"]']) ?>;
+
+/* ================= SMART AI MANAGER ENGINE ================= */
+let SMART_STATE={providers:[],keys:[],health:[],models:[],usage:{},logs:[],settings:[]};
+let SMART_PROVIDER_CHAIN=null, SMART_KEY_ORDER={};
+const SMART_DEFAULTS={cooldown:60,retry:3,routing:'smart',limit:100};
+const SMART_MODEL_BUSY=new Set();
+function smartCsrf(fd){const n='<?= $this->security->get_csrf_token_name(); ?>',h='<?= $this->security->get_csrf_hash(); ?>';if(n)fd.append(n,h);return fd;}
+async function smartPost(data){
+  const fd=new FormData();
+  Object.keys(data||{}).forEach(k=>fd.append(k,typeof data[k]==='object'?JSON.stringify(data[k]):data[k]));
+  smartCsrf(fd);
+  const r=await fetch(window.location.href,{method:'POST',body:fd,credentials:'same-origin',headers:{'X-Requested-With':'XMLHttpRequest'}});
+  const raw=await r.text();
+  let json=null;
+  try{json=JSON.parse(raw);}catch(_){
+    const snippet=String(raw||'').replace(/<[^>]*>/g,' ').replace(/\s+/g,' ').trim().slice(0,240);
+    throw new Error(`Backend tidak mengembalikan JSON (HTTP ${r.status}). ${snippet||'Response kosong.'}`);
+  }
+  if(!r.ok) throw new Error(json?.message||json?.error||`HTTP ${r.status}`);
+  return json;
+}
+function smartMask(v){v=String(v||'');return v.length<8?'••••••••':v.slice(0,4)+'••••••••'+v.slice(-4)}
+function smartEscape(v){return String(v??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]));}
+function smartStatusLabel(s){
+  const map={healthy:'HEALTHY',cooldown:'COOLDOWN',rate_limited:'RATE LIMITED',error:'ERROR',disabled:'DISABLED',invalid_key:'INVALID KEY',model_error:'MODEL ERROR',unknown:'NOT CHECKED'};
+  return map[s]||String(s||'UNKNOWN').replaceAll('_',' ').toUpperCase();
+}
+function smartStatusBadge(s){s=s||'unknown';return `<span class="smart-status ${smartEscape(s)}"><i class="fas ${s==='healthy'?'fa-check-circle':s==='cooldown'||s==='rate_limited'?'fa-clock':s==='disabled'||s==='invalid_key'?'fa-ban':s==='model_error'?'fa-cubes':'fa-exclamation-circle'}"></i>${smartStatusLabel(s)}</span>`}
+function smartHttpBadge(http){
+  const n=Number(http||0);
+  if(!n)return '<span class="text-muted">—</span>';
+  return `<span class="smart-http ${n>=200&&n<300?'ok':'bad'}">${n}</span>`;
+}
+function smartErrorText(h){
+  if(h?.message)return smartEscape(h.message).slice(0,180);
+  if(h?.http_status)return `HTTP ${h.http_status}`;
+  return '—';
+}
+function smartSetBusy(on){
+  const box=document.querySelector('.smart-manager');
+  if(box)box.classList.toggle('smart-refreshing',!!on);
+}
+async function smartRefresh(){
+  try{
+    const r=await smartPost({action:'manager_snapshot'});
+    if(r.status!=='success')throw Error(r.message||'Snapshot gagal');
+    SMART_STATE=r;
+    smartBuildRouting();
+    smartRender();
+  }catch(e){
+    console.warn('Smart Manager snapshot:',e);
+    // Fallback frontend: UI tetap hidup walaupun endpoint manager belum tersedia.
+    smartBuildLocalFallback();
+    smartBuildRouting();
+    smartRender();
+    const el=document.getElementById('smHealthSummary');
+    if(el && !(SMART_STATE.health||[]).length){
+      el.innerHTML='<span class="text-warning"><i class="fas fa-exclamation-triangle mr-1"></i>Backend Smart Manager belum mengembalikan snapshot. Health Check langsung ke provider tetap dapat digunakan.</span>';
+    }
+  }
+}
+function smartBuildLocalFallback(){
+  const defs=[
+    ['gemini','Google Gemini',1,['gemini-3.5-flash','gemini-3.1-flash-lite']],
+    ['openai','OpenAI',2,['gpt-4.1-mini','gpt-4.1']],
+    ['groq','Groq AI',4,['openai/gpt-oss-120b','openai/gpt-oss-20b']],
+    ['pollinations','Pollinations.ai',6,['openai','openai-fast','deepseek']],
+    ['openrouter','OpenRouter',7,['deepseek/deepseek-chat','meta-llama/llama-3.3-70b-instruct']],
+    ['mistral','Mistral AI',8,['mistral-small-latest','mistral-large-latest']],
+    ['cloudflare','Cloudflare Workers AI',9,['@cf/meta/llama-3.3-70b-instruct-fp8-fast','@cf/meta/llama-3.1-8b-instruct']]
+  ];
+  const providers=[],keys=[],models=[];
+  defs.forEach(d=>{
+    const val=SERVER_KEYS[d[0]] || localStorage.getItem('CUSTOM_'+d[0].toUpperCase()+'_KEY') || '';
+    if(!val && d[0]==='cloudflare') return;
+    providers.push({provider_key:d[0],provider_name:d[1],priority:d[2],enabled:1});
+    d[3].forEach((m,i)=>models.push({provider_key:d[0],model_name:m,priority:i+1,enabled:1,success_count:0,fail_count:0}));
+    val.split(',').map(x=>x.trim()).filter(Boolean).forEach((v,i)=>keys.push({
+      provider_key:d[0],key_index:i+1,key_value:v,enabled:1,status:'unknown',
+      total_requests:0,success_count:0,fail_count:0
+    }));
+  });
+  SMART_STATE.providers=providers;
+  SMART_STATE.keys=keys;
+  SMART_STATE.models=models;
+  SMART_STATE.health=SMART_STATE.health||[];
+  SMART_STATE.usage=SMART_STATE.usage||{total:0,success:0,avg_ms:0};
+  SMART_STATE.logs=SMART_STATE.logs||[];
+  SMART_STATE.settings=SMART_STATE.settings||[];
+}
+
+function smartBuildRouting(){
+  const now=Date.now(), healthy={}; SMART_KEY_ORDER={};
+  (SMART_STATE.keys||[]).forEach(k=>{
+    const cool=k.cooldown_until?new Date(String(k.cooldown_until).replace(' ','T')).getTime():0;
+    if(k.enabled && k.status!=='disabled' && (!cool||cool<now)){
+      healthy[k.provider_key]??=[];healthy[k.provider_key].push(k.key_index);
+    }
+  });
+  const score={};(SMART_STATE.providers||[]).forEach(p=>score[p.provider_key]=Number(p.priority||100));
+  Object.keys(healthy).forEach(p=>{
+    healthy[p].sort((a,b)=>{
+      const ka=(SMART_STATE.keys||[]).find(x=>x.provider_key===p&&Number(x.key_index)===Number(a));
+      const kb=(SMART_STATE.keys||[]).find(x=>x.provider_key===p&&Number(x.key_index)===Number(b));
+      return Number(kb?.success_count||0)-Number(ka?.success_count||0);
+    });
+    SMART_KEY_ORDER[p]=healthy[p];
+  });
+  const providers=(SMART_STATE.providers||[]).filter(p=>p.enabled!=0).sort((a,b)=>score[a.provider_key]-score[b.provider_key]);
+  SMART_PROVIDER_CHAIN=providers.map(p=>p.provider_key); if(!SMART_PROVIDER_CHAIN.length)SMART_PROVIDER_CHAIN=null;
+}
+function smartRender(){
+  const ps=SMART_STATE.providers||[],ks=SMART_STATE.keys||[],ms=SMART_STATE.models||[],hs=SMART_STATE.health||[],u=SMART_STATE.usage||{};
+  const el=id=>document.getElementById(id);
+  el('smProviders').textContent=ps.length;
+  el('smKeys').textContent=ks.length;
+  el('smRequests').textContent=Number(u.total||0).toLocaleString();
+  const rate=Number(u.total||0)?Math.round(Number(u.success||0)/Number(u.total||1)*1000)/10:0;
+  el('smSuccess').textContent=rate+'%';
+
+  const grouped={};ks.forEach(k=>(grouped[k.provider_key]??=[]).push(k));
+  el('smProviderRows').innerHTML=ps.map(p=>{
+    const a=grouped[p.provider_key]||[];
+    const healthy=a.filter(k=>k.status==='healthy'||k.status==='unknown').length;
+    const cool=a.filter(k=>k.status==='cooldown').length;
+    const errors=a.filter(k=>['error','disabled'].includes(k.status)).length;
+    const checked=hs.filter(h=>h.provider_key===p.provider_key);
+    const last=checked.map(h=>h.checked_at).filter(Boolean).sort().pop();
+    return `<tr>
+      <td class="font-weight-bold">${smartEscape(p.provider_name)}</td><td>${a.length}</td>
+      <td class="text-success font-weight-bold">${healthy}</td><td class="text-warning font-weight-bold">${cool}</td>
+      <td>${p.priority}</td><td>${errors?'<span class="smart-status error">ATTENTION</span>':'<span class="smart-status healthy">READY</span>'}</td>
+      <td class="small text-muted">${last||'—'}</td></tr>`;
+  }).join('')||'<tr><td colspan="7" class="text-center text-muted p-4">Belum ada provider.</td></tr>';
+
+  el('smProvidersRows').innerHTML=ps.map(p=>`<tr>
+    <td>${smartEscape(p.provider_name)}</td><td>${p.enabled?'🟢':'🔴'}</td><td>${p.priority}</td>
+    <td>${ms.filter(m=>m.provider_key===p.provider_key&&Number(m.enabled)!==0).length}</td>
+    <td><button class="btn btn-xs btn-outline-secondary" onclick="smartHealthProvider('${smartEscape(p.provider_key)}')"><i class="fas fa-heartbeat mr-1"></i>Test</button></td>
+  </tr>`).join('');
+
+  el('smKeyRows').innerHTML=ks.map(k=>`<tr>
+    <td>${smartEscape(k.provider_key)}</td><td class="smart-mono">${smartMask(k.key_value)}</td>
+    <td>${smartStatusBadge(k.status)}</td><td>${k.total_requests||0}</td><td>${k.success_count||0}</td><td>${k.last_used_at||'-'}</td>
+  </tr>`).join('')||'<tr><td colspan="6" class="text-center text-muted p-4">Belum ada API key.</td></tr>';
+
+  const byProv={}; ms.forEach(m=>(byProv[m.provider_key]??=[]).push(m));
+  const modelArgs=m=>`'${smartEscape(m.provider_key)}','${smartEscape(m.model_name)}'`;
+  el('smModelRows').innerHTML=ms.map(m=>{
+    const grp=byProv[m.provider_key], idx=grp.indexOf(m), on=Number(m.enabled)!==0;
+    const busy=SMART_MODEL_BUSY.has(m.provider_key+'|'+m.model_name);
+    const test=busy?'<span class="text-info"><i class="fas fa-spinner fa-spin mr-1"></i>Menguji…</span>'
+      :!m.last_status?'<span class="text-muted">Belum dites</span>'
+      :`<span title="${smartEscape(m.last_message||'')}">${smartStatusBadge(m.last_status)} ${smartHttpBadge(m.last_http)} <span class="small text-muted">${m.last_ms?Number(m.last_ms)+' ms':''}</span></span>`;
+    return `<tr class="${on?'':'text-muted'}">
+      <td>${smartEscape(m.provider_key)}</td><td class="smart-mono">${smartEscape(m.model_name)}</td>
+      <td style="white-space:nowrap"><button class="btn btn-xs btn-outline-secondary" ${idx===0?'disabled':''} onclick="smartModelMove(${modelArgs(m)},'up')" title="Naikkan prioritas">▲</button> <button class="btn btn-xs btn-outline-secondary" ${idx===grp.length-1?'disabled':''} onclick="smartModelMove(${modelArgs(m)},'down')" title="Turunkan prioritas">▼</button> <span class="ml-1">${idx+1}</span></td>
+      <td><button class="btn btn-xs ${on?'btn-success':'btn-outline-secondary'}" onclick="smartModelToggle(${modelArgs(m)})" title="Klik untuk ${on?'mematikan':'mengaktifkan'}">${on?'🟢 Aktif':'🔴 Mati'}</button></td>
+      <td>${test}</td><td>${m.success_count||0}</td><td>${m.fail_count||0}</td>
+      <td><button class="btn btn-xs btn-outline-primary" ${busy?'disabled':''} onclick="smartTestModel(${modelArgs(m)})"><i class="fas fa-vial mr-1"></i>Test</button></td>
+    </tr>`;
+  }).join('');
+  {
+    const on=ms.filter(m=>Number(m.enabled)!==0).length, tested=ms.filter(m=>m.last_status);
+    const ok=tested.filter(m=>m.last_status==='healthy').length;
+    el('smModelSummary').innerHTML=`<b>${on}</b> aktif • <b>${ms.length-on}</b> mati • <b class="text-success">${ok}</b> lolos tes • <b class="text-danger">${tested.length-ok}</b> gagal tes • <b>${ms.length-tested.length}</b> belum dites`;
+  }
+
+  const counts={healthy:0,cooldown:0,error:0,disabled:0,httpError:0};
+  hs.forEach(h=>{
+    if(h.status==='healthy')counts.healthy++;
+    else if(h.status==='cooldown'||h.status==='rate_limited')counts.cooldown++;
+    else if(h.status==='disabled'||h.status==='invalid_key')counts.disabled++;
+    else if(h.status==='error'||h.status==='model_error')counts.error++;
+    if(Number(h.http_status)>=400)counts.httpError++;
+  });
+  el('smHealthHealthy').textContent=counts.healthy;
+  el('smHealthCooldown').textContent=counts.cooldown;
+  el('smHealthError').textContent=counts.error;
+  el('smHealthDisabled').textContent=counts.disabled;
+  el('smHealthHttpError').textContent=counts.httpError;
+  el('smHealthSummary').innerHTML=`<b>${counts.healthy}</b> sehat • <b>${counts.cooldown}</b> cooldown • <b>${counts.error}</b> error • <b>${counts.disabled}</b> disabled • <b>${counts.httpError}</b> HTTP error`;
+
+  el('smHealthRows').innerHTML=hs.map(h=>`<tr>
+    <td class="font-weight-bold">${smartEscape(h.provider_key)}</td><td>#${h.key_index}</td>
+    <td class="smart-mono">${smartEscape(h.model_name||'—')}</td><td>${smartStatusBadge(h.status)}</td>
+    <td>${smartHttpBadge(h.http_status)}</td><td>${h.response_ms?Number(h.response_ms)+' ms':'—'}</td>
+    <td title="${smartEscape(h.message||'')}">${smartErrorText(h)}</td><td>${h.checked_at||'—'}</td>
+    <td><button class="btn btn-xs btn-outline-primary" onclick="smartHealthKey('${smartEscape(h.provider_key)}',${h.key_index})"><i class="fas fa-redo mr-1"></i>Test</button></td>
+  </tr>`).join('')||'<tr><td colspan="9" class="text-center text-muted p-4">Belum ada API key untuk Health Check.</td></tr>';
+
+  {
+    const st={};(SMART_STATE.settings||[]).forEach(x=>st[x.setting_key]=x.setting_value);
+    const ubp=SMART_STATE.usage_by_provider||{};
+    const limitOf=k=>Math.max(1,parseInt(st['limit_'+k],10)||SMART_DEFAULTS.limit);
+    const LV={low:'Aman',mid:'Mulai ramai',high:'Hampir habis',full:'Limit tercapai'};
+    el('smUsageBars').innerHTML=ps.map(p=>{
+      const k=p.provider_key,u2=ubp[k]||{},used=Number(u2.total||0),ok=Number(u2.success||0);
+      const limit=limitOf(k),raw=used/limit*100,pct=Math.min(100,Math.round(raw*10)/10);
+      const lvl=raw>=100?'full':raw>=85?'high':raw>=60?'mid':'low';
+      const a=ks.filter(x=>x.provider_key===k),cool=a.filter(x=>x.status==='cooldown').length;
+      const sr=used?Math.round(ok/used*100)+'%':'—';
+      const ms=Number(u2.avg_ms||0)?Math.round(Number(u2.avg_ms))+' ms':'—';
+      return `<div class="sq-item sq-${lvl}">
+        <div class="sq-head">
+          <div class="sq-name">${smartEscape(p.provider_name)}<span class="sq-chip">${LV[lvl]}</span></div>
+          <div class="sq-pct">${pct}<small>%</small></div>
+        </div>
+        <div class="sq-track" title="${used} dari ${limit} request hari ini">
+          <span class="sq-fill" style="width:${pct}%"></span>
+          <i class="sq-mark" style="left:60%"></i><i class="sq-mark" style="left:85%"></i>
+        </div>
+        <div class="sq-scale"><span>0</span><span>${limit.toLocaleString()} request</span></div>
+        <div class="sq-meta">
+          <span>Terpakai <b>${used.toLocaleString()}</b> / ${limit.toLocaleString()}</span>
+          <span>Sisa <b>${Math.max(0,limit-used).toLocaleString()}</b></span>
+          <span>Sukses <b>${sr}</b></span>
+          <span>Rata-rata <b>${ms}</b></span>
+          <span>${a.length} key${cool?` • <b style="color:#ffe27b">${cool} cooldown</b>`:''}</span>
+        </div>
+      </div>`;
+    }).join('')||'<div class="text-center text-muted p-3">Belum ada provider.</div>';
+
+    // Input limit di tab Settings (dibangun ulang hanya jika data tersimpan berubah, supaya ketikan tidak hilang)
+    const box=el('smLimitInputs');
+    if(box){
+      const sig=JSON.stringify(ps.map(p=>[p.provider_key,limitOf(p.provider_key)]));
+      if(box.dataset.sig!==sig){
+        box.dataset.sig=sig;
+        box.innerHTML=ps.map(p=>`<div class="col-md-3 col-6 mb-2"><label class="small mb-1">${smartEscape(p.provider_name)}</label><input type="number" min="1" class="form-control form-control-sm sm-limit-input" data-p="${smartEscape(p.provider_key)}" value="${limitOf(p.provider_key)}"></div>`).join('');
+      }
+    }
+  }
+
+  el('smLogRows').innerHTML=(SMART_STATE.logs||[]).map(l=>`<tr>
+    <td>${l.created_at||'-'}</td><td>${l.level==='error'?'<span class="text-danger font-weight-bold">ERROR</span>':'<span class="text-success">INFO</span>'}</td>
+    <td>${smartEscape(l.provider_key||'-')} #${l.key_index||''}</td><td>${smartEscape(l.model_name||'-')}</td>
+    <td>${smartEscape(l.event||'-')}</td><td>${smartEscape(l.message||'')}</td>
+  </tr>`).join('')||'<tr><td colspan="6" class="text-center text-muted p-4">Belum ada log.</td></tr>';
+
+  const settings={};(SMART_STATE.settings||[]).forEach(x=>settings[x.setting_key]=x.setting_value);
+  el('smCooldown').value=settings.cooldown||SMART_DEFAULTS.cooldown;
+  el('smRetry').value=settings.retry||SMART_DEFAULTS.retry;
+  el('smRouting').value=settings.routing||SMART_DEFAULTS.routing;
+}
+function smartTab(tab){
+  const target=document.getElementById('smart-'+tab);
+  const alreadyOpen=!!target && target.classList.contains('active');
+
+  // Klik tab yang sama = tutup panel. Klik tab lain = buka panel tersebut.
+  document.querySelectorAll('#smartNav button').forEach(b=>{
+    b.classList.toggle('active', !alreadyOpen && b.dataset.tab===tab);
+  });
+  document.querySelectorAll('.smart-panel').forEach(p=>{
+    p.classList.toggle('active', !alreadyOpen && p.id==='smart-'+tab);
+  });
+}
+function smartNavSync(){
+  const act=document.querySelector('#smartNav button.active');
+  const lab=document.getElementById('smartNavLabel'),ic=document.getElementById('smartNavIcon');
+  if(!lab||!ic)return;
+  if(act){lab.textContent=act.textContent.trim();ic.className=act.querySelector('i').className;}
+  else{lab.textContent='Menu';ic.className='fas fa-bars';}
+}
+function smartNavToggle(open){
+  const w=document.getElementById('smartNavWrap'),t=document.getElementById('smartNavToggle');
+  if(!w)return;
+  const o=(typeof open==='boolean')?open:!w.classList.contains('open');
+  w.classList.toggle('open',o);
+  if(t)t.setAttribute('aria-expanded',o?'true':'false');
+}
+document.addEventListener('click',e=>{
+  const b=e.target.closest('#smartNav button');
+  if(b){
+    // efek ripple saat disentuh
+    const r=b.getBoundingClientRect(),d=Math.max(r.width,r.height)*2,rip=document.createElement('span');
+    rip.className='rip';rip.style.width=rip.style.height=d+'px';
+    rip.style.left=(e.clientX-r.left-d/2)+'px';rip.style.top=(e.clientY-r.top-d/2)+'px';
+    b.appendChild(rip);setTimeout(()=>rip.remove(),600);
+    smartTab(b.dataset.tab);
+    smartNavSync();
+    smartNavToggle(false);
+    return;
+  }
+  if(e.target.closest('#smartNavToggle')){smartNavToggle();return;}
+  if(!e.target.closest('#smartNavWrap'))smartNavToggle(false);
+});
+document.addEventListener('keydown',e=>{if(e.key==='Escape')smartNavToggle(false);});
+
+function smartParseHttpError(error){
+  const raw=String(error?.message||error||'');
+  // Status HTTP sebenarnya dibawa oleh error.httpStatus (diisi smartApiError / proxy server).
+  let http=Number(error?.httpStatus||0);
+  let message=raw;
+  try{
+    const body=error?.body;
+    if(body){const j=typeof body==='string'?JSON.parse(body):body;message=j?.error?.message||j?.message||raw;}
+  }catch(_){}
+  if(!http){const m=raw.match(/(?:HTTP|Status)[\s:=#-]*(\d{3})/i);if(m)http=Number(m[1]);}
+  if(!http && /failed to fetch|networkerror|load failed|network request failed/i.test(raw)) message='Gagal terhubung ke provider (jaringan/CORS/diblokir). '+raw;
+  if(http===402) message='Saldo/kredit akun provider habis (HTTP 402). '+message;
+  return {http,message};
+}
+function smartClassify(http){
+  return http===401||http===403?'invalid_key':http===429?'rate_limited':http===404?'model_error':'error';
+}
+
+// ---- Pemanggilan provider: langsung dari browser, otomatis lewat server jika CORS/jaringan gagal ----
+const SMART_DIRECT={
+  gemini:(k,m,p)=>callGeminiApi(k,m,p), openai:(k,m,p)=>callOpenAiApi(k,m,p), 
+  groq:(k,m,p)=>callGroqApi(k,m,p), pollinations:(k,m,p)=>callPollinationsApi(k,m,p),
+  openrouter:(k,m,p)=>callOpenRouterApi(k,m,p), mistral:(k,m,p)=>callMistralApi(k,m,p)
+};
+async function smartCallViaProxy(provider,apiKey,model,prompt){
+  const j=await smartPost({
+    action:'ai_proxy',provider_key:provider,api_key:apiKey,model_name:model,prompt:prompt,
+    account_id:provider==='cloudflare'?(SERVER_KEYS.cloudflare_account||localStorage.getItem('CUSTOM_CLOUDFLARE_ACCOUNT_ID')||''):''
+  });
+  if(j.status!=='success'){
+    const e=new Error(j.message||'Proxy server gagal.');
+    e.httpStatus=Number(j.http||0);
+    throw e;
+  }
+  return j.content;
+}
+function smartTrackUsage(provider,apiKey,model,ok,http,ms,msg){
+  const k=(SMART_STATE.keys||[]).find(x=>x.provider_key===provider&&String(x.key_value||'').trim()===String(apiKey).trim());
+  smartLog(provider,k?Number(k.key_index):1,model,ok,http,Math.round(ms),String(msg||'').slice(0,300),ok?'convert_ok':'convert_fail');
+}
+// track=true hanya dari proses konversi (bukan Health Check / tes model) agar hitungan limit akurat.
+async function smartCall(provider,apiKey,model,prompt,track){
+  const t0=performance.now();
+  try{
+    const out=await smartCallInner(provider,apiKey,model,prompt);
+    if(track) smartTrackUsage(provider,apiKey,model,true,200,performance.now()-t0,'OK');
+    return out;
+  }catch(e){
+    if(track){const x=smartParseHttpError(e);smartTrackUsage(provider,apiKey,model,false,x.http,performance.now()-t0,x.message);}
+    throw e;
+  }
+}
+async function smartCallInner(provider,apiKey,model,prompt){
+  // Cloudflare Workers AI tidak mengizinkan request browser (CORS) → selalu lewat server.
+  if(provider==='cloudflare') return smartCallViaProxy(provider,apiKey,model,prompt);
+  const direct=SMART_DIRECT[provider];
+  if(!direct) throw new Error('Provider tidak dikenal: '+provider);
+  try{
+    return await direct(apiKey,model,prompt);
+  }catch(e){
+    if(e && e.httpStatus) throw e;   // provider menjawab dengan error → itu error sebenarnya
+    console.warn(provider+': request langsung gagal, mencoba lewat server…',e);
+    return await smartCallViaProxy(provider,apiKey,model,prompt);
+  }
+}
+// Daftar model yang AKTIF (urut prioritas) dari Model Manager; fallback ke daftar bawaan bila belum ada data.
+function smartModels(provider,fallback){
+  const all=(SMART_STATE.models||[]).filter(m=>m.provider_key===provider);
+  if(!all.length) return fallback;
+  return all.filter(m=>Number(m.enabled)!==0).sort((a,b)=>Number(a.priority||100)-Number(b.priority||100)).map(m=>m.model_name);
+}
+
+// ---- Model Manager: aksi ----
+const SMART_HEALTH_PROMPT='Return a JSON object with exactly one field: {"ok":true}. This is a health check.';
+function smartFindModel(provider,model){return (SMART_STATE.models||[]).find(x=>x.provider_key===provider&&x.model_name===model);}
+async function smartModelToggle(provider,model){
+  const m=smartFindModel(provider,model); if(!m)return;
+  const to=Number(m.enabled)!==0?0:1;
+  try{
+    await smartPost({action:'manager_model_toggle',provider_key:provider,model_name:model,enabled:to});
+    m.enabled=to; smartRender();
+  }catch(e){alert('Gagal menyimpan perubahan model: '+e.message);}
+}
+async function smartModelMove(provider,model,direction){
+  try{
+    await smartPost({action:'manager_model_move',provider_key:provider,model_name:model,direction:direction});
+    await smartRefresh();
+  }catch(e){alert('Gagal mengubah urutan model: '+e.message);}
+}
+async function smartModelBulk(mode){
+  try{
+    await smartPost({action:'manager_model_bulk',mode:mode});
+    await smartRefresh();
+  }catch(e){alert('Gagal: '+e.message);}
+}
+async function smartTestModel(provider,model,quiet){
+  const m=smartFindModel(provider,model); if(!m)return;
+  const keys=(SMART_STATE.keys||[]).filter(k=>k.provider_key===provider&&Number(k.enabled)!==0&&k.status!=='disabled'&&k.key_value);
+  if(!keys.length){
+    if(!quiet)alert('Provider "'+provider+'" belum punya API key aktif. Isi/perbaiki key di Pengaturan API Key.');
+    return;
+  }
+  const busyId=provider+'|'+model;
+  SMART_MODEL_BUSY.add(busyId); smartRender();
+  let res=null;
+  for(const k of keys){
+    const t=performance.now();
+    try{
+      const out=await smartCall(provider,k.key_value,model,SMART_HEALTH_PROMPT);
+      if(!out||!String(out).trim()) throw new Error('Respons kosong dari model.');
+      res={status:'healthy',http:200,ms:Math.round(performance.now()-t),message:'OK'};
+      break;
+    }catch(e){
+      const x=smartParseHttpError(e);
+      res={status:smartClassify(x.http),http:x.http,ms:Math.round(performance.now()-t),message:x.message};
+      // Salah model/jaringan: key lain tidak akan beda. Salah key / kena limit: coba key berikutnya.
+      if(res.status==='error'||res.status==='model_error')break;
+    }
+  }
+  SMART_MODEL_BUSY.delete(busyId);
+  const mm=smartFindModel(provider,model)||m;   // state bisa diganti oleh auto-refresh saat menunggu
+  Object.assign(mm,{last_status:res.status,last_http:res.http,last_ms:res.ms,last_message:res.message,last_checked_at:new Date().toLocaleString('sv-SE')});
+  if(res.status==='healthy')mm.success_count=Number(mm.success_count||0)+1; else mm.fail_count=Number(mm.fail_count||0)+1;
+  smartRender();
+  try{await smartPost({action:'manager_model_result',provider_key:provider,model_name:model,status:res.status,http_status:res.http,response_ms:res.ms,message:res.message});}
+  catch(e){console.warn('Simpan hasil tes model:',e);}
+}
+let SMART_TEST_ALL_RUNNING=false;
+async function smartTestAllModels(){
+  if(SMART_TEST_ALL_RUNNING)return;
+  SMART_TEST_ALL_RUNNING=true;
+  const btn=document.getElementById('btnTestAllModels');
+  if(btn){btn.disabled=true;btn.innerHTML='<i class="fas fa-spinner fa-spin mr-1"></i>Menguji…';}
+  try{
+    const byProv={};
+    (SMART_STATE.models||[]).forEach(m=>(byProv[m.provider_key]??=[]).push(m.model_name));
+    // Antar provider paralel, model dalam satu provider berurutan (hindari rate limit).
+    await Promise.all(Object.keys(byProv).map(async p=>{for(const name of byProv[p])await smartTestModel(p,name,true);}));
+  }finally{
+    SMART_TEST_ALL_RUNNING=false;
+    if(btn){btn.disabled=false;btn.innerHTML='<i class="fas fa-vial mr-1"></i>Tes Semua Model';}
+  }
+}
+async function smartHealthKey(provider,keyIndex){
+  const k=(SMART_STATE.keys||[]).find(x=>x.provider_key===provider&&Number(x.key_index)===Number(keyIndex));
+  if(!k)return;
+  const models=(SMART_STATE.models||[]).filter(x=>x.provider_key===provider&&x.enabled!=0).sort((a,b)=>Number(a.priority||100)-Number(b.priority||100));
+  if(!models.length)return;
+
+  let start=performance.now(),selectedModel='',finalStatus='error',finalHttp=0,finalMsg='',attempts=[];
+  for(const m of models){
+    const model=m.model_name; const t=performance.now();
+    try{
+      const out=await smartCall(provider,k.key_value,model,SMART_HEALTH_PROMPT);
+      if(!out||!String(out).trim()) throw new Error('Respons kosong dari model.');
+      const rms=Math.round(performance.now()-t);
+      attempts.push({model,status:'healthy',http:200,message:`OK • ${rms} ms`});
+      selectedModel=model;finalStatus='healthy';finalHttp=200;finalMsg=`Health check OK • ${rms} ms`;break;
+    }catch(e){
+      const x=smartParseHttpError(e), rms=Math.round(performance.now()-t);
+      let st=smartClassify(x.http);
+      attempts.push({model,status:st,http:x.http,message:x.message});
+      finalStatus=st;finalHttp=x.http;finalMsg=x.message;
+      // Key/auth/rate-limit errors are provider-wide enough to stop immediately.
+      if(st==='invalid_key'||st==='rate_limited')break;
+    }
+  }
+  // Jika semua model gagal, tampilkan pesan tiap model (bukan hanya model terakhir).
+  if(finalStatus!=='healthy' && attempts.length>1) finalMsg=attempts.map(a=>`${a.model}: ${a.message}`).join(' | ');
+  const ms=Math.round(performance.now()-start);
+  const healthRow={
+    provider_key:provider,key_index:Number(keyIndex),status:finalStatus,http_status:finalHttp,
+    response_ms:ms,message:finalMsg,model_name:selectedModel||models[0].model_name,
+    checked_at:new Date().toLocaleString('sv-SE').replace('T',' ')
+  };
+  // Tampilkan hasil segera walaupun backend logging gagal.
+  SMART_STATE.health=SMART_STATE.health||[];
+  const hi=SMART_STATE.health.findIndex(x=>x.provider_key===provider&&Number(x.key_index)===Number(keyIndex));
+  if(hi>=0) SMART_STATE.health[hi]=healthRow; else SMART_STATE.health.unshift(healthRow);
+  const kk=(SMART_STATE.keys||[]).find(x=>x.provider_key===provider&&Number(x.key_index)===Number(keyIndex));
+  if(kk){kk.status=finalStatus;kk.last_used_at=healthRow.checked_at;}
+  try{
+    await smartPost({action:'manager_health',provider_key:provider,key_index:keyIndex,health_status:finalStatus,http_status:finalHttp,response_ms:ms,message:finalMsg,model_name:selectedModel||models[0].model_name,attempts});
+  }catch(e){console.warn('Health log backend:',e);}
+  smartRender(); smartTab('health');
+}
+async function smartHealthProvider(provider){
+  const keys=(SMART_STATE.keys||[]).filter(k=>k.provider_key===provider);
+  for(const k of keys)await smartHealthKey(provider,k.key_index);
+}
+async function smartHealthAll(){
+  smartTab('health');
+  const keys=[...(SMART_STATE.keys||[])];
+  for(const k of keys)await smartHealthKey(k.provider_key,k.key_index);
+}
+async function smartClearLogs(){if(!confirm('Hapus semua log Smart AI?'))return;await smartPost({action:'manager_reset_logs'});smartRefresh();}
+async function smartSaveSettings(){
+  const cfg={cooldown:document.getElementById('smCooldown').value,retry:document.getElementById('smRetry').value,routing:document.getElementById('smRouting').value};
+  document.querySelectorAll('.sm-limit-input').forEach(i=>{cfg['limit_'+i.dataset.p]=Math.max(1,parseInt(i.value,10)||SMART_DEFAULTS.limit);});
+  await smartPost({action:'manager_settings',settings:cfg});
+  await smartRefresh();
+  alert('Smart AI Settings tersimpan.');
+}
+function smartSortKeys(provider,keys){const order=SMART_KEY_ORDER[provider]||[];return [...keys].sort((a,b)=>{const ia=order.indexOf(a),ib=order.indexOf(b);return (ia<0?999:ia)-(ib<0?999:ib)})}
+function smartChain(){return SMART_PROVIDER_CHAIN&&SMART_PROVIDER_CHAIN.length?SMART_PROVIDER_CHAIN:null}
+async function smartLog(provider,keyIndex,model,success,httpStatus,responseMs,message,event){try{await smartPost({action:'manager_event',provider_key:provider,key_index:keyIndex,model_name:model,success:success?1:0,http_status:httpStatus||0,response_ms:responseMs||0,message:message||'',event:event||''})}catch(e){} }
+
+// Bersihkan sisa data provider yang sudah dihapus dari penyimpanan browser.
+(function(){try{
+  ['CUSTOM_CLAUDE_KEY','CUSTOM_KIMI_KEY'].forEach(k=>localStorage.removeItem(k));
+  const c=JSON.parse(localStorage.getItem('AI_PROVIDER_CHAIN')||'null');
+  if(Array.isArray(c)) localStorage.setItem('AI_PROVIDER_CHAIN',JSON.stringify(c.filter(x=>!['claude','kimi'].includes(x))));
+}catch(e){}})();
+window.addEventListener('load',()=>{smartRefresh();setInterval(smartRefresh,30000)});
+
+
+function toggleVisibility(inputId, btn) {
+    let input = document.getElementById(inputId);
+    let icon = btn.querySelector('i');
+    if (input.type === "password") {
+        input.type = "text";
+        icon.classList.remove('fa-eye');
+        icon.classList.add('fa-eye-slash');
+    } else {
+        input.type = "password";
+        icon.classList.remove('fa-eye-slash');
+        icon.classList.add('fa-eye');
+    }
+}
+
+function copyToClipboard(inputId, btn) {
+    let input = document.getElementById(inputId);
+    if (!input.value.trim()) {
+        alert("Key/Token masih kosong, tidak ada yang disalin.");
+        return;
+    }
+
+    navigator.clipboard.writeText(input.value.trim()).then(() => {
+        let icon = btn.querySelector('i');
+        icon.className = 'fas fa-check text-success';
+        btn.classList.add('border-success');
+
+        setTimeout(() => {
+            icon.className = 'fas fa-copy';
+            btn.classList.remove('border-success');
+        }, 1500);
+    }).catch(err => {
+        input.select();
+        document.execCommand('copy');
+        alert("Berhasil disalin!");
+    });
+}
+
+function openApiKeyModal() {
+    let geminiVal = SERVER_KEYS.gemini || localStorage.getItem('CUSTOM_GEMINI_KEY') || '';
+    let openaiVal = SERVER_KEYS.openai || localStorage.getItem('CUSTOM_OPENAI_KEY') || '';
+    let groqVal = SERVER_KEYS.groq || localStorage.getItem('CUSTOM_GROQ_KEY') || '';
+    let pollinationsVal = SERVER_KEYS.pollinations || localStorage.getItem('CUSTOM_POLLINATIONS_KEY') || '';
+    let openRouterVal = SERVER_KEYS.openrouter || localStorage.getItem('CUSTOM_OPENROUTER_KEY') || '';
+    let mistralVal = SERVER_KEYS.mistral || localStorage.getItem('CUSTOM_MISTRAL_KEY') || '';
+    let cfAccountVal = SERVER_KEYS.cloudflare_account || localStorage.getItem('CUSTOM_CLOUDFLARE_ACCOUNT_ID') || '';
+    let cfKeyVal = SERVER_KEYS.cloudflare_key || localStorage.getItem('CUSTOM_CLOUDFLARE_KEY') || '';
+    let chainVal = SERVER_KEYS.chain || localStorage.getItem('AI_PROVIDER_CHAIN') || '["gemini","openai","groq","pollinations","openrouter","mistral","cloudflare"]';
+
+    document.getElementById('inputGeminiKey').value = geminiVal;
+    document.getElementById('inputOpenaiKey').value = openaiVal;
+    document.getElementById('inputGroqKey').value = groqVal;
+    document.getElementById('inputPollinationsKey').value = pollinationsVal;
+    document.getElementById('inputOpenRouterKey').value = openRouterVal;
+    document.getElementById('inputMistralKey').value = mistralVal;
+    document.getElementById('inputCloudflareAccountId').value = cfAccountVal;
+    document.getElementById('inputCloudflareKey').value = cfKeyVal;
+
+    let chain = [];
+    try { 
+        chain = typeof chainVal === 'string' ? JSON.parse(chainVal) : chainVal; 
+    } catch(e) { 
+        chain = ["gemini","openai","groq","pollinations","openrouter","mistral","cloudflare"]; 
+    }
+
+    document.querySelectorAll('.provider-chain-item').forEach(cb => {
+        cb.checked = chain.includes(cb.value);
+    });
+
+    if (typeof $ !== 'undefined') $('#apiKeyModal').modal('show');
+}
+
+async function saveApiKeyModal() {
+    let geminiVal = document.getElementById('inputGeminiKey').value.trim();
+    let openaiVal = document.getElementById('inputOpenaiKey').value.trim();
+    let groqVal = document.getElementById('inputGroqKey').value.trim();
+    let pollinationsVal = document.getElementById('inputPollinationsKey').value.trim();
+    let openRouterVal = document.getElementById('inputOpenRouterKey').value.trim();
+    let mistralVal = document.getElementById('inputMistralKey').value.trim();
+    let cfAccountVal = document.getElementById('inputCloudflareAccountId').value.trim();
+    let cfKeyVal = document.getElementById('inputCloudflareKey').value.trim();
+
+    let selectedProviders = [];
+    document.querySelectorAll('.provider-chain-item:checked').forEach(cb => {
+        selectedProviders.push(cb.value);
+    });
+    let chainJsonStr = JSON.stringify(selectedProviders);
+
+    let formData = new FormData();
+    formData.append('action', 'save_keys');
+    formData.append('gemini', geminiVal);
+    formData.append('openai', openaiVal);
+    formData.append('groq', groqVal);
+    formData.append('pollinations', pollinationsVal);
+    formData.append('openrouter', openRouterVal);
+    formData.append('mistral', mistralVal);
+    formData.append('cloudflare_account', cfAccountVal);
+    formData.append('cloudflare_key', cfKeyVal);
+    formData.append('chain', chainJsonStr);
+
+    let csrfName = '<?= $this->security->get_csrf_token_name(); ?>';
+    let csrfHash = '<?= $this->security->get_csrf_hash(); ?>';
+    if (csrfName) formData.append(csrfName, csrfHash);
+
+    // Simpan lokal sebagai fallback agar konfigurasi tidak hilang jika endpoint controller belum tersedia.
+    localStorage.setItem('CUSTOM_GEMINI_KEY', geminiVal);
+    localStorage.setItem('CUSTOM_OPENAI_KEY', openaiVal);
+    localStorage.setItem('CUSTOM_GROQ_KEY', groqVal);
+    localStorage.setItem('CUSTOM_POLLINATIONS_KEY', pollinationsVal);
+    localStorage.setItem('CUSTOM_OPENROUTER_KEY', openRouterVal);
+    localStorage.setItem('CUSTOM_MISTRAL_KEY', mistralVal);
+    localStorage.setItem('CUSTOM_CLOUDFLARE_ACCOUNT_ID', cfAccountVal);
+    localStorage.setItem('CUSTOM_CLOUDFLARE_KEY', cfKeyVal);
+    localStorage.setItem('AI_PROVIDER_CHAIN', chainJsonStr);
+
+    try {
+        let res = await fetch(window.location.href, {
+            method: 'POST',
+            body: formData,
+            credentials: 'same-origin',
+            headers: {'X-Requested-With':'XMLHttpRequest'}
+        });
+
+        let raw = await res.text();
+        let result;
+        try { result = JSON.parse(raw); }
+        catch (_) { throw new Error(`HTTP ${res.status}: server tidak mengembalikan JSON.`); }
+
+        if (result.status === 'success') {
+            localStorage.setItem('CUSTOM_GEMINI_KEY', geminiVal);
+            localStorage.setItem('CUSTOM_OPENAI_KEY', openaiVal);
+            localStorage.setItem('CUSTOM_GROQ_KEY', groqVal);
+            localStorage.setItem('CUSTOM_POLLINATIONS_KEY', pollinationsVal);
+            localStorage.setItem('CUSTOM_OPENROUTER_KEY', openRouterVal);
+            localStorage.setItem('CUSTOM_MISTRAL_KEY', mistralVal);
+            localStorage.setItem('CUSTOM_CLOUDFLARE_ACCOUNT_ID', cfAccountVal);
+            localStorage.setItem('CUSTOM_CLOUDFLARE_KEY', cfKeyVal);
+            localStorage.setItem('AI_PROVIDER_CHAIN', chainJsonStr);
+
+            alert("API Key berhasil disimpan. Konfigurasi lokal aktif dan key juga tersimpan di Database Server.");
+            if (typeof $ !== 'undefined') $('#apiKeyModal').modal('hide');
+            location.reload();
+        } else {
+            alert("Gagal menyimpan: " + result.message);
+        }
+    } catch (err) {
+        alert("Gagal koneksi ke server: " + err.message);
+    }
+}
+
+function getApiKeys(provider) {
+    let keyStr = SERVER_KEYS[provider] || localStorage.getItem(`CUSTOM_${provider.toUpperCase()}_KEY`) || '';
+    if (!keyStr) return [];
+    return smartSortKeys(provider, keyStr.split(',').map(k => k.trim()).filter(k => k.length > 0));
+}
+
+if (typeof window !== 'undefined' && 'pdfjsLib' in window) {
+    window.pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.worker.min.js';
+}
+
+let parsedData = [];
+// Tabel dan numbering hasil import/copy-paste disimpan terpisah agar parser teks tidak merusaknya.
+let EDITOR_TABLES = {};
+let EDITOR_TABLE_SEQ = 0;
+
+// Gambar pada editor diganti token [[IMG_xxxx]] saat parsing (innerText membuang <img>),
+// lalu dikembalikan saat Preview/Word. Token berbasis isi gambar, jadi stabil untuk cache.
+let EDITOR_IMAGES = {};
+const IMG_TOKEN_CACHE = new Map();
+const PREVIEW_IMAGE_SCALE = 0.5; // gambar di Preview tampil 50% dari ukuran aslinya
+
+// ===================== DUKUNGAN EQUATION / RUMUS WORD =====================
+// Mammoth membuang equation Word (<m:oMath>), sehingga rumus (pecahan, pangkat, akar, dst.)
+// hilang saat dokumen diimpor. Solusinya:
+//   1) Sebelum Mammoth jalan, setiap equation diganti token teks [[EQ_xxxx]] (posisi tetap),
+//      LaTeX + OMML aslinya disimpan di EDITOR_EQUATIONS.
+//   2) Di Editor/Preview token ditampilkan sebagai rumus (KaTeX).
+//   3) Saat unduh .docx token dikembalikan menjadi equation asli Word (OMML).
+let EDITOR_EQUATIONS = {};
+const EQ_NS_M = 'http://schemas.openxmlformats.org/officeDocument/2006/math';
+const EQ_NS_W = 'http://schemas.openxmlformats.org/wordprocessingml/2006/main';
+
+function makeEquationToken(latex) {
+    latex = String(latex || '');
+    let h1 = 0x811c9dc5, h2 = 0x01000193 ^ latex.length;
+    for (let i = 0; i < latex.length; i++) {
+        const c = latex.charCodeAt(i);
+        h1 ^= c; h1 = Math.imul(h1, 16777619);
+        h2 = Math.imul(h2 ^ c, 2246822519); h2 ^= h2 >>> 13;
+    }
+    return '[[EQ_' + (h1 >>> 0).toString(16).padStart(8, '0') + (h2 >>> 0).toString(16).padStart(8, '0') + latex.length.toString(36) + ']]';
+}
+
+const OMML_GREEK = {
+    'α':'\\alpha ','β':'\\beta ','γ':'\\gamma ','δ':'\\delta ','ε':'\\varepsilon ','ϵ':'\\epsilon ','ζ':'\\zeta ','η':'\\eta ',
+    'θ':'\\theta ','ϑ':'\\vartheta ','ι':'\\iota ','κ':'\\kappa ','λ':'\\lambda ','μ':'\\mu ','ν':'\\nu ','ξ':'\\xi ','π':'\\pi ',
+    'ρ':'\\rho ','σ':'\\sigma ','τ':'\\tau ','υ':'\\upsilon ','φ':'\\varphi ','ϕ':'\\phi ','χ':'\\chi ','ψ':'\\psi ','ω':'\\omega ',
+    'Γ':'\\Gamma ','Δ':'\\Delta ','Θ':'\\Theta ','Λ':'\\Lambda ','Ξ':'\\Xi ','Π':'\\Pi ','Σ':'\\Sigma ','Φ':'\\Phi ','Ψ':'\\Psi ','Ω':'\\Omega '
+};
+const OMML_SYMBOLS = {
+    '×':'\\times ','÷':'\\div ','±':'\\pm ','∓':'\\mp ','≤':'\\le ','≥':'\\ge ','≠':'\\ne ','≈':'\\approx ','≡':'\\equiv ',
+    '∞':'\\infty ','·':'\\cdot ','⋅':'\\cdot ','∙':'\\cdot ','−':'-','–':'-','—':'-','→':'\\to ','←':'\\leftarrow ','↔':'\\leftrightarrow ',
+    '⇒':'\\Rightarrow ','⇐':'\\Leftarrow ','⇔':'\\Leftrightarrow ','∈':'\\in ','∉':'\\notin ','⊂':'\\subset ','⊃':'\\supset ',
+    '⊆':'\\subseteq ','⊇':'\\supseteq ','∪':'\\cup ','∩':'\\cap ','∅':'\\emptyset ','∠':'\\angle ','∥':'\\parallel ','⊥':'\\perp ',
+    '△':'\\triangle ','°':'^{\\circ}','′':"'",'″':"''",'…':'\\ldots ','⋯':'\\cdots ','∴':'\\therefore ','∵':'\\because ',
+    '∂':'\\partial ','∇':'\\nabla ','∝':'\\propto ','≅':'\\cong ','∼':'\\sim ','≪':'\\ll ','≫':'\\gg ','∀':'\\forall ','∃':'\\exists ',
+    '¬':'\\neg ','∧':'\\wedge ','∨':'\\vee ','⁄':'/','¹':'^{1}','²':'^{2}','³':'^{3}','½':'\\frac{1}{2}','¼':'\\frac{1}{4}','¾':'\\frac{3}{4}',
+    '∑':'\\sum ','∏':'\\prod ','∫':'\\int ','√':'\\surd ','ℝ':'\\mathbb{R}','ℕ':'\\mathbb{N}','ℤ':'\\mathbb{Z}','ℚ':'\\mathbb{Q}',
+    '\u00A0':'\\ ','\u2009':'\\,','\u2002':'\\ ','\u2003':'\\ '
+};
+const OMML_FUNCS = ['sin','cos','tan','cot','sec','csc','arcsin','arccos','arctan','sinh','cosh','tanh','log','ln','lg','exp','det','gcd','mod','deg','dim','ker','arg'];
+const OMML_LIMOPS = ['lim','max','min','sup','inf','limsup','liminf'];
+const OMML_NARY = { '∑':'\\sum','∏':'\\prod','∐':'\\coprod','∫':'\\int','∬':'\\iint','∭':'\\iiint','∮':'\\oint','⋃':'\\bigcup','⋂':'\\bigcap','⋁':'\\bigvee','⋀':'\\bigwedge' };
+const OMML_ACCENTS = { '\u0302':'\\hat','^':'\\hat','ˆ':'\\hat','\u0304':'\\bar','¯':'\\bar','‾':'\\bar','\u20D7':'\\vec','→':'\\vec','\u0307':'\\dot','˙':'\\dot','\u0308':'\\ddot','¨':'\\ddot','\u0303':'\\tilde','~':'\\tilde','˜':'\\tilde','\u030C':'\\check','\u0306':'\\breve','\u0301':'\\acute','\u0300':'\\grave' };
+const OMML_DELIMS = { '(':'(', ')':')', '[':'[', ']':']', '{':'\\{', '}':'\\}', '|':'|', '‖':'\\|', '⟨':'\\langle ', '⟩':'\\rangle ', '〈':'\\langle ', '〉':'\\rangle ', '⌈':'\\lceil ', '⌉':'\\rceil ', '⌊':'\\lfloor ', '⌋':'\\rfloor ', '':'.' };
+
+function ommlChild(el, name) {
+    if (!el) return null;
+    for (let c = el.firstChild; c; c = c.nextSibling) if (c.nodeType === 1 && c.localName === name) return c;
+    return null;
+}
+function ommlVal(el) {
+    if (!el) return null;
+    let v = el.getAttributeNS(EQ_NS_M, 'val');
+    if (v === null || v === '') v = el.getAttribute('m:val');
+    return v;
+}
+function ommlTextChar(ch) {
+    if (OMML_SYMBOLS[ch] !== undefined) return OMML_SYMBOLS[ch];
+    if (OMML_GREEK[ch] !== undefined) return OMML_GREEK[ch];
+    switch (ch) {
+        case '\\': return '\\backslash ';
+        case '{': return '\\{';
+        case '}': return '\\}';
+        case '#': return '\\#';
+        case '%': return '\\%';
+        case '&': return '\\&';
+        case '$': return '\\$';
+        case '_': return '\\_';
+        case '~': return '\\sim ';
+        case '^': return '\\hat{}';
+        case ' ': case '\t': case '\n': return '';
+    }
+    return ch;
+}
+function ommlPlainText(t) {
+    return String(t).replace(/[\\{}#%&$_^~]/g, ch => ({ '\\':'\\textbackslash ', '{':'\\{', '}':'\\}', '#':'\\#', '%':'\\%', '&':'\\&', '$':'\\$', '_':'\\_', '^':'\\^{}', '~':'\\~{}' }[ch]));
+}
+function ommlRun(r) {
+    let text = '';
+    for (let c = r.firstChild; c; c = c.nextSibling) if (c.nodeType === 1 && c.localName === 't') text += c.textContent;
+    if (!text) return '';
+    const rpr = ommlChild(r, 'rPr');
+    const norEl = rpr && ommlChild(rpr, 'nor');
+    const nor = !!norEl && ommlVal(norEl) !== '0' && ommlVal(norEl) !== 'false';
+    const sty = rpr && ommlChild(rpr, 'sty') ? ommlVal(ommlChild(rpr, 'sty')) : '';
+    if (nor) return '\\text{' + ommlPlainText(text) + '}';
+    let out = '';
+    for (const ch of text) out += ommlTextChar(ch);
+    if (!out) return '';
+    if ((sty === 'p') && /^[A-Za-z]{2,}$/.test(text.replace(/\s+/g, ''))) return '\\mathrm{' + text.replace(/\s+/g, '') + '}';
+    if (sty === 'p' && /^[A-Za-z]$/.test(text)) return '\\mathrm{' + text + '}';
+    if (sty === 'b') return '\\mathbf{' + out + '}';
+    if (sty === 'bi') return '\\boldsymbol{' + out + '}';
+    return out;
+}
+function ommlKids(el) {
+    if (!el) return '';
+    let out = '';
+    for (let c = el.firstChild; c; c = c.nextSibling) {
+        if (c.nodeType !== 1) continue;
+        const ln = c.localName;
+        if (/Pr$/.test(ln)) continue;            // fPr, dPr, rPr, ctrlPr, ... = properti, bukan isi
+        out += ommlNode(c);
+    }
+    return out;
+}
+function ommlGroup(el) { const s = ommlKids(el).trim(); return '{' + s + '}'; }
+function ommlDelim(chr) { return Object.prototype.hasOwnProperty.call(OMML_DELIMS, chr) ? OMML_DELIMS[chr] : chr; }
+
+function ommlNode(n) {
+    switch (n.localName) {
+        case 'r': return ommlRun(n);
+        case 'f': {
+            const fpr = ommlChild(n, 'fPr');
+            const type = fpr && ommlChild(fpr, 'type') ? ommlVal(ommlChild(fpr, 'type')) : 'bar';
+            const num = ommlGroup(ommlChild(n, 'num')), den = ommlGroup(ommlChild(n, 'den'));
+            if (type === 'noBar') return '\\binom' + num + den;
+            if (type === 'lin' || type === 'skw') return num + '/' + den;
+            return '\\dfrac' + num + den;
+        }
+        case 'sSup': return ommlGroup(ommlChild(n, 'e')) + '^' + ommlGroup(ommlChild(n, 'sup'));
+        case 'sSub': return ommlGroup(ommlChild(n, 'e')) + '_' + ommlGroup(ommlChild(n, 'sub'));
+        case 'sSubSup': return ommlGroup(ommlChild(n, 'e')) + '_' + ommlGroup(ommlChild(n, 'sub')) + '^' + ommlGroup(ommlChild(n, 'sup'));
+        case 'sPre': return '{}_' + ommlGroup(ommlChild(n, 'sub')) + '^' + ommlGroup(ommlChild(n, 'sup')) + ommlGroup(ommlChild(n, 'e'));
+        case 'rad': {
+            const rpr = ommlChild(n, 'radPr');
+            const hideEl = rpr && ommlChild(rpr, 'degHide');
+            const hide = !!hideEl && ommlVal(hideEl) !== '0' && ommlVal(hideEl) !== 'false';
+            const deg = ommlKids(ommlChild(n, 'deg')).trim();
+            const base = ommlGroup(ommlChild(n, 'e'));
+            return (hide || !deg) ? '\\sqrt' + base : '\\sqrt[' + deg + ']' + base;
+        }
+        case 'd': {
+            const dpr = ommlChild(n, 'dPr');
+            const begEl = dpr && ommlChild(dpr, 'begChr'), endEl = dpr && ommlChild(dpr, 'endChr'), sepEl = dpr && ommlChild(dpr, 'sepChr');
+            const beg = begEl ? (ommlVal(begEl) || '') : '(';
+            const end = endEl ? (ommlVal(endEl) || '') : ')';
+            const sep = sepEl ? (ommlVal(sepEl) || '') : '|';
+            const items = [];
+            for (let c = n.firstChild; c; c = c.nextSibling) if (c.nodeType === 1 && c.localName === 'e') items.push(ommlKids(c).trim());
+            const sepTex = sep === '' ? '\\ ' : (sep === '|' ? '\\mid ' : ommlDelim(sep));
+            return '\\left' + ommlDelim(beg) + ' ' + items.join(sepTex) + ' \\right' + ommlDelim(end);
+        }
+        case 'nary': {
+            const pr = ommlChild(n, 'naryPr');
+            const chrEl = pr && ommlChild(pr, 'chr');
+            const chr = chrEl ? (ommlVal(chrEl) || '') : '∫';
+            const op = OMML_NARY[chr] || (chr ? ommlTextChar(chr) : '');
+            const flag = name => { const e = pr && ommlChild(pr, name); return !!e && ommlVal(e) !== '0' && ommlVal(e) !== 'false'; };
+            const sub = flag('subHide') ? '' : ommlKids(ommlChild(n, 'sub')).trim();
+            const sup = flag('supHide') ? '' : ommlKids(ommlChild(n, 'sup')).trim();
+            return op + (sub ? '_{' + sub + '}' : '') + (sup ? '^{' + sup + '}' : '') + ' ' + ommlGroup(ommlChild(n, 'e'));
+        }
+        case 'func': {
+            const nameEl = ommlChild(n, 'fName');
+            const name = nameEl ? nameEl.textContent.trim() : '';
+            let fn;
+            if (OMML_FUNCS.indexOf(name) >= 0) fn = '\\' + name + ' ';
+            else if (OMML_LIMOPS.indexOf(name) >= 0) fn = '\\' + name + ' ';
+            else fn = ommlKids(nameEl).trim() || ('\\operatorname{' + name + '}');
+            return fn + ' ' + ommlGroup(ommlChild(n, 'e'));
+        }
+        case 'limLow': {
+            const eEl = ommlChild(n, 'e'), name = eEl ? eEl.textContent.trim() : '';
+            const lim = ommlKids(ommlChild(n, 'lim')).trim();
+            if (OMML_LIMOPS.indexOf(name) >= 0) return '\\' + name + '_{' + lim + '} ';
+            return '\\underset{' + lim + '}' + ommlGroup(eEl);
+        }
+        case 'limUpp': return '\\overset{' + ommlKids(ommlChild(n, 'lim')).trim() + '}' + ommlGroup(ommlChild(n, 'e'));
+        case 'acc': {
+            const pr = ommlChild(n, 'accPr');
+            const chrEl = pr && ommlChild(pr, 'chr');
+            const chr = chrEl ? (ommlVal(chrEl) || '\u0302') : '\u0302';
+            return (OMML_ACCENTS[chr] || '\\hat') + ommlGroup(ommlChild(n, 'e'));
+        }
+        case 'bar': {
+            const pr = ommlChild(n, 'barPr');
+            const posEl = pr && ommlChild(pr, 'pos');
+            const pos = posEl ? ommlVal(posEl) : 'bot';
+            return (pos === 'top' ? '\\overline' : '\\underline') + ommlGroup(ommlChild(n, 'e'));
+        }
+        case 'groupChr': {
+            const pr = ommlChild(n, 'groupChrPr');
+            const chrEl = pr && ommlChild(pr, 'chr'), posEl = pr && ommlChild(pr, 'pos');
+            const chr = chrEl ? ommlVal(chrEl) : '⏟';
+            const pos = posEl ? ommlVal(posEl) : (chr === '⏞' ? 'top' : 'bot');
+            return (pos === 'top' ? '\\overbrace' : '\\underbrace') + ommlGroup(ommlChild(n, 'e'));
+        }
+        case 'borderBox': return '\\boxed' + ommlGroup(ommlChild(n, 'e'));
+        case 'eqArr': {
+            const rows = [];
+            for (let c = n.firstChild; c; c = c.nextSibling) if (c.nodeType === 1 && c.localName === 'e') rows.push(ommlKids(c).trim());
+            return '\\begin{aligned}' + rows.join(' \\\\ ') + '\\end{aligned}';
+        }
+        case 'm': {
+            const rows = [];
+            for (let r = n.firstChild; r; r = r.nextSibling) {
+                if (r.nodeType !== 1 || r.localName !== 'mr') continue;
+                const cells = [];
+                for (let c = r.firstChild; c; c = c.nextSibling) if (c.nodeType === 1 && c.localName === 'e') cells.push(ommlKids(c).trim());
+                rows.push(cells.join(' & '));
+            }
+            return '\\begin{matrix}' + rows.join(' \\\\ ') + '\\end{matrix}';
+        }
+        default: return ommlKids(n);
+    }
+}
+function ommlToLatex(oMathEl) {
+    let s = '';
+    try { s = ommlKids(oMathEl); } catch (e) { console.warn('OMML->LaTeX gagal:', e); }
+    return s.replace(/[ \t\r\n]+/g, ' ').trim();
+}
+// OMML ringkas (tanpa properti font Word) untuk ditanam kembali ke file .docx hasil unduhan.
+function ommlForExport(oMathEl) {
+    const c = oMathEl.cloneNode(true);
+    Array.from(c.getElementsByTagNameNS(EQ_NS_W, 'rPr')).forEach(e => e.parentNode && e.parentNode.removeChild(e));
+    let s = new XMLSerializer().serializeToString(c);
+    if (!/xmlns:m=/.test(s)) s = s.replace(/^<m:oMath/, '<m:oMath xmlns:m="' + EQ_NS_M + '"');
+    return s;
+}
+
+function renderEquationHtml(latex) {
+    try {
+        if (window.katex && typeof window.katex.renderToString === 'function') {
+            return window.katex.renderToString(String(latex || ''), { throwOnError: false, displayMode: false, output: 'html', strict: 'ignore' });
+        }
+    } catch (e) { console.warn('KaTeX gagal:', e); }
+    return '<span class="eq-fallback">' + escapeHtml(String(latex || '')) + '</span>';
+}
+
+function makeEquationSpan(token) {
+    const eq = EDITOR_EQUATIONS[token];
+    if (!eq) return document.createTextNode(token);
+    const span = document.createElement('span');
+    span.className = 'eq-token';
+    span.setAttribute('contenteditable', 'false');
+    span.setAttribute('data-eq', token);
+    span.setAttribute('data-latex', eq.latex);
+    if (eq.omml) span.setAttribute('data-omml', eq.omml);
+    span.innerHTML = renderEquationHtml(eq.latex);
+    return span;
+}
+
+// Token [[EQ_xxxx]] di dalam teks -> elemen rumus (dipakai di kolom Input Bank Soal Mentah).
+function equationTokensToEditorSpans(root) {
+    const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT);
+    const nodes = [];
+    while (walker.nextNode()) nodes.push(walker.currentNode);
+    nodes.forEach(node => {
+        const txt = node.nodeValue || '';
+        const re = /\[\[EQ_[0-9a-z]+\]\]/g;
+        if (!re.test(txt)) return;
+        re.lastIndex = 0;
+        const frag = document.createDocumentFragment();
+        let last = 0, m;
+        while ((m = re.exec(txt)) !== null) {
+            if (m.index > last) frag.appendChild(document.createTextNode(txt.slice(last, m.index)));
+            frag.appendChild(makeEquationSpan(m[0]));
+            last = m.index + m[0].length;
+        }
+        if (last < txt.length) frag.appendChild(document.createTextNode(txt.slice(last)));
+        node.parentNode.replaceChild(frag, node);
+    });
+}
+
+function docxFirstChildNS(el, name) {
+    if (!el) return null;
+    for (let c = el.firstChild; c; c = c.nextSibling) if (c.nodeType === 1 && c.localName === name && c.namespaceURI === EQ_NS_W) return c;
+    return null;
+}
+function docxWVal(el) {
+    if (!el) return null;
+    let v = el.getAttributeNS(EQ_NS_W, 'val');
+    if (v === null || v === '') v = el.getAttribute('w:val');
+    return v;
+}
+
+// Ganti setiap <m:oMath> / <m:oMathPara> dengan run teks berisi token [[EQ_xxxx]].
+function convertDocxEquations(doc) {
+    let changed = false;
+    const makeRun = omath => {
+        const latex = ommlToLatex(omath);
+        if (!latex) return null;
+        const token = makeEquationToken(latex);
+        EDITOR_EQUATIONS[token] = { latex: latex, omml: ommlForExport(omath) };
+        const r = doc.createElementNS(EQ_NS_W, 'w:r');
+        const t = doc.createElementNS(EQ_NS_W, 'w:t');
+        t.setAttributeNS('http://www.w3.org/XML/1998/namespace', 'xml:space', 'preserve');
+        t.textContent = token;
+        r.appendChild(t);
+        return r;
+    };
+    Array.from(doc.getElementsByTagNameNS(EQ_NS_M, 'oMathPara')).forEach(para => {
+        const parent = para.parentNode;
+        if (!parent) return;
+        Array.from(para.childNodes).filter(n => n.nodeType === 1 && n.localName === 'oMath').forEach(om => {
+            const run = makeRun(om);
+            if (run) parent.insertBefore(run, para);
+        });
+        parent.removeChild(para);
+        changed = true;
+    });
+    Array.from(doc.getElementsByTagNameNS(EQ_NS_M, 'oMath')).forEach(om => {
+        const parent = om.parentNode;
+        if (!parent) return;
+        const run = makeRun(om);
+        if (run) parent.replaceChild(run, om); else parent.removeChild(om);
+        changed = true;
+    });
+    return changed;
+}
+
+// Daftar huruf Word (a. b. c. d.) pada level paling atas biasanya dipakai sebagai OPSI jawaban,
+// tetapi Mammoth menganggapnya daftar bernomor baru sehingga nomor soal jadi kacau.
+// Ubah menjadi teks biasa "a. isi" agar dibaca sebagai opsi (nesting daftar lain tidak diubah).
+function flattenLetterLists(doc, numDoc) {
+    if (!numDoc) return false;
+    const numToAbs = {}, startOverride = {}, absLvl = {};
+    Array.from(numDoc.getElementsByTagNameNS(EQ_NS_W, 'abstractNum')).forEach(a => {
+        const id = a.getAttributeNS(EQ_NS_W, 'abstractNumId');
+        absLvl[id] = {};
+        Array.from(a.childNodes).forEach(l => {
+            if (l.nodeType !== 1 || l.localName !== 'lvl') return;
+            const il = l.getAttributeNS(EQ_NS_W, 'ilvl');
+            const fmt = docxWVal(docxFirstChildNS(l, 'numFmt'));
+            const st = docxWVal(docxFirstChildNS(l, 'start'));
+            absLvl[id][il] = { fmt: fmt, start: st === null ? 1 : (parseInt(st, 10) || 1) };
+        });
+    });
+    Array.from(numDoc.getElementsByTagNameNS(EQ_NS_W, 'num')).forEach(nm => {
+        const id = nm.getAttributeNS(EQ_NS_W, 'numId');
+        numToAbs[id] = docxWVal(docxFirstChildNS(nm, 'abstractNumId'));
+        Array.from(nm.childNodes).forEach(o => {
+            if (o.nodeType !== 1 || o.localName !== 'lvlOverride') return;
+            const so = docxFirstChildNS(o, 'startOverride');
+            if (so) startOverride[id + ':' + o.getAttributeNS(EQ_NS_W, 'ilvl')] = parseInt(docxWVal(so), 10) || 1;
+        });
+    });
+
+    let changed = false;
+    let counters = {};
+    Array.from(doc.getElementsByTagNameNS(EQ_NS_W, 'p')).forEach(p => {
+        const ppr = docxFirstChildNS(p, 'pPr');
+        const numPr = docxFirstChildNS(ppr, 'numPr');
+        if (!numPr) return;
+        const ilvl = parseInt(docxWVal(docxFirstChildNS(numPr, 'ilvl')) || '0', 10) || 0;
+        const numId = docxWVal(docxFirstChildNS(numPr, 'numId'));
+        if (!numId || numId === '0' || ilvl !== 0) return;
+        const lvl = (absLvl[numToAbs[numId]] || {})['0'];
+        if (!lvl) return;
+        if (!/^(lower|upper)Letter$/.test(lvl.fmt || '')) { counters = {}; return; }   // nomor soal -> reset huruf
+
+        const hasContent = Array.from(p.getElementsByTagNameNS(EQ_NS_W, 't')).some(t => (t.textContent || '').trim()) ||
+            p.getElementsByTagNameNS(EQ_NS_W, 'drawing').length > 0 || p.getElementsByTagNameNS(EQ_NS_W, 'pict').length > 0;
+        if (!hasContent) return;     // baris kosong (spasi) tidak dihitung sebagai opsi
+
+        const start = startOverride[numId + ':0'] || lvl.start || 1;
+        const idx = (counters[numId] === undefined ? start - 1 : counters[numId]) + 1;
+        counters[numId] = idx;
+        const base = lvl.fmt === 'upperLetter' ? 65 : 97;
+        const label = String.fromCharCode(base + ((idx - 1) % 26)) + '. ';
+
+        ppr.removeChild(numPr);
+        const r = doc.createElementNS(EQ_NS_W, 'w:r');
+        const t = doc.createElementNS(EQ_NS_W, 'w:t');
+        t.setAttributeNS('http://www.w3.org/XML/1998/namespace', 'xml:space', 'preserve');
+        t.textContent = label;
+        r.appendChild(t);
+        p.insertBefore(r, ppr.nextSibling);
+        changed = true;
+    });
+    return changed;
+}
+
+// Dipanggil sebelum Mammoth: equation -> token, daftar huruf level atas -> teks biasa.
+async function preprocessDocxForImport(arrayBuffer) {
+    if (typeof JSZip === 'undefined' || typeof DOMParser === 'undefined') return arrayBuffer;
+    try {
+        const zip = await JSZip.loadAsync(arrayBuffer);
+        const docFile = zip.file('word/document.xml');
+        if (!docFile) return arrayBuffer;
+        const parser = new DOMParser();
+        const doc = parser.parseFromString(await docFile.async('string'), 'application/xml');
+        if (doc.getElementsByTagName('parsererror').length) return arrayBuffer;
+
+        let changed = convertDocxEquations(doc);
+        const numFile = zip.file('word/numbering.xml');
+        if (numFile) {
+            const numDoc = parser.parseFromString(await numFile.async('string'), 'application/xml');
+            if (!numDoc.getElementsByTagName('parsererror').length) changed = flattenLetterLists(doc, numDoc) || changed;
+        }
+        if (!changed) return arrayBuffer;
+        zip.file('word/document.xml', new XMLSerializer().serializeToString(doc));
+        return await zip.generateAsync({ type: 'arraybuffer' });
+    } catch (err) {
+        console.warn('Pra-proses DOCX (equation) dilewati:', err);
+        return arrayBuffer;
+    }
+}
+
+// Setelah file .docx dibuat docx.js: ganti run penanda [[EQ_xxxx]] dengan equation asli Word (OMML).
+async function injectEquationsIntoDocx(blob) {
+    if (typeof JSZip === 'undefined') return blob;
+    try {
+        const zip = await JSZip.loadAsync(blob);
+        const f = zip.file('word/document.xml');
+        if (!f) return blob;
+        let xml = await f.async('string');
+        if (!/\[\[EQ_[0-9a-z]+\]\]/.test(xml)) return blob;
+        xml = xml.replace(/<w:r>(?:(?!<\/w:r>)[\s\S])*?<w:t(?:\s[^>]*)?>\[\[(EQ_[0-9a-z]+)\]\]<\/w:t><\/w:r>/g, (m, id) => {
+            const eq = EDITOR_EQUATIONS['[[' + id + ']]'];
+            if (!eq) return m;
+            if (eq.omml) return eq.omml;                                   // equation asli Word
+            const safe = String(eq.latex || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+            return m.replace('[[' + id + ']]', safe);                      // cadangan: LaTeX sebagai teks
+        });
+        zip.file('word/document.xml', xml);
+        return await zip.generateAsync({
+            type: 'blob',
+            mimeType: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+            compression: 'DEFLATE'
+        });
+    } catch (err) {
+        console.warn('Penanaman equation ke Word dilewati:', err);
+        return blob;
+    }
+}
+
+function safeImageSrc(src) {
+    src = String(src || '').trim();
+    if (/^data:image\/(?:png|jpe?g|gif|webp|bmp|svg\+xml);base64,[a-z0-9+\/=\s]+$/i.test(src)) return src;
+    if (/^https?:\/\//i.test(src)) return src;
+    return '';
+}
+
+function makeImageToken(src) {
+    let token = IMG_TOKEN_CACHE.get(src);
+    if (token) return token;
+    let h1 = 0x811c9dc5, h2 = 0x01000193 ^ src.length;
+    for (let i = 0; i < src.length; i++) {
+        const c = src.charCodeAt(i);
+        h1 ^= c; h1 = Math.imul(h1, 16777619);
+        h2 = Math.imul(h2 ^ c, 2246822519); h2 ^= h2 >>> 13;
+    }
+    token = '[[IMG_' + (h1 >>> 0).toString(16).padStart(8, '0') + (h2 >>> 0).toString(16).padStart(8, '0') + src.length.toString(36) + ']]';
+    IMG_TOKEN_CACHE.set(src, token);
+    return token;
+}
+
+function replaceImageTokens(html, inline) {
+    return String(html || '').replace(/\[\[IMG_([0-9a-z]+)\]\]/g, (m, id) => {
+        const src = EDITOR_IMAGES['[[IMG_' + id + ']]'];
+        if (!src) return '';
+        const safe = String(src).replace(/&/g, '&amp;').replace(/"/g, '&quot;');
+        return '<img class="preview-img" src="' + safe + '" alt="Gambar soal" style="display:' + (inline ? 'inline-block' : 'block') + '">';
+    }).replace(/\[\[EQ_([0-9a-z]+)\]\]/g, (m, id) => {
+        const eq = EDITOR_EQUATIONS['[[EQ_' + id + ']]'];
+        if (!eq) return '';
+        return '<span class="preview-eq">' + renderEquationHtml(eq.latex) + '</span>';
+    });
+}
+
+// Tampilkan semua gambar Preview pada 50% dari ukuran aslinya (tetap tidak melebihi lebar kotak).
+function applyPreviewImageScale(root) {
+    if (!root) return;
+    root.querySelectorAll('img').forEach(img => {
+        const apply = () => {
+            if (img.naturalWidth) {
+                img.style.width = Math.max(1, Math.round(img.naturalWidth * PREVIEW_IMAGE_SCALE)) + 'px';
+            } else {
+                img.style.width = (PREVIEW_IMAGE_SCALE * 100) + '%';
+            }
+            img.style.maxWidth = '100%';
+            img.style.height = 'auto';
+        };
+        if (img.complete && img.naturalWidth) apply();
+        else img.addEventListener('load', apply, { once: true });
+    });
+}
+
+// Jika AI menghapus token gambar, kembalikan ke posisi soal/opsi yang sama.
+function restoreMissingImageTokens(sourceItems, aiItems) {
+    if (!Array.isArray(aiItems) || !Array.isArray(sourceItems) || aiItems.length !== sourceItems.length) return aiItems;
+    const tokensOf = v => String(v || '').match(/\[\[(?:IMG|EQ)_[0-9a-z]+\]\]/g) || [];
+    aiItems.forEach((ai, i) => {
+        if (!ai || typeof ai !== 'object') return;
+        const src = sourceItems[i] || {};
+        const qMiss = tokensOf(src.question).filter(t => !String(ai.question || '').includes(t));
+        if (qMiss.length) ai.question = (String(ai.question || '').trim() + ' ' + qMiss.join(' ')).trim();
+        if (Array.isArray(src.options) && Array.isArray(ai.options) && src.options.length === ai.options.length) {
+            src.options.forEach((o, j) => {
+                const miss = tokensOf(o).filter(t => !String(ai.options[j] || '').includes(t));
+                if (miss.length) ai.options[j] = (String(ai.options[j] || '').trim() + ' ' + miss.join(' ')).trim();
+            });
+        }
+    });
+    return aiItems;
+}
+
+let isAiProcessed = false;
+let activeQuestionFingerprint = '';
+let cacheLoaded = false;
+let cacheLookupTimer = null;
+let cacheLookupInProgress = false;
+
+function normalizeForFingerprint(value) {
+    return String(value ?? '')
+        .replace(/\r\n/g, '\n')
+        .replace(/\r/g, '\n')
+        .replace(/[\u00A0\u1680\u180E\u2000-\u200B\u202F\u205F\u3000\t]+/g, ' ')
+        .replace(/\s+/g, ' ')
+        .trim();
+}
+
+function getFingerprintSource(data) {
+    return (data || []).map(item => ({
+        question: normalizeForFingerprint(item.question),
+        options: Array.isArray(item.options) ? item.options.map(normalizeForFingerprint) : [],
+        jenisDraft: item.jenis ? String(item.jenis) : '',
+        answer: item.answer ? normalizeForFingerprint(item.answer) : ''
+    }));
+}
+
+async function sha256Hex(text) {
+    if (window.crypto && window.crypto.subtle) {
+        const buffer = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(text));
+        return Array.from(new Uint8Array(buffer)).map(b => b.toString(16).padStart(2, '0')).join('');
+    }
+    let h1 = 0x811c9dc5, h2 = 0x01000193;
+    for (let i = 0; i < text.length; i++) {
+        const c = text.charCodeAt(i);
+        h1 ^= c; h1 = Math.imul(h1, 16777619);
+        h2 ^= c + i; h2 = Math.imul(h2, 16777619);
+    }
+    return (h1 >>> 0).toString(16).padStart(8,'0') + (h2 >>> 0).toString(16).padStart(8,'0') +
+           (text.length >>> 0).toString(16).padStart(8,'0') + '00000000000000000000000000000000';
+}
+
+async function getQuestionFingerprint(data = parsedData) {
+    const canonical = JSON.stringify(getFingerprintSource(data));
+    return await sha256Hex(canonical);
+}
+
+function setCacheStatus(message, type = 'muted') {
+    const el = document.getElementById('cacheStatus');
+    if (!el) return;
+    el.className = `small text-${type} mb-2`;
+    el.style.display = message ? 'block' : 'none';
+    el.innerHTML = message;
+}
+
+// Hapus angka "peninggalan batch" yang salah menempel di AKHIR opsi D saja.
+// No. 10-20 -> hapus 1; No. 21-30 -> hapus 2; No. 31-40 -> hapus 3; dst.
+// Opsi A/B/C/E dan nomor di luar aturan TIDAK diubah.
+function cleanTrailingBatchMarker(item) {
+    if (!item || !Array.isArray(item.options) || item.options.length < 4) return item;
+
+    const no = Number(item.number || 0);
+    const dIndex = 3;
+    let d = String(item.options[dIndex] ?? '').trim();
+
+    // Hapus angka sisa yang ditempelkan generator/batch di belakang pilihan D.
+    // Prioritaskan marker berdasarkan nomor soal; jika tidak cocok, bersihkan
+    // pola nomor batch yang berdiri sendiri di ujung teks.
+    let marker = null;
+    if (no >= 10 && no <= 20) marker = '1';
+    else if (no >= 21) marker = String(Math.floor((no - 1) / 10));
+
+    if (marker !== null) {
+        const reMarker = new RegExp('\\s*' + marker.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '\\s*$', 'u');
+        d = d.replace(reMarker, '').trim();
+    }
+
+    // Tangani sisa nomor batch lain seperti: "Jawaban ... 1", "... 2", dst.
+    // Hanya angka yang berdiri sendiri di paling belakang yang dihapus.
+    d = d.replace(/\s+(?:[1-9]\d*)\s*$/u, '').trim();
+    item.options[dIndex] = d;
+    return item;
+}
+
+function normalizeAiResult(data) {
+    if (!Array.isArray(data)) return [];
+    return data.map((item, index) => {
+        item = item || {};
+        item.number = index + 1;
+        item.question = String(item.question || '').replace(/^\d+[\.\)]\s*/, '').trim();
+        item.images = Array.isArray(item.images) ? item.images : [];
+        return cleanTrailingBatchMarker(item);
+    });
+}
+
+async function lookupConverterCache(showMiss = false) {
+    if (cacheLookupInProgress || !parsedData || parsedData.length === 0 || isAiProcessed) return false;
+    cacheLookupInProgress = true;
+    try {
+        const fingerprint = await getQuestionFingerprint(parsedData);
+        activeQuestionFingerprint = fingerprint;
+        const fd = new FormData();
+        fd.append('action', 'cache_lookup');
+        fd.append('fingerprint', fingerprint);
+        const csrfName = '<?= $this->security->get_csrf_token_name(); ?>';
+        const csrfHash = '<?= $this->security->get_csrf_hash(); ?>';
+        if (csrfName) fd.append(csrfName, csrfHash);
+
+        const res = await fetch(window.location.href, { method: 'POST', body: fd });
+        const result = await res.json();
+        if (result.status === 'hit' && Array.isArray(result.data) && result.data.length) {
+            parsedData = normalizeAiResult(result.data);
+            isAiProcessed = true;
+            cacheLoaded = true;
+            document.getElementById('btnAiAnswer').style.display = 'none';
+            setCacheStatus(`<i class="fas fa-database mr-1"></i> Hasil ditemukan di cache. ${result.question_count || parsedData.length} soal siap diunduh tanpa convert ulang. <span class="text-muted">${result.cached_at || ''}</span>`, 'success');
+            renderPreview();
+            return true;
+        }
+        if (showMiss) setCacheStatus('<i class="fas fa-info-circle mr-1"></i> Belum ada hasil tersimpan. Klik AI Generator untuk memproses.', 'muted');
+    } catch (e) {
+        console.warn('Cache lookup gagal:', e);
+        if (showMiss) setCacheStatus('<i class="fas fa-exclamation-triangle mr-1"></i> Cache server tidak dapat diperiksa. Anda tetap dapat menjalankan AI.', 'warning');
+    } finally {
+        cacheLookupInProgress = false;
+    }
+    return false;
+}
+
+function scheduleCacheLookup() {
+    clearTimeout(cacheLookupTimer);
+    cacheLookupTimer = setTimeout(() => lookupConverterCache(false), 900);
+}
+
+async function saveConverterCache(fingerprint, data) {
+    if (!fingerprint || !Array.isArray(data) || !data.length) return false;
+    try {
+        const fd = new FormData();
+        fd.append('action', 'cache_save');
+        fd.append('fingerprint', fingerprint);
+        fd.append('payload', JSON.stringify(data));
+        const csrfName = '<?= $this->security->get_csrf_token_name(); ?>';
+        const csrfHash = '<?= $this->security->get_csrf_hash(); ?>';
+        if (csrfName) fd.append(csrfName, csrfHash);
+        const res = await fetch(window.location.href, { method: 'POST', body: fd });
+        const result = await res.json();
+        if (result.status === 'success') {
+            setCacheStatus(`<i class="fas fa-database mr-1"></i> Hasil AI tersimpan. Import ulang soal yang sama akan menggunakan cache tanpa convert ulang.`, 'success');
+            return true;
+        }
+    } catch (e) {
+        console.warn('Cache save gagal:', e);
+    }
+    return false;
+}
+
+const inputArea = document.getElementById('inputText');
+if (inputArea) {
+    inputArea.addEventListener('paste', function(e) {
+        let clipboardData = e.clipboardData || window.clipboardData;
+        if (!clipboardData) return;
+        let hasImage = false;
+
+        if (clipboardData.items) {
+            for (let i = 0; i < clipboardData.items.length; i++) {
+                if (clipboardData.items[i].type.indexOf('image') !== -1) {
+                    e.preventDefault();
+                    hasImage = true;
+                    let blob = clipboardData.items[i].getAsFile();
+                    let reader = new FileReader();
+                    reader.onload = function(event) { insertImageToInput(event.target.result); };
+                    reader.readAsDataURL(blob);
+                }
+            }
+        }
+        if (!hasImage) {
+            let textData = clipboardData.getData('text/plain');
+            if (textData) {
+                e.preventDefault();
+                textData = textData.replace(/[\u00A0\u1680\u180E\u2000-\u200B\u202F\u205F\u3000\t]/g, ' ');
+                document.execCommand('insertText', false, textData);
+            }
+        }
+        setTimeout(() => autoCleanAndParse(), 100);
+    });
+}
+
+function insertImageToInput(base64Src) {
+    let imgHTML = `<br><img src="${base64Src}" style="max-width:220px; display:block; margin:5px 0;"><br>`;
+    document.execCommand('insertHTML', false, imgHTML);
+    autoCleanAndParse();
+}
+
+function showProgressState(message) {
+    const container = document.getElementById('previewRenderArea');
+    container.innerHTML = `
+        <div class="text-center text-muted py-5">
+            <i class="fas fa-spinner fa-spin fa-3x mb-3 text-teal d-block"></i>
+            <h6 class="font-weight-bold text-dark">${message}</h6>
+            <small class="text-muted">Mohon tunggu, proses mengekstrak file...</small>
+        </div>`;
+}
+
+async function handleFileUpload(input) {
+    const file = input.files[0];
+    if (!file) return;
+
+    const ext = file.name.split('.').pop().toLowerCase();
+    const container = document.getElementById('inputText');
+
+    showProgressState("Mengekstrak Dokumen " + ext.toUpperCase() + "...");
+    container.innerHTML = "Sedang mengekstrak berkas, mohon tunggu...";
+    isAiProcessed = false;
+
+    let reader = new FileReader();
+
+    if (ext === 'docx') {
+        if (typeof mammoth === 'undefined') {
+            alert("Library Mammoth.js belum siap.");
+            container.innerHTML = "";
+            renderPreview();
+            return;
+        }
+
+        reader.onload = async function(e) {
+            try {
+                // Equation Word (OMML) dijadikan token [[EQ_xxxx]] dulu karena Mammoth membuangnya.
+                EDITOR_EQUATIONS = {};
+                const docxBuffer = await preprocessDocxForImport(e.target.result);
+                let result = await mammoth.convertToHtml({ arrayBuffer: docxBuffer });
+                if (result.value && result.value.trim() !== "") {
+                    let tempDiv = document.createElement('div');
+                    tempDiv.innerHTML = result.value;
+
+                    // Ubah numbering Word (OL/LI) menjadi nomor/HURUF MANUAL.
+                    // Top-level list = nomor soal, nested list = opsi A-E.
+                    normalizeImportedDocxLists(tempDiv);
+
+                    // Token rumus -> tampil sebagai rumus (bukan teks [[EQ_...]]) di kolom Input.
+                    equationTokensToEditorSpans(tempDiv);
+
+                    // Jangan diratakan menjadi innerText. HTML ini dimasukkan ke editor
+                    // supaya tabel dan nomor manual tetap terlihat di Input Bank Soal Mentah.
+                    container.innerHTML = tempDiv.innerHTML.trim();
+
+                    parsedData = [];
+                    parseEditorContent();
+                    scheduleCacheLookup();
+                } else {
+                    alert("Teks dokumen kosong atau tidak terbaca.");
+                    container.innerHTML = "";
+                    renderPreview();
+                }
+            } catch (err) {
+                alert("Gagal membaca berkas Word: " + err.message);
+                container.innerHTML = "";
+                renderPreview();
+            }
+        };
+        reader.readAsArrayBuffer(file);
+
+    } else if (ext === 'pdf') {
+        if (typeof pdfjsLib === 'undefined') {
+            alert("Library PDF.js belum siap.");
+            container.innerHTML = "";
+            renderPreview();
+            return;
+        }
+
+        reader.onload = function(e) {
+            let typedarray = new Uint8Array(e.target.result);
+            pdfjsLib.getDocument({ data: typedarray }).promise.then(async function(pdf) {
+                let maxPages = pdf.numPages;
+                let fullText = "";
+
+                for (let j = 1; j <= maxPages; j++) {
+                    try {
+                        showProgressState(`Mengekstrak PDF (Halaman ${j} dari ${maxPages})...`);
+                        let page = await pdf.getPage(j);
+                        let tokenizedText = await page.getTextContent();
+                        let pageText = "";
+                        let lastY = null;
+
+                        for (let item of tokenizedText.items) {
+                            if (lastY !== null && Math.abs(item.transform[5] - lastY) > 5) {
+                                pageText += "\n";
+                            }
+                            pageText += item.str + " ";
+                            lastY = item.transform[5];
+                        }
+                        fullText += pageText + "\n\n";
+                    } catch (pageErr) {
+                        console.warn(pageErr);
+                    }
+                }
+
+                if (fullText.trim() !== "") {
+                    container.innerText = fullText.trim();
+                    parsedData = [];
+                    parseLocalInstantly(fullText);
+                    scheduleCacheLookup();
+                } else {
+                    alert("PDF tidak memiliki layer teks.");
+                    container.innerHTML = "";
+                    renderPreview();
+                }
+            }).catch(err => {
+                alert("Gagal membaca PDF: " + err.message);
+                container.innerHTML = "";
+                renderPreview();
+            });
+        };
+        reader.readAsArrayBuffer(file);
+    }
+    input.value = '';
+}
+
+function normalizeImportedDocxLists(root) {
+    const lists = Array.from(root.querySelectorAll('ol, ul')).filter(list => !list.parentElement.closest('ol, ul'));
+    let questionNo = 1;
+
+    function makeManualList(list, level) {
+        const fragment = document.createDocumentFragment();
+        const items = Array.from(list.children).filter(el => el.tagName === 'LI');
+
+        items.forEach((li, index) => {
+            const wrapper = document.createElement('div');
+            wrapper.className = level === 0 ? 'import-question-line' : 'import-option-line';
+
+            const prefix = level === 0
+                ? (questionNo++) + '. '
+                : String.fromCharCode(65 + Math.min(index, 25)) + '. ';
+
+            const nestedLists = Array.from(li.children).filter(el => /^(OL|UL)$/i.test(el.tagName));
+            const content = document.createElement('span');
+            Array.from(li.childNodes).forEach(node => {
+                if (node.nodeType === 1 && /^(OL|UL)$/i.test(node.tagName)) return;
+                content.appendChild(node.cloneNode(true));
+            });
+            wrapper.appendChild(document.createTextNode(prefix));
+            wrapper.appendChild(content);
+            fragment.appendChild(wrapper);
+
+            nestedLists.forEach(nested => {
+                fragment.appendChild(makeManualList(nested, level + 1));
+            });
+        });
+        return fragment;
+    }
+
+    lists.forEach(list => {
+        const fragment = makeManualList(list, 0);
+        list.parentNode.replaceChild(fragment, list);
+    });
+}
+
+function uploadBatchImages(input) {
+    if (input.files && input.files.length > 0) {
+        Array.from(input.files).forEach(file => {
+            let reader = new FileReader();
+            reader.onload = (e) => insertImageToInput(e.target.result);
+            reader.readAsDataURL(file);
+        });
+    }
+    input.value = '';
+}
+
+function parseEditorContent() {
+    const container = document.getElementById('inputText');
+    if (!container) return;
+
+    EDITOR_TABLES = {};
+    EDITOR_TABLE_SEQ = 0;
+
+    const clone = container.cloneNode(true);
+
+    // Rumus di editor dikembalikan menjadi token [[EQ_xxxx]] agar ikut terbaca parser/AI/Preview/Word.
+    clone.querySelectorAll('.eq-token').forEach(el => {
+        const latex = el.getAttribute('data-latex') || el.textContent || '';
+        const token = el.getAttribute('data-eq') || makeEquationToken(latex);
+        const prev = EDITOR_EQUATIONS[token] || {};
+        EDITOR_EQUATIONS[token] = { latex: latex, omml: el.getAttribute('data-omml') || prev.omml || '' };
+        el.parentNode.replaceChild(document.createTextNode(token), el);
+    });
+
+    // Gambar (termasuk di dalam tabel) diganti token teks agar tidak hilang oleh innerText.
+    clone.querySelectorAll('img').forEach(img => {
+        const safe = safeImageSrc(img.getAttribute('src'));
+        if (!safe) { img.remove(); return; }
+        const token = makeImageToken(safe);
+        EDITOR_IMAGES[token] = safe;
+        img.parentNode.replaceChild(document.createTextNode(' ' + token + ' '), img);
+    });
+
+    const tables = clone.querySelectorAll('table');
+    tables.forEach(table => {
+        const id = '[[TABLE_' + (EDITOR_TABLE_SEQ++) + ']]';
+        EDITOR_TABLES[id] = table.outerHTML;
+        const marker = document.createElement('span');
+        marker.textContent = '\n' + id + '\n';
+        table.parentNode.replaceChild(marker, table);
+    });
+
+    // Browser clipboard kadang mengirim OL/UL. Jika masih ada, ubah juga menjadi manual.
+    normalizeImportedDocxLists(clone);
+
+    // PENTING: innerText pada elemen yang TIDAK menempel di DOM bekerja seperti textContent
+    // (baris baru dari <div>/<br>/<p> hilang, sehingga "a. ...b. ...c. ..." menyatu).
+    // Karena itu clone dipasang sementara di luar layar agar innerText memakai layout asli.
+    let rawEditorText = '';
+    const host = document.createElement('div');
+    host.style.cssText = 'position:fixed;left:-99999px;top:0;width:800px;white-space:pre-wrap;pointer-events:none;';
+    host.appendChild(clone);
+    document.body.appendChild(host);
+    try {
+        rawEditorText = clone.innerText || clone.textContent || '';
+    } finally {
+        document.body.removeChild(host);
+    }
+
+    const text = rawEditorText
+        .replace(/\u00A0/g, ' ')
+        .replace(/[ \t]+\n/g, '\n')
+        .replace(/\n{3,}/g, '\n\n')
+        .trim();
+
+    parseLocalInstantly(text);
+    // Simpan tabel sebagai token selama parsing, tetapi sediakan versi HTML asli
+    // untuk prompt AI dan renderer Preview.
+}
+
+function restoreEditorTablesRaw(value) {
+    let raw = String(value || '');
+    Object.keys(EDITOR_TABLES).forEach(token => {
+        raw = raw.split(token).join(EDITOR_TABLES[token]);
+    });
+    return raw;
+}
+
+function sanitizePreviewTable(tableHtml) {
+    const holder = document.createElement('div');
+    holder.innerHTML = String(tableHtml || '');
+    const table = holder.querySelector('table');
+    if (!table) return escapeHtml(String(tableHtml || ''));
+
+    table.querySelectorAll('script,style,iframe,object,embed').forEach(el => el.remove());
+    table.querySelectorAll('*').forEach(el => {
+        Array.from(el.attributes).forEach(attr => {
+            const name = attr.name.toLowerCase();
+            if (name.startsWith('on') || name === 'style' || name === 'class' || name === 'id') {
+                el.removeAttribute(attr.name);
+            }
+        });
+    });
+    return table.outerHTML;
+}
+
+function renderPreviewContent(value) {
+    let raw = String(value || '');
+    const tables = [];
+    raw = raw.replace(/<table\b[\s\S]*?<\/table>/gi, match => {
+        const token = `___PREVIEW_TABLE_${tables.length}___`;
+        tables.push(sanitizePreviewTable(match));
+        return token;
+    });
+
+    // Token tabel juga didukung jika masih ada pada data draft/cache lama.
+    Object.keys(EDITOR_TABLES || {}).forEach(token => {
+        const safeToken = token.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+        raw = raw.replace(new RegExp(safeToken, 'g'), `___EDITOR_TABLE_${tables.length}___`);
+        tables.push(sanitizePreviewTable(EDITOR_TABLES[token]));
+    });
+
+    raw = escapeHtml(raw).replace(/\n/g, '<br>');
+    tables.forEach((tableHtml, idx) => {
+        raw = raw.replace(`___PREVIEW_TABLE_${idx}___`, tableHtml);
+        raw = raw.replace(`___EDITOR_TABLE_${idx}___`, tableHtml);
+    });
+    return replaceImageTokens(raw, false);
+}
+
+function restoreEditorTables(value) {
+    return renderPreviewContent(value);
+}
+
+function autoCleanAndParse() {
+    let container = document.getElementById('inputText');
+    let content = container.innerHTML.trim();
+    let hasContent = content.length > 0;
+
+    if (cacheLoaded) {
+        cacheLoaded = false;
+        isAiProcessed = false;
+        activeQuestionFingerprint = '';
+        setCacheStatus('', 'muted');
+    }
+
+    document.getElementById('btnAiAnswer').style.display = hasContent ? 'block' : 'none';
+    
+    if (!hasContent) {
+        parsedData = [];
+        isAiProcessed = false;
+        activeQuestionFingerprint = '';
+        setCacheStatus('', 'muted');
+        renderPreview();
+    } else {
+        if (!isAiProcessed) {
+            parseEditorContent();
+            scheduleCacheLookup();
+        }
+    }
+}
+
+function parseLocalInstantly(text) {
+    let rawText = String(text || '').trim();
+    if (!rawText) {
+        parsedData = [];
+        renderPreview();
+        return;
+    }
+
+    rawText = rawText
+        .replace(/[\u00A0\u1680\u180E\u2000-\u200B\u202F\u205F\u3000\t]/g, ' ')
+        .replace(/\r\n/g, '\n')
+        .replace(/\r/g, '\n')
+        .replace(/^(?:BERILAH\s+TANDA\s+SILANG[^\n]*|MATA\s+PELAJARAN[^\n]*|PENILAIAN\s+AKHIR[^\n]*|TAHUN\s+PELAJARAN[^\n]*|NAMA\s*:[^\n]*)\n+/gi, '')
+        .trim();
+
+    // Nomor soal/opsi dari Word/PDF sering menempel dengan teks sebelumnya,
+    // misalnya: "D. jawaban lawan2. Manakah...".
+    // Pisahkan nomor/opsi menjadi baris manual agar parser tidak menggabungkan soal.
+    // Perbaiki artefak numbering Word yang kadang menyisakan angka "1"
+    // tepat sebelum nomor soal 10, 11, 12, dst.
+    rawText = rawText
+        .replace(/([^\n])\s+1\s+(?=(1\d{1,2}[\.)]\s+))/g, '$1\n\n')
+        .replace(/([^\n])\s+1\s*\n\s*(1\d{1,2}[\.)]\s+)/g, '$1\n$2')
+        .replace(/([^\n])\s+1\s+(?=0[\.)]\s+)/g, '$1\n10. ')
+        .replace(/([^\n])\s+(?=(\d{1,3}[\.)]\s+))/g, '$1\n\n')
+        .replace(/([^\n])\s+(?=([a-eA-E][\.)]\s+))/g, '$1\n')
+        // Nomor yang menempel pada teks (mis. "lawan2. Manakah"), tapi bukan angka bersambung seperti "2022. Ia".
+        .replace(/([^\n\d])(?=(\d{1,3}[\.)]\s+))/g, '$1\n\n')
+        // CATATAN: pemisahan opsi yang menempel TANPA spasi dihapus, karena memotong kata
+        // yang berakhiran a-e + titik (mis. "temannya. Edo" -> "teman-temanny" + "a. Edo").
+        .replace(/\s+([a-eA-E])[\.)]\s+/g, '\n$1.  ');
+
+    // Jika dokumen sama sekali tidak mempunyai nomor, anggap seluruh teks sebagai soal No. 1.
+    if (!/^\s*\d{1,3}[\.)]\s+/.test(rawText)) {
+        rawText = '1. ' + rawText.trim();
+    }
+
+    // Normalisasi nomor menjadi format manual "1."
+    rawText = rawText.replace(/^\s*(\d{1,3})[\.)]\s*/gm, '$1. ');
+    // Normalisasi pilihan menjadi format manual A., B., C., D., E.
+    rawText = rawText.replace(/^\s*([a-eA-E])[\.)]\s*/gm, (_, ch) => ch.toUpperCase() + '. ');
+
+    const lines = rawText.split('\n');
+    let processedText = '';
+    for (const line of lines) {
+        const trimmed = line.trim();
+        if (/^\d{1,3}[\.)]\s+/.test(trimmed)) {
+            processedText += '\n===SOAL===\n' + trimmed + '\n';
+        } else {
+            processedText += line + '\n';
+        }
+    }
+
+    const items = [];
+    let realNumberCounter = 1;
+    // ===== SINKRONISASI POSISI GAMBAR =====
+    // Gambar yang berdiri sendiri (baris sendiri) SETELAH opsi terakhir sebuah soal
+    // sebenarnya milik soal berikutnya (gambar diletakkan di atas nomor soal berikutnya).
+    // Tanpa ini, gambar nempel ke opsi terakhir soal sebelumnya (mis. opsi D soal 4).
+    // Gambar yang sebaris dengan opsi (mis. "D. [gambar]") tetap menjadi milik opsi itu.
+    const rawBlocks = processedText.split('===SOAL===')
+        .map(b => b.trim())
+        .filter(b => b.length > 3);
+    let carryImages = '';
+    rawBlocks.forEach((blk, idx) => {
+        if (carryImages) {
+            blk = blk.replace(/^(\d{1,3}[\.)]\s*)/, '$1' + carryImages + '\n');
+            carryImages = '';
+        }
+        if (idx < rawBlocks.length - 1) {
+            const tail = blk.match(/\n[ \t]*((?:\[\[IMG_[0-9a-z]+\]\][ \t\n]*)+)$/);
+            if (tail) {
+                const body = blk.slice(0, tail.index).trimEnd();
+                const lastLine = body.split('\n').pop().trim();
+                // hanya dipindah jika opsi terakhir sudah punya teks sendiri
+                if (/^[A-E]\.\s+\S/.test(lastLine)) {
+                    carryImages = tail[1].trim().replace(/\s+/g, ' ');
+                    blk = body;
+                }
+            }
+        }
+        rawBlocks[idx] = blk;
+    });
+
+    rawBlocks.forEach(block => {
+        const cleanBlock = block.trim();
+        if (cleanBlock.length <= 3) return;
+
+        const parsedObj = extractQuestionAndOptions(cleanBlock, realNumberCounter);
+        if (!parsedObj || !parsedObj.question) return;
+
+        // Kembalikan tabel yang sebelumnya diamankan oleh parseEditorContent().
+        const restoreTables = value => String(value || '').replace(/\[\[TABLE_(\d+)\]\]/g, (m, n) => {
+            return (typeof EDITOR_TABLES !== 'undefined' && EDITOR_TABLES['[[TABLE_'+Number(n)+']]'])
+                ? EDITOR_TABLES['[[TABLE_'+Number(n)+']]']
+                : m;
+        });
+
+        parsedObj.question = restoreTables(parsedObj.question);
+        if (Array.isArray(parsedObj.options)) {
+            parsedObj.options = parsedObj.options.map(restoreTables);
+        }
+        items.push(parsedObj);
+        realNumberCounter++;
+    });
+
+    parsedData = items;
+    renderPreview();
+}
+
+function extractQuestionAndOptions(chunkText, num) {
+    if (!chunkText) return null;
+
+    let cleanText = String(chunkText)
+        .replace(/[\u00A0\u1680\u180E\u2000-\u200B\u202F\u205F\u3000\t]+/g, ' ')
+        .replace(/\r\n/g, '\n')
+        .replace(/\r/g, '\n')
+        .trim();
+
+    cleanText = cleanText.replace(/^\d{1,3}[\.\)]\s*/, '').trim();
+
+    // Pastikan pilihan yang masih menempel dalam satu baris dipisahkan.
+    // Contoh: "A. ... B. ... C. ... D. ..." -> setiap pilihan menjadi baris sendiri.
+    // Dua spasi setelah label dipakai agar hasil Input/Preview lebih mudah dibaca.
+    cleanText = cleanText
+        .replace(/\s+([a-eA-E])[\.\)]\s+/g, '\n$1.  ')
+        .replace(/^([a-eA-E])[\.\)]\s+/gm, (_, ch) => ch.toUpperCase() + '.  ')
+        .replace(/\n{3,}/g, '\n\n')
+        .trim();
+
+    const optRegex = /(?:^|\n)\s*([a-eA-E])\.\s{1,}/g;
+    const matches = [];
+    let m;
+
+    while ((m = optRegex.exec(cleanText)) !== null) {
+        matches.push({
+            index: m.index,
+            contentIndex: m.index + m[0].length,
+            fullMatchLength: m[0].length,
+            label: m[1].toUpperCase()
+        });
+    }
+
+    let questionText = '';
+    let options = [];
+    const optionLabels = [];
+
+    if (matches.length > 0) {
+        questionText = cleanText.substring(0, matches[0].index).trim();
+
+        const limitOptions = Math.min(matches.length, 5);
+        for (let i = 0; i < limitOptions; i++) {
+            const start = matches[i].contentIndex;
+            const end = (i + 1 < matches.length) ? matches[i + 1].index : cleanText.length;
+            let optVal = cleanText.substring(start, end)
+                .replace(/\s+/g, ' ')
+                .trim();
+            // Jika masih ada label pilihan yang ikut terbawa, buang sekali lagi.
+            optVal = optVal.replace(/^[a-eA-E1-5][\.\)]\s*/u, '').trim();
+            if (optVal) { options.push(optVal); optionLabels.push(matches[i].label); }
+        }
+        // Opsi yang ditulis 2 kolom di Word (a. ... c. ... / b. ... d. ...) terbaca berurutan a,c,b,d.
+        // Jika huruf-hurufnya unik dan lengkap (A..N), urutkan menurut huruf supaya A,B,C,D benar.
+        if (options.length > 1) {
+            const sorted = optionLabels.slice().sort();
+            const complete = sorted.every((l, k) => l === String.fromCharCode(65 + k));
+            const inOrder = optionLabels.every((l, k) => l === sorted[k]);
+            if (complete && !inOrder) {
+                const pairs = options.map((v, k) => ({ l: optionLabels[k], v: v }));
+                pairs.sort((a, b) => a.l < b.l ? -1 : 1);
+                options = pairs.map(p => p.v);
+            }
+        }
+    } else {
+        questionText = cleanText;
+    }
+
+    questionText = questionText
+        .replace(/\s+/g, ' ')
+        .trim();
+
+    return {
+        number: num,
+        question: questionText,
+        jenis: options.length > 0 ? 1 : 5,
+        options: options.length > 0 ? options : null,
+        key: null
+    };
+}
+
+function updateAIProgress(percent, message) {
+    const container = document.getElementById('previewRenderArea');
+    container.innerHTML = `
+        <div class="text-center py-5 px-4">
+            <i class="fas fa-brain fa-spin fa-3x mb-3 text-teal"></i>
+            <h5 class="font-weight-bold text-dark">${percent}%</h5>
+            <p class="text-muted font-weight-bold mb-3" style="font-size: 14px;">${message}</p>
+            <div class="progress shadow-sm" style="height: 15px; border-radius: 10px;">
+                <div class="progress-bar progress-bar-striped progress-bar-animated bg-teal" 
+                     role="progressbar" style="width: ${percent}%;"></div>
+            </div>
+            <small class="text-muted mt-2 d-block">Memproses analisis kunci jawaban via Multi-AI Engine...</small>
+        </div>`;
+}
+
+async function smartApiError(res, provider, model){
+    let body='';
+    try{ body=await res.text(); }catch(_){}
+    let message=`${provider} ${model} Error HTTP ${res.status}`;
+    try{
+        const j=JSON.parse(body);
+        message=j?.error?.message||j?.message||message;
+    }catch(_){}
+    const err=new Error(message);
+    err.httpStatus=res.status;
+    err.body=body;
+    throw err;
+}
+
+async function callGeminiApi(apiKey, model, promptText) {
+    let endpoint = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
+    let res = await fetch(endpoint, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+            contents: [{ parts: [{ text: promptText }] }],
+            generationConfig: { temperature: 0.1, responseMimeType: "application/json" }
+        })
+    });
+    if (!res.ok) await smartApiError(res, "Google Gemini", model);
+    let data = await res.json();
+    return data.candidates?.[0]?.content?.parts?.[0]?.text;
+}
+
+async function callOpenAiApi(apiKey, model, promptText) {
+    let res = await fetch("https://api.openai.com/v1/chat/completions", {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${apiKey}`
+        },
+        body: JSON.stringify({
+            model: model,
+            messages: [{ role: "user", content: promptText }],
+            temperature: 0.1,
+            response_format: { type: "json_object" }
+        })
+    });
+    if (!res.ok) await smartApiError(res, "OpenAI", model);
+    let data = await res.json();
+    return data.choices?.[0]?.message?.content;
+}
+
+async function callGroqApi(apiKey, model, promptText) {
+    let res = await fetch("https://api.groq.com/openai/v1/chat/completions", {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${apiKey}`
+        },
+        body: JSON.stringify({
+            model: model,
+            messages: [{ role: "user", content: promptText }],
+            temperature: 0.1,
+            response_format: { type: "json_object" }
+        })
+    });
+    if (!res.ok) await smartApiError(res, "Groq", model);
+    let data = await res.json();
+    return data.choices?.[0]?.message?.content;
+}
+
+async function callPollinationsApi(apiKey, model, promptText) {
+    const selectedModel = model || "openai";
+    let res = await fetch("https://gen.pollinations.ai/v1/chat/completions", {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${apiKey}`
+        },
+        body: JSON.stringify({
+            model: selectedModel,
+            messages: [
+                { role: "system", content: "You are a helpful assistant that outputs strict JSON." },
+                { role: "user", content: promptText }
+            ],
+            temperature: 0
+        })
+    });
+    if (!res.ok) await smartApiError(res, "Pollinations.ai", selectedModel);
+    let data = await res.json();
+    return data.choices?.[0]?.message?.content || data.output_text || data.text || null;
+}
+
+async function callOpenRouterApi(apiKey, model, promptText) {
+    let res = await fetch("https://openrouter.ai/api/v1/chat/completions", {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${apiKey}`
+        },
+        body: JSON.stringify({
+            model: model,
+            messages: [{ role: "user", content: promptText }],
+            temperature: 0.1
+        })
+    });
+    if (!res.ok) await smartApiError(res, "OpenRouter", model);
+    let data = await res.json();
+    return data.choices?.[0]?.message?.content;
+}
+
+async function callMistralApi(apiKey, model, promptText) {
+    let res = await fetch("https://api.mistral.ai/v1/chat/completions", {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${apiKey}`
+        },
+        body: JSON.stringify({
+            model: model,
+            messages: [{ role: "user", content: promptText }],
+            temperature: 0.1,
+            response_format: { type: "json_object" }
+        })
+    });
+    if (!res.ok) await smartApiError(res, "Mistral", model);
+    let data = await res.json();
+    return data.choices?.[0]?.message?.content;
+}
+
+async function callCloudflareApi(accountId, apiToken, model, promptText) {
+    let endpoint = `https://api.cloudflare.com/client/v4/accounts/${accountId}/ai/run/${model}`;
+    let res = await fetch(endpoint, {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${apiToken}`
+        },
+        body: JSON.stringify({
+            messages: [
+                { role: "system", content: "You are a helpful assistant that outputs strict JSON." },
+                { role: "user", content: promptText }
+            ]
+        })
+    });
+    if (!res.ok) await smartApiError(res, "Cloudflare Workers AI", model);
+    let data = await res.json();
+    return data.result?.response;
+}
+
+async function prosesDanRapikanDenganAI() {
+    const container = document.getElementById('inputText');
+    if (!parsedData || parsedData.length === 0) parseLocalInstantly(container.innerText);
+    if (parsedData.length === 0) return alert('Tidak ada soal yang terdeteksi.');
+
+    let providersChain = [];
+    try {
+        let chainStr = smartChain() || SERVER_KEYS.chain || localStorage.getItem('AI_PROVIDER_CHAIN') || '["gemini","openai","groq","pollinations","openrouter","mistral","cloudflare"]';
+        providersChain = typeof chainStr === 'string' ? JSON.parse(chainStr) : chainStr;
+    } catch(e) {
+        providersChain = ["gemini","openai","groq","pollinations","openrouter","mistral","cloudflare"];
+    }
+
+    let geminiKeys = getApiKeys('gemini');
+    let openaiKeys = getApiKeys('openai');
+    let groqKeys = getApiKeys('groq');
+    let pollinationsKeys = getApiKeys('pollinations');
+    let openRouterKeys = getApiKeys('openrouter');
+    let mistralKeys = getApiKeys('mistral');
+    let cfAccountId = SERVER_KEYS.cloudflare_account || localStorage.getItem('CUSTOM_CLOUDFLARE_ACCOUNT_ID') || '';
+    let cfKeys = getApiKeys('cloudflare_key');
+
+    if (geminiKeys.length === 0 && openaiKeys.length === 0 && groqKeys.length === 0 && pollinationsKeys.length === 0 && openRouterKeys.length === 0 && mistralKeys.length === 0 && cfKeys.length === 0) {
+        alert("Harap masukkan minimal 1 API Key di menu Pengaturan!");
+        openApiKeyModal();
+        return;
+    }
+
+    const cached = await lookupConverterCache(true);
+    if (cached) {
+        alert(`Hasil ${parsedData.length} soal ditemukan di cache. Tidak ada request AI baru.`);
+        return;
+    }
+
+    activeQuestionFingerprint = await getQuestionFingerprint(parsedData);
+    setCacheStatus('<i class="fas fa-sync-alt fa-spin mr-1"></i> Belum ada cache. Menyiapkan proses AI...', 'info');
+
+    const btn = document.getElementById('btnAiAnswer');
+    btn.disabled = true;
+    btn.innerHTML = `<i class="fas fa-spinner fa-spin mr-2"></i> Menganalisis via Multi-AI Engine...`;
+
+    const totalSoal = parsedData.length;
+    const batchSize = 10; 
+    let hasilAI = [];
+
+    const delay = ms => new Promise(res => setTimeout(res, ms));
+
+    try {
+        for (let i = 0; i < totalSoal; i += batchSize) {
+            let chunkSoal = parsedData.slice(i, i + batchSize);
+            let startNo = i + 1;
+            let endNo = Math.min(i + batchSize, totalSoal);
+            let percent = Math.round((i / totalSoal) * 100);
+
+            updateAIProgress(percent, `Memproses Soal No. ${startNo} s.d ${endNo} dari${totalSoal}...`);
+
+            let promptText = `Kamu adalah sistem pemroses bank soal. Analisis dan formatkan potongan soal berikut menjadi JSON Array murni. Jika dalam soal terdapat struktur tabel, sertakan struktur tabel tersebut dalam tag HTML <table>...</table> yang bersih di dalam string "question".
+
+Potongan Soal (No ${startNo} - ${endNo}):${JSON.stringify(chunkSoal.map(q => ({...q, question: restoreEditorTablesRaw(q.question)})), null, 2)}
+
+ATURAN KETAT OUTPUT:
+1. Kembalikan HANYA JSON Array murni [ ... ].
+2. JANGAN tambahkan teks pembuka/penutup, markdown (\`\`\`json), atau keterangan apa pun.
+3. Tentukan jenis soal (1=PG Biasa, 2=PG Kompleks, 3=Menjodohkan, 4=Isian, 5=Uraian).
+4. Berikan kunci jawaban yang BENAR di field "key" HANYA berupa HURUF KAPITAL TUNGGAL dalam array. Contoh: ["A"] atau ["B"].
+5. JANGAN sertakan nomor urut soal di dalam teks "question" (hilangkan "1.", "2.", dst).
+6. Pada "options", tuliskan HANYA OPSI YANG ADA SESUAI SOAL ASLI. JANGAN menambahkan opsi jika tidak ada di soal asli!
+7. Tuliskan ISI OPSINYA SAJA tanpa huruf "A.", "B.", dst.
+8. Pastikan SEMUA teks bersih dari spasi berlebih, spasi tak terlihat (nbsp), dan tab.
+9. Token gambar berbentuk [[IMG_xxxxxxxx]] WAJIB dipertahankan PERSIS (jangan diubah, dihapus, dijelaskan, atau dipindah) pada field "question" atau "options" tempat token itu semula berada.
+10. Token rumus berbentuk [[EQ_xxxxxxxx]] (pecahan, pangkat, akar, dll.) juga WAJIB dipertahankan PERSIS di tempat semula. JANGAN diubah menjadi teks, LaTeX, atau dihitung ulang.`;
+
+            let rawString = null;
+            let batchSuccess = false;
+
+            for (let prov of providersChain) {
+                if (batchSuccess) break;
+
+                if (prov === 'gemini' && geminiKeys.length > 0) {
+                    let models = smartModels('gemini', ["gemini-2.5-flash", "gemini-2.5-pro"]);
+                    for (let key of geminiKeys) {
+                        if (batchSuccess) break;
+                        for (let mod of models) {
+                            try {
+                                rawString = await smartCall('gemini', key, mod, promptText, true);
+                                if (rawString) { batchSuccess = true; break; }
+                            } catch (e) {
+                                console.warn(`Gemini API/Model ${mod} gagal/limit:`, e.message);
+                            }
+                        }
+                    }
+                }
+                else if (prov === 'openai' && openaiKeys.length > 0) {
+                    let models = smartModels('openai', ["gpt-4o-mini", "gpt-4o"]);
+                    for (let key of openaiKeys) {
+                        if (batchSuccess) break;
+                        for (let mod of models) {
+                            try {
+                                rawString = await smartCall('openai', key, mod, promptText, true);
+                                if (rawString) { batchSuccess = true; break; }
+                            } catch (e) {
+                                console.warn(`OpenAI Model ${mod} gagal/limit:`, e.message);
+                            }
+                        }
+                    }
+                } 
+                else if (prov === 'groq' && groqKeys.length > 0) {
+                    let models = smartModels('groq', ["llama-3.3-70b-versatile", "llama-3.1-8b-instant"]);
+                    for (let key of groqKeys) {
+                        if (batchSuccess) break;
+                        for (let mod of models) {
+                            try {
+                                rawString = await smartCall('groq', key, mod, promptText, true);
+                                if (rawString) { batchSuccess = true; break; }
+                            } catch (e) {
+                                console.warn(`Groq Model ${mod} gagal/limit:`, e.message);
+                            }
+                        }
+                    }
+                }
+                else if (prov === 'pollinations' && pollinationsKeys.length > 0) {
+                    let models = smartModels('pollinations', ["openai", "openai-fast", "deepseek"]);
+                    for (let key of pollinationsKeys) {
+                        if (batchSuccess) break;
+                        for (let mod of models) {
+                            try {
+                                rawString = await smartCall('pollinations', key, mod, promptText, true);
+                                if (rawString) { batchSuccess = true; break; }
+                            } catch (e) {
+                                console.warn(`Pollinations.ai Model ${mod} gagal/limit:`, e.message);
+                            }
+                        }
+                    }
+                }
+                else if (prov === 'openrouter' && openRouterKeys.length > 0) {
+                    let models = smartModels('openrouter', ["deepseek/deepseek-chat", "meta-llama/llama-3.3-70b-instruct"]);
+                    for (let key of openRouterKeys) {
+                        if (batchSuccess) break;
+                        for (let mod of models) {
+                            try {
+                                rawString = await smartCall('openrouter', key, mod, promptText, true);
+                                if (rawString) { batchSuccess = true; break; }
+                            } catch (e) {
+                                console.warn(`OpenRouter Model ${mod} gagal/limit:`, e.message);
+                            }
+                        }
+                    }
+                }
+                else if (prov === 'mistral' && mistralKeys.length > 0) {
+                    let models = smartModels('mistral', ["mistral-small-latest", "mistral-large-latest"]);
+                    for (let key of mistralKeys) {
+                        if (batchSuccess) break;
+                        for (let mod of models) {
+                            try {
+                                rawString = await smartCall('mistral', key, mod, promptText, true);
+                                if (rawString) { batchSuccess = true; break; }
+                            } catch (e) {
+                                console.warn(`Mistral Model ${mod} gagal/limit:`, e.message);
+                            }
+                        }
+                    }
+                }
+                else if (prov === 'cloudflare' && cfAccountId && cfKeys.length > 0) {
+                    let models = smartModels('cloudflare', ["@cf/meta/llama-3.3-70b-instruct-fp8-fast", "@cf/meta/llama-3.1-8b-instruct"]);
+                    for (let key of cfKeys) {
+                        if (batchSuccess) break;
+                        for (let mod of models) {
+                            try {
+                                rawString = await smartCall('cloudflare', key, mod, promptText, true);
+                                if (rawString) { batchSuccess = true; break; }
+                            } catch (e) {
+                                console.warn(`Cloudflare Model ${mod} gagal/limit:`, e.message);
+                            }
+                        }
+                    }
+                }
+            }
+
+            if (!batchSuccess || !rawString) {
+                throw new Error(`Semua Provider & API Key yang dikonfigurasi mengalami limit atau error pada soal No ${startNo}-${endNo}. Silakan periksa kembali API Key Anda.`);
+            }
+
+            let firstBracket = rawString.indexOf('[');
+            let lastBracket = rawString.lastIndexOf(']');
+
+            if (firstBracket === -1 || lastBracket === -1) {
+                throw new Error(`Format JSON tidak valid pada No. ${startNo}-${endNo}`);
+            }
+
+            let cleanJsonString = rawString.substring(firstBracket, lastBracket + 1);
+            hasilAI = hasilAI.concat(restoreMissingImageTokens(chunkSoal, JSON.parse(cleanJsonString)));
+
+            if (i + batchSize < totalSoal) {
+                await delay(1000);
+            }
+        }
+
+        updateAIProgress(100, `Selesai! Berhasil menganalisis seluruh ${totalSoal} soal.`);
+
+        // Normalisasi hasil AI, termasuk membersihkan angka batch yang salah
+        // menempel di belakang opsi D sesuai nomor soal.
+        parsedData = normalizeAiResult(hasilAI);
+        isAiProcessed = true;
+        cacheLoaded = true;
+
+        await saveConverterCache(activeQuestionFingerprint, parsedData);
+
+        setTimeout(() => {
+            renderPreview();
+            alert(`Selesai! Berhasil memproses ${parsedData.length} soal menggunakan Rotasi Multi-AI Engine.`);
+        }, 400);
+
+    } catch (err) {
+        console.error(err);
+        alert('Gagal memproses soal: ' + err.message);
+        renderPreview();
+    } finally {
+        btn.disabled = false;
+        btn.innerHTML = '<i class="fas fa-robot mr-2"></i> Jalankan AI Generator & Kunci Jawaban Otomatis ✨';
+        setTimeout(smartRefresh, 900);   // perbarui bar persen limit setelah request tercatat
+    }
+}
+
+function updateCountBadge(badge, total, verified) {
+    if (!badge) return;
+    let state = total === 0 ? 'idle' : (verified ? 'ok' : 'draft');
+    let icon  = total === 0 ? 'fa-search' : (verified ? 'fa-check' : 'fa-bolt');
+    let label = verified && total > 0 ? 'Soal Terverifikasi' : 'Soal Terdeteksi';
+    let sub   = total === 0 ? 'MENUNGGU INPUT' : (verified ? 'AI VERIFIED' : 'DRAFT');
+    let prev  = parseInt(badge.dataset.count || '0', 10) || 0;
+    let wasState = badge.dataset.state || '';
+
+    badge.className = 'count-pill ' + state;
+    badge.innerHTML = '<span class="cp-ico"><i class="fas ' + icon + '"></i></span>'
+        + '<span class="cp-num">' + prev + '</span>'
+        + '<span class="cp-txt"><b>' + label + '</b><small>' + sub + '</small></span>';
+    badge.dataset.count = String(total);
+    badge.dataset.state = state;
+
+    const numEl = badge.querySelector('.cp-num');
+    if (prev !== total) {
+        const t0 = performance.now(), dur = 450;
+        (function tick(now) {
+            const k = Math.min(1, (now - t0) / dur);
+            numEl.textContent = Math.round(prev + (total - prev) * k);
+            if (k < 1) requestAnimationFrame(tick);
+        })(t0);
+        badge.classList.remove('pop'); void badge.offsetWidth; badge.classList.add('pop');
+    } else {
+        numEl.textContent = total;
+    }
+}
+
+function renderPreview() {
+    const container = document.getElementById('previewRenderArea');
+    const badge = document.getElementById('countBadge');
+
+    updateCountBadge(badge, parsedData.length, isAiProcessed);
+
+    if (parsedData.length === 0) {
+        container.innerHTML = '<div class="text-center text-muted py-5"><i class="fas fa-magic fa-3x mb-3 text-teal d-block"></i>Tempelkan teks bank soal di sebelah kiri atau unggah dokumen.</div>';
+        return;
+    }
+
+    let html = '';
+    const typeBadges = {
+        1: '<span class="badge badge-primary badge-type">Pilihan Ganda (PG 1)</span>',
+        2: '<span class="badge badge-info badge-type">PG Kompleks (PG 2)</span>',
+        3: '<span class="badge badge-warning badge-type text-dark">Menjodohkan</span>',
+        4: '<span class="badge badge-success badge-type">Isian Singkat</span>',
+        5: '<span class="badge badge-danger badge-type">Uraian / Essai</span>'
+    };
+
+    parsedData.forEach((item) => {
+        let cleanQuestion = restoreEditorTables(String(item.question || '')
+            .replace(/^\d+[\.\)]\s*/, '')
+            .replace(/\s+/g, ' ')
+            .trim());
+
+        html += `<div class="card mb-3 shadow-sm border preview-question-card">
+            <div class="card-header bg-white py-2 px-3 d-flex justify-content-between align-items-center">
+                <span class="font-weight-bold text-teal">No. ${item.number}</span>
+                ${isAiProcessed ? (typeBadges[item.jenis] || '') : '<span class="badge badge-secondary badge-type">Drafting</span>'}
+            </div>
+            <div class="card-body p-3">
+                <div class="preview-question font-weight-bold text-dark">${cleanQuestion}</div>`;
+
+        if (Array.isArray(item.options) && item.options.length) {
+            html += '<div class="preview-options">';
+            item.options.forEach((opt, oIdx) => {
+                const char = String.fromCharCode(65 + oIdx);
+                const isCorrect = item.key && Array.isArray(item.key) &&
+                    item.key.some(k => String(k).trim().toUpperCase() === char);
+
+                let displayOpt = String(opt ?? '').trim();
+                if (oIdx === 3) {
+                    const safeItem = cleanTrailingBatchMarker({...item, options: [...item.options]});
+                    displayOpt = String(safeItem.options?.[3] || '').trim();
+                }
+
+                // Hilangkan label A./B./C./D./E. yang ikut masuk ke isi opsi.
+                let cleanOptText = replaceImageTokens(escapeHtml(displayOpt)
+                    .replace(/^[a-eA-E1-5][.)]\s*/u, '')
+                    .trim(), true);
+
+                html += `<div class="preview-option ${isCorrect ? 'text-success font-weight-bold' : 'text-muted'}">
+                    <span class="preview-option-label">${char}.</span><span class="preview-option-text">${cleanOptText}</span>
+                    ${isCorrect ? '<i class="fas fa-check-circle text-success ml-1"></i> <b>(Kunci AI)</b>' : ''}
+                </div>`;
+            });
+            html += '</div>';
+        }
+        html += `</div></div>`;
+    });
+
+    container.innerHTML = html;
+    applyPreviewImageScale(container);
+}
+
+// CONVERT TO WORD GARUDA - RESPONSIVE LOADING, LANDSCAPE PERMANEN & TABEL TURUN
+async function convertToWordGaruda() {
+    if (!parsedData || parsedData.length === 0) {
+        alert("Belum ada soal untuk diunduh!");
+        return;
+    }
+
+    if (typeof docx === 'undefined' || typeof saveAs === 'undefined') {
+        alert("Library docx.js / FileSaver belum siap.");
+        return;
+    }
+
+    const btnDownload = document.getElementById('btnDownloadWord');
+    const originalText = btnDownload.innerHTML;
+    btnDownload.disabled = true;
+    btnDownload.innerHTML = `<i class="fas fa-spinner fa-spin mr-2"></i> Meng-generate File Word...`;
+
+    await new Promise(resolve => setTimeout(resolve, 100));
+
+    try {
+        const { Document, Packer, Paragraph, TextRun, ImageRun, Table, TableRow, TableCell, WidthType, ShadingType, BorderStyle, AlignmentType, VerticalAlign } = docx;
+
+        const FONT_NAME = "Calibri";
+        const FONT_SIZE = 24; 
+
+        // ===== Dukungan gambar pada Word (gambar ditulis 50% dari ukuran asli, dibatasi lebar kolom) =====
+        let IMG_DOCX = {};
+        const DOCX_Q_MAX_W = 400, DOCX_OPT_MAX_W = 220, DOCX_CELL_MAX_W = 180;
+
+        function loadImageForDocx(src) {
+            return new Promise(resolve => {
+                const im = new Image();
+                im.onload = () => {
+                    try {
+                        const w = im.naturalWidth || im.width, h = im.naturalHeight || im.height;
+                        if (!w || !h) return resolve(null);
+                        const c = document.createElement('canvas');
+                        c.width = w; c.height = h;
+                        c.getContext('2d').drawImage(im, 0, 0);
+                        const bin = atob(c.toDataURL('image/png').split(',')[1]);
+                        const bytes = new Uint8Array(bin.length);
+                        for (let k = 0; k < bin.length; k++) bytes[k] = bin.charCodeAt(k);
+                        resolve({ data: bytes, w: w, h: h });
+                    } catch (e) { resolve(null); }
+                };
+                im.onerror = () => resolve(null);
+                if (/^https?:/i.test(src)) im.crossOrigin = 'anonymous';
+                im.src = src;
+            });
+        }
+
+        async function prepareDocxImages(items) {
+            const tokens = new Set();
+            (items || []).forEach(it => {
+                const all = [String(it.question || '')].concat(Array.isArray(it.options) ? it.options.map(o => String(o || '')) : []);
+                all.forEach(t => (t.match(/\[\[IMG_[0-9a-z]+\]\]/g) || []).forEach(x => tokens.add(x)));
+            });
+            const out = {};
+            for (const t of tokens) {
+                if (!EDITOR_IMAGES[t]) continue;
+                const img = await loadImageForDocx(EDITOR_IMAGES[t]);
+                if (img) out[t] = img;
+            }
+            return out;
+        }
+
+        function docxRunsFromText(text, maxW) {
+            const str = String(text || '');
+            const re = /\[\[(IMG|EQ)_([0-9a-z]+)\]\]/g;
+            const parts = [];
+            let last = 0, m;
+            while ((m = re.exec(str)) !== null) {
+                if (m.index > last) parts.push({ type: 'text', value: str.slice(last, m.index) });
+                parts.push({ type: m[1] === 'IMG' ? 'img' : 'eq', key: '[[' + m[1] + '_' + m[2] + ']]' });
+                last = m.index + m[0].length;
+            }
+            if (last < str.length) parts.push({ type: 'text', value: str.slice(last) });
+
+            const runs = [];
+            let afterImg = false;
+            parts.forEach((part, i) => {
+                if (part.type === 'text') {
+                    // Spasi di sekitar rumus dipertahankan (mis. "15 x [rumus] adalah"), selain itu di-trim seperti biasa.
+                    const prevEq = i > 0 && parts[i - 1].type === 'eq';
+                    const nextEq = i < parts.length - 1 && parts[i + 1].type === 'eq';
+                    let t = part.value;
+                    if (!prevEq) t = t.replace(/^\s+/, '');
+                    if (!nextEq) t = t.replace(/\s+$/, '');
+                    if (!t) return;
+                    if (afterImg) { runs.push(new TextRun({ text: '', break: 1 })); afterImg = false; }
+                    runs.push(new TextRun({ text: t, font: FONT_NAME, size: FONT_SIZE }));
+                } else if (part.type === 'eq') {
+                    // Penanda; setelah file dibuat diganti equation asli Word oleh injectEquationsIntoDocx().
+                    if (!EDITOR_EQUATIONS[part.key]) return;
+                    if (afterImg) { runs.push(new TextRun({ text: '', break: 1 })); afterImg = false; }
+                    runs.push(new TextRun({ text: part.key, font: FONT_NAME, size: FONT_SIZE }));
+                } else {
+                    const img = IMG_DOCX[part.key];
+                    if (!img) return;
+                    let w = Math.max(1, Math.round(img.w * 0.5));
+                    let h = Math.max(1, Math.round(img.h * 0.5));
+                    if (w > maxW) { h = Math.max(1, Math.round(h * maxW / w)); w = maxW; }
+                    if (runs.length) runs.push(new TextRun({ text: '', break: 1 }));
+                    runs.push(new ImageRun({ data: img.data, transformation: { width: w, height: h } }));
+                    afterImg = true;
+                }
+            });
+            if (!runs.length) runs.push(new TextRun({ text: '', font: FONT_NAME, size: FONT_SIZE }));
+            return runs;
+        }
+
+        IMG_DOCX = await prepareDocxImages(parsedData);
+
+        const tableBorders = {
+            top: { style: BorderStyle.SINGLE, size: 4, color: "000000" },
+            bottom: { style: BorderStyle.SINGLE, size: 4, color: "000000" },
+            left: { style: BorderStyle.SINGLE, size: 4, color: "000000" },
+            right: { style: BorderStyle.SINGLE, size: 4, color: "000000" },
+            insideHorizontal: { style: BorderStyle.SINGLE, size: 4, color: "000000" },
+            insideVertical: { style: BorderStyle.SINGLE, size: 4, color: "000000" }
+        };
+
+        const tableRows = [];
+
+        // Header Row
+        const headerRow = new TableRow({
+            cantSplit: true,
+            children: [
+                new TableCell({ children: [new Paragraph({ children: [new TextRun({ text: "NO", bold: true, font: FONT_NAME, size: FONT_SIZE })], alignment: AlignmentType.CENTER })], width: { size: 5, unit: WidthType.PERCENTAGE }, shading: { fill: "B4C6E7", type: ShadingType.CLEAR }, verticalAlign: VerticalAlign.CENTER }),
+                new TableCell({ children: [new Paragraph({ children: [new TextRun({ text: "SOAL", bold: true, font: FONT_NAME, size: FONT_SIZE })], alignment: AlignmentType.CENTER })], width: { size: 45, unit: WidthType.PERCENTAGE }, shading: { fill: "B4C6E7", type: ShadingType.CLEAR }, verticalAlign: VerticalAlign.CENTER }),
+                new TableCell({ children: [new Paragraph({ children: [new TextRun({ text: "JENIS", bold: true, font: FONT_NAME, size: FONT_SIZE })], alignment: AlignmentType.CENTER })], width: { size: 8, unit: WidthType.PERCENTAGE }, shading: { fill: "B4C6E7", type: ShadingType.CLEAR }, verticalAlign: VerticalAlign.CENTER }),
+                new TableCell({ children: [new Paragraph({ children: [new TextRun({ text: "OPSI", bold: true, font: FONT_NAME, size: FONT_SIZE })], alignment: AlignmentType.CENTER })], width: { size: 7, unit: WidthType.PERCENTAGE }, shading: { fill: "B4C6E7", type: ShadingType.CLEAR }, verticalAlign: VerticalAlign.CENTER }),
+                new TableCell({ children: [new Paragraph({ children: [new TextRun({ text: "JAWABAN", bold: true, font: FONT_NAME, size: FONT_SIZE })], alignment: AlignmentType.CENTER })], width: { size: 25, unit: WidthType.PERCENTAGE }, shading: { fill: "B4C6E7", type: ShadingType.CLEAR }, verticalAlign: VerticalAlign.CENTER }),
+                new TableCell({ children: [new Paragraph({ children: [new TextRun({ text: "KUNCI", bold: true, font: FONT_NAME, size: FONT_SIZE })], alignment: AlignmentType.CENTER })], width: { size: 10, unit: WidthType.PERCENTAGE }, shading: { fill: "B4C6E7", type: ShadingType.CLEAR }, verticalAlign: VerticalAlign.CENTER })
+            ]
+        });
+        tableRows.push(headerRow);
+
+        function parseHtmlTableToDocx(htmlString) {
+            let docxElements = [];
+            let tempDiv = document.createElement('div');
+            tempDiv.innerHTML = htmlString;
+
+            let tableEl = tempDiv.querySelector('table');
+            if (tableEl) {
+                let clone = tempDiv.cloneNode(true);
+                let t = clone.querySelector('table');
+                if (t) t.remove();
+                let textBefore = clone.innerText.replace(/^\d+[\.\)]\s*/, '').trim();
+                if (textBefore) docxElements.push(new Paragraph({ children: docxRunsFromText(textBefore, DOCX_Q_MAX_W) }));
+
+                let innerRows = [];
+                let rows = tableEl.querySelectorAll('tr');
+                rows.forEach(tr => {
+                    let cells = [];
+                    let cols = tr.querySelectorAll('th, td');
+                    cols.forEach(td => {
+                        cells.push(new TableCell({
+                            children: [new Paragraph({ children: docxRunsFromText(td.innerText.trim(), DOCX_CELL_MAX_W) })],
+                            borders: tableBorders
+                        }));
+                    });
+                    if (cells.length > 0) innerRows.push(new TableRow({ children: cells }));
+                });
+
+                if (innerRows.length > 0) {
+                    docxElements.push(new Table({ rows: innerRows, width: { size: 100, unit: WidthType.PERCENTAGE } }));
+                }
+            } else {
+                let cleanText = tempDiv.innerText.replace(/^\d+[\.\)]\s*/, '').trim();
+                docxElements.push(new Paragraph({ children: docxRunsFromText(cleanText, DOCX_Q_MAX_W) }));
+            }
+
+            return docxElements;
+        }
+
+        parsedData.forEach((item) => {
+            cleanTrailingBatchMarker(item);
+            let totalOptions = (item.options && item.options.length > 0) ? item.options.length : 5;
+            let cleanQuestionText = String(item.question || '').replace(/^\d+[\.\)]\s*/, '').trim();
+            let soalChildren = parseHtmlTableToDocx(cleanQuestionText);
+
+            for (let oIdx = 0; oIdx < totalOptions; oIdx++) {
+                let char = String.fromCharCode(65 + oIdx);
+                let isCorrect = item.key && Array.isArray(item.key) && item.key.some(k => String(k).trim().toUpperCase() === char);
+                let rawOptText = (item.options && item.options[oIdx]) ? item.options[oIdx] : '';
+                if (oIdx === 3) {
+                    const safeItem = cleanTrailingBatchMarker({...item, options: [...(item.options || [])]});
+                    rawOptText = safeItem.options?.[3] || '';
+                }
+                let optText = String(rawOptText).replace(/^[a-eA-E1-5][.)]\s*/, '').trim();
+
+                let cells = [];
+
+                if (oIdx === 0) {
+                    cells.push(
+                        new TableCell({ children: [new Paragraph({ children: [new TextRun({ text: String(item.number), font: FONT_NAME, size: FONT_SIZE })], alignment: AlignmentType.CENTER })], rowSpan: totalOptions, verticalAlign: VerticalAlign.CENTER }),
+                        new TableCell({ children: soalChildren, rowSpan: totalOptions, verticalAlign: VerticalAlign.CENTER }),
+                        new TableCell({ children: [new Paragraph({ children: [new TextRun({ text: String(item.jenis || 1), font: FONT_NAME, size: FONT_SIZE })], alignment: AlignmentType.CENTER })], rowSpan: totalOptions, verticalAlign: VerticalAlign.CENTER }),
+                        new TableCell({ children: [new Paragraph({ children: [new TextRun({ text: char, font: FONT_NAME, size: FONT_SIZE })], alignment: AlignmentType.CENTER })], verticalAlign: VerticalAlign.CENTER }),
+                        new TableCell({ children: [new Paragraph({ children: docxRunsFromText(optText, DOCX_OPT_MAX_W) })], verticalAlign: VerticalAlign.CENTER }),
+                        new TableCell({ children: [new Paragraph({ children: [new TextRun({ text: isCorrect ? "v" : "", font: FONT_NAME, size: FONT_SIZE })], alignment: AlignmentType.CENTER })], verticalAlign: VerticalAlign.CENTER })
+                    );
+                } else {
+                    cells.push(
+                        new TableCell({ children: [new Paragraph({ children: [new TextRun({ text: char, font: FONT_NAME, size: FONT_SIZE })], alignment: AlignmentType.CENTER })], verticalAlign: VerticalAlign.CENTER }),
+                        new TableCell({ children: [new Paragraph({ children: docxRunsFromText(optText, DOCX_OPT_MAX_W) })], verticalAlign: VerticalAlign.CENTER }),
+                        new TableCell({ children: [new Paragraph({ children: [new TextRun({ text: isCorrect ? "v" : "", font: FONT_NAME, size: FONT_SIZE })], alignment: AlignmentType.CENTER })], verticalAlign: VerticalAlign.CENTER })
+                    );
+                }
+
+                tableRows.push(new TableRow({ children: cells }));
+            }
+        });
+
+        const doc = new Document({
+            styles: {
+                default: {
+                    document: {
+                        run: {
+                            font: FONT_NAME,
+                            size: FONT_SIZE
+                        }
+                    }
+                }
+            },
+            sections: [{
+                properties: {
+                    page: {
+                        orientation: docx.PageOrientation.LANDSCAPE,
+                        size: {
+                            width: 16838,  
+                            height: 11906  
+                        },
+                        margin: {
+                            top: 1000,
+                            bottom: 1000,
+                            left: 1000,
+                            right: 1000
+                        }
+                    }
+                },
+                children: [
+                    new Paragraph({
+                        children: [new TextRun({ text: "I. Soal Pilihan Ganda (satu jawaban benar)", bold: true, font: FONT_NAME, size: FONT_SIZE })],
+                        spaceAfter: 100
+                    }),
+                    new Paragraph({
+                        children: [new TextRun({ text: "- Jenis Pilihan Ganda (PG 1) untuk pilihan ganda yang sudah ditentukan pilihan opsinya, misal 4 opsi (A,B,C,D) atau 5 opsi (A,B,C,D,E).", font: FONT_NAME, size: FONT_SIZE })],
+                        spaceAfter: 40
+                    }),
+                    new Paragraph({
+                        children: [
+                            new TextRun({ text: "- Kolom jenis harus diisi angka ", font: FONT_NAME, size: FONT_SIZE }),
+                            new TextRun({ text: "1", bold: true, font: FONT_NAME, size: FONT_SIZE })
+                        ],
+                        spaceAfter: 40
+                    }),
+                    new Paragraph({
+                        children: [new TextRun({ text: "- Biarkan OPSI JAWABAN kosong jika ada opsi yang tidak digunakan.", font: FONT_NAME, size: FONT_SIZE })],
+                        spaceAfter: 40
+                    }),
+                    new Paragraph({
+                        children: [new TextRun({ text: "- NOMOR soal yang tidak digunakan bisa dihapus atau dibiarkan kosong.", font: FONT_NAME, size: FONT_SIZE })],
+                        spaceAfter: 40
+                    }),
+                    new Paragraph({
+                        children: [new TextRun({ text: "- Soal dan jawaban bisa disisipi gambar", color: "00B050", font: FONT_NAME, size: FONT_SIZE })],
+                        spaceAfter: 40
+                    }),
+                    new Paragraph({
+                        children: [new TextRun({ text: "- KUNCI hanya diisi satu jawaban.", font: FONT_NAME, size: FONT_SIZE })],
+                        spaceAfter: 40
+                    }),
+                    new Paragraph({
+                        children: [
+                            new TextRun({ text: "- Beri tanda v pada opsi jawaban benar, (", font: FONT_NAME, size: FONT_SIZE }),
+                            new TextRun({ text: "v huruf kecil atau V huruf besar", bold: true, font: FONT_NAME, size: FONT_SIZE }),
+                            new TextRun({ text: ").", font: FONT_NAME, size: FONT_SIZE })
+                        ]
+                    }),
+                    new Paragraph({ children: [], spaceAfter: 150 }),
+                    new Table({
+                        rows: tableRows,
+                        borders: tableBorders,
+                        width: { size: 100, unit: WidthType.PERCENTAGE }
+                    })
+                ]
+            }]
+        });
+
+        let blob = await Packer.toBlob(doc);
+        blob = await injectEquationsIntoDocx(blob);   // rumus -> equation asli Word
+        saveAs(blob, "Soal_Converter.docx");
+
+    } catch (err) {
+        alert("Gagal mengunduh file Word: " + err.message);
+    } finally {
+        btnDownload.disabled = false;
+        btnDownload.innerHTML = originalText;
+    }
+}
+
+function clearAll() {
+    document.getElementById('inputText').innerHTML = '';
+    document.getElementById('btnAiAnswer').style.display = 'none';
+    EDITOR_IMAGES = {};
+    EDITOR_EQUATIONS = {};
+    parsedData = [];
+    isAiProcessed = false;
+    cacheLoaded = false;
+    activeQuestionFingerprint = '';
+    setCacheStatus('', 'muted');
+    renderPreview();
+}
+
+function escapeHtml(text) {
+    if (!text) return '';
+    return text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+}
+</script>

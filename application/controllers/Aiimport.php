@@ -25,15 +25,38 @@ class Aiimport extends CI_Controller
         // Hanya admin yang sudah login (GarudaCBT memakai ion_auth). Sesuaikan jika berbeda.
         $this->load->library('ion_auth');
         if (!$this->ion_auth->logged_in() || !$this->ion_auth->is_admin()) {
-            show_error('Akses ditolak karena anda belum login', 403);
+            show_error('Akses ditolak', 403);
         }
         // Gerbang lisensi: 1 kode lisensi = 1 komputer. Kalau tidak sah, tampilkan halaman terkunci
         // (bukan hanya menyembunyikan menu, supaya alamat /aiimport tidak bisa dibuka langsung).
         $this->load->helper('license');
         $akses = lg_gate_ai_soal();
         if (!empty($akses['block'])) {
-            $this->output->set_status_header(403);
-            $this->load->view('errors/html/error_license', $akses['error']);
+            // Belum berlisensi di komputer ini: deteksi MAC otomatis, lalu minta kode lisensi (aktivasi).
+            $pesan_gagal = '';
+            $kode_isi    = '';
+            if ($this->input->method() === 'post' && $this->input->post('lg_activate_code') !== null) {
+                $kode_isi = (string)$this->input->post('lg_activate_code', TRUE);
+                $hasil    = lg_activate($kode_isi);
+                if (!empty($hasil['ok'])) {
+                    redirect(site_url('aiimport'));   // aktivasi berhasil -> buka AI Soal
+                    return;
+                }
+                $pesan_gagal = $hasil['message'];
+            }
+            $ident = lg_ident();
+            $err   = is_array($akses['error']) ? $akses['error'] : [];
+            $this->load->view('errors/html/license_activate', [
+                'title'      => $err['title']   ?? 'Aktifkan Lisensi',
+                'message'    => $err['message'] ?? 'Masukkan kode lisensi untuk mengaktifkan modul AI Soal di komputer ini.',
+                'contact'    => $err['contact'] ?? '081234567890',
+                'mac'        => $ident['mac'] ?? '',
+                'csrf_name'  => $this->security->get_csrf_token_name(),
+                'csrf_hash'  => $this->security->get_csrf_hash(),
+                'action'     => site_url('aiimport'),
+                'error'      => $pesan_gagal,
+                'code_value' => $kode_isi,
+            ]);
             echo $this->output->get_output();
             exit;
         }

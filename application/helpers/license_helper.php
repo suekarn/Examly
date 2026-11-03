@@ -1,6 +1,6 @@
 <?php
 defined('BASEPATH') OR exit('No direct script access allowed');
-// LG_HELPER_VERSION: 8
+// LG_HELPER_VERSION: 9
 
 /**
  * =====================================================================
@@ -36,6 +36,11 @@ if (!defined('LG_LICENSE_SERVER_URL')) {
 // Set true HANYA kalau server lisensi lama masih mewajibkan parameter domain/ip/host.
 if (!defined('LG_SEND_EXTRA')) define('LG_SEND_EXTRA', false);
 if (!defined('LG_SEND_IP'))    define('LG_SEND_IP', false); // v6: kirim IP komputer ke server lisensi? (tidak perlu)
+// v9: AKTIVASI OTOMATIS. Kode lisensi yang diketik di halaman AI Soal disimpan di berkas ini
+// (prioritas di atas license_key.php). Menu AI Soal tetap tampil supaya komputer baru bisa mengaktifkan.
+if (!defined('LG_ACTIVATION_FILE')) define('LG_ACTIVATION_FILE', APPPATH . 'config/license_activation.json');
+// Set true bila menu AI Soal harus DISEMBUNYIKAN di komputer yang belum berlisensi (aktivasi lewat alamat /aiimport).
+if (!defined('LG_MENU_HIDE_WHEN_LOCKED')) define('LG_MENU_HIDE_WHEN_LOCKED', false);
 if (!defined('LG_DEBUG'))      define('LG_DEBUG', false);   // set true hanya saat perlu melacak masalah
 if (!defined('LG_DEBUG_FILE')) define('LG_DEBUG_FILE', APPPATH . 'cache/lg_license_debug.log');
 if (!defined('LG_CACHE_FILE'))  define('LG_CACHE_FILE', APPPATH . 'cache/lg_license_cache.json');
@@ -43,7 +48,7 @@ if (!defined('LG_FAIL_FILE'))   define('LG_FAIL_FILE', APPPATH . 'cache/lg_licen
 if (!defined('LG_IDENT_FILE'))  define('LG_IDENT_FILE', APPPATH . 'cache/lg_license_ident.json');
 if (!defined('LG_MENU_TTL'))    define('LG_MENU_TTL', 60);    // detik; dipakai untuk tampil/sembunyi menu di sidebar
 if (!defined('LG_GRACE_DAYS'))  define('LG_GRACE_DAYS', 3);   // hari offline maksimal sebelum Converter dikunci
-if (!defined('LG_RETRY_SECONDS')) define('LG_RETRY_SECONDS', 60); // jeda sebelum mencoba server lisensi lagi setelah gagal
+if (!defined('LG_RETRY_SECONDS')) define('LG_RETRY_SECONDS', 300); // jeda sebelum mencoba server lisensi lagi setelah gagal
 if (!defined('LG_HTTP_TIMEOUT'))  define('LG_HTTP_TIMEOUT', 2);    // detik, total waktu tunggu per permintaan
 if (!defined('LG_CONNECT_TIMEOUT')) define('LG_CONNECT_TIMEOUT', 1); // detik, waktu tunggu koneksi
 
@@ -274,9 +279,16 @@ if (!function_exists('lg_http_get')) {
  * kode terbaca kosong secara acak.
  */
 if (!function_exists('lg_license_key')) {
-    function lg_license_key() {
+    function lg_license_key($reset = false) {
         static $cached = null;
+        if ($reset) $cached = null;
         if ($cached !== null && $cached !== '') return $cached;
+
+        // v9: kode hasil aktivasi di komputer ini (diketik di halaman AI Soal) didahulukan.
+        if (is_file(LG_ACTIVATION_FILE)) {
+            $act = json_decode((string)@file_get_contents(LG_ACTIVATION_FILE), true);
+            if (is_array($act) && !empty($act['key']) && is_string($act['key'])) return $cached = trim($act['key']);
+        }
 
         $cached = lg_config_value('key');            // license_key.php -> $key = '...';
         if ($cached !== '') return $cached;
@@ -291,11 +303,56 @@ if (!function_exists('lg_license_key')) {
 }
 
 /**
- * Panggil server lisensi secara LIVE (sumber kebenaran saat ini) dan
- * simpan hasilnya ke cache file. Return null kalau server tidak
- * terjangkau, kode lisensi belum dikonfigurasi, atau percobaan terakhir
- * baru saja gagal (masih dalam jeda LG_RETRY_SECONDS).
+ * v9: AKTIVASI. Dipanggil dari halaman AI Soal saat pengguna mengetik kode lisensi.
+ * Mengirim kode + MAC komputer ini ke server lisensi. Server mengikat kode ke MAC itu bila
+ * kode terdaftar, aktif, dan belum dipakai komputer lain. Kode hanya disimpan kalau diterima.
+ * Return ['ok' => bool, 'message' => string].
  */
+if (!function_exists('lg_activate')) {
+    function lg_activate($code) {
+        $code = strtoupper(trim((string)$code));
+        if (!preg_match('/^[A-Z0-9][A-Z0-9\-]{6,40}$/', $code)) {
+            return ['ok' => false, 'message' => 'Format kode tidak sesuai. Contoh: GCBT-XXXX-XXXX-XXXX-XXXX.'];
+        }
+        $id = lg_ident(); // MAC dibaca otomatis dari komputer ini
+        if (empty($id['mac'])) {
+            return ['ok' => false, 'message' => 'MAC address komputer ini tidak terbaca (fungsi shell_exec mungkin dimatikan). Hubungi developer.'];
+        }
+        $raw = lg_http_get(lg_server_url() . '?key=' . urlencode($code) . '&mac=' . urlencode($id['mac']));
+        if ($raw === false || $raw === '') {
+            return ['ok' => false, 'message' => 'Tidak dapat menghubungi server lisensi. Pastikan komputer server lisensi menyala dan satu jaringan dengan komputer ini.'];
+        }
+        $p = json_decode($raw, true);
+        if (!is_array($p) || !isset($p['status'])) {
+            return ['ok' => false, 'message' => 'Server lisensi sedang tidak tersedia. Coba lagi sebentar lagi.'];
+        }
+        $menuOk = !array_key_exists('menu_ai_soal', $p) || $p['menu_ai_soal'];
+        if ($p['status'] !== 'active' || !$menuOk) {
+            $msg = !empty($p['message']) ? $p['message']
+                 : ($p['status'] === 'expired'  ? 'Masa berlaku kode lisensi ini sudah habis. Hubungi developer untuk perpanjangan.'
+                 : ($p['status'] === 'disabled' ? 'Kode lisensi ini sedang dinonaktifkan. Hubungi developer.'
+                 : 'Kode lisensi tidak bisa dipakai di komputer ini.'));
+            return ['ok' => false, 'message' => $msg];
+        }
+        // Diterima: simpan kode, buang cache lama, isi cache baru.
+        $saved = @file_put_contents(LG_ACTIVATION_FILE, json_encode(['key' => $code, 'activated_at' => date('Y-m-d H:i:s'), 'mac' => $id['mac']]), LOCK_EX);
+        if ($saved === false) {
+            return ['ok' => false, 'message' => 'Kode diterima server, tetapi tidak bisa disimpan. Beri izin tulis pada folder application/config lalu ulangi.'];
+        }
+        lg_license_key(true);
+        lg_clear_fail();
+        @file_put_contents(LG_CACHE_FILE, json_encode([
+            'status'       => $p['status'],
+            'message'      => $p['message']      ?? null,
+            'contact'      => $p['contact']      ?? null,
+            'expired_date' => $p['expired_date'] ?? null,
+            'menu_ai_soal' => true,
+            'checked_at'   => time(),
+        ]), LOCK_EX);
+        return ['ok' => true, 'message' => 'Lisensi berhasil diaktifkan di komputer ini.'];
+    }
+}
+
 if (!function_exists('lg_fetch_license_live')) {
     function lg_fetch_license_live() {
         $key = lg_license_key();
@@ -369,8 +426,8 @@ if (!function_exists('lg_evaluate_access')) {
         if ($key === '') {
             lg_log('Kode lisensi kosong. Dicari di: ' . APPPATH . 'config/license_key.php');
             return ['block' => true, 'error' => [
-                'title' => 'Lisensi Belum Dikonfigurasi',
-                'message' => 'Kode lisensi belum diatur di instalasi ini. Hubungi developer.',
+                'title' => 'Aktifkan Lisensi',
+                'message' => 'Aplikasi ini belum diaktifkan di komputer ini. Masukkan kode lisensi di bawah.',
                 'contact' => '081234567890', 'domain' => $domain, 'expired_date' => '-',
             ]];
         }
@@ -452,7 +509,13 @@ if (!function_exists('lg_show_ai_soal_menu')) {
             $live = lg_fetch_license_live(); // null cepat bila baru gagal (lihat lg_recent_fail)
             if ($live !== null) $cache = $live;
         }
-        // v8: belum pernah berhasil diverifikasi server lisensi -> SEMBUNYIKAN (dulu: tampil).
+        // v9: menu TETAP TAMPIL supaya komputer baru bisa mengaktifkan lewat halaman AI Soal.
+        // Disembunyikan hanya bila lisensi sah tetapi admin mematikan menunya (Menu AI Soal = Sembunyi).
+        if (!LG_MENU_HIDE_WHEN_LOCKED) {
+            if ($cache && ($cache['status'] ?? '') === 'active' && array_key_exists('menu_ai_soal', $cache) && $cache['menu_ai_soal'] === false) return false;
+            return true;
+        }
+        // Mode lama (LG_MENU_HIDE_WHEN_LOCKED = true): sembunyikan bila belum pernah terverifikasi.
         if (!$cache) return false;
         if (in_array($cache['status'] ?? '', ['expired', 'disabled'], true)) return false;
         // v8: terlalu lama tidak bisa memverifikasi (lewat masa tenggang) -> sembunyikan.

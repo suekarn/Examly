@@ -8,40 +8,235 @@
  * =====================================================================
  */
 
+// ----------------------------- AKSES -----------------------------
+// Halaman admin hanya bisa dibuka dari KOMPUTER SERVER ini (127.0.0.1, atau lewat IP LAN-nya sendiri
+// seperti 192.168.3.118 yang dibuka di komputer server). Perangkat lain di LAN ditolak.
+// Kalau suatu saat perlu membuka dari komputer lain, tambahkan IP-nya di sini, mis. ['192.168.3.50'].
+// check_license.php TIDAK dibatasi, jadi pengecekan lisensi dari aplikasi tetap jalan.
+define('ADMIN_ALLOW_IPS', []);
+
+function adm_norm_ip($ip) { $ip = (string)$ip; return strpos($ip, '::ffff:') === 0 ? substr($ip, 7) : $ip; }
+function adm_client_allowed() {
+    $ip  = adm_norm_ip($_SERVER['REMOTE_ADDR'] ?? '');
+    $srv = adm_norm_ip($_SERVER['SERVER_ADDR'] ?? '');
+    if ($ip === '127.0.0.1' || $ip === '::1') return true;
+    if ($srv !== '' && $ip === $srv) return true;
+    return in_array($ip, ADMIN_ALLOW_IPS, true);
+}
+if (!adm_client_allowed()) {
+    http_response_code(403);
+    header('Content-Type: text/html; charset=utf-8');
+    echo '<!DOCTYPE html><html lang="id"><head><meta charset="UTF-8"><title>403</title></head>'
+       . '<body style="font-family:sans-serif;background:#07130f;color:#eafff8;display:flex;align-items:center;justify-content:center;min-height:100vh">'
+       . '<div style="text-align:center"><h1 style="font-size:20px">Akses ditolak</h1>'
+       . '<p style="color:#7fb3a3;margin-top:8px;font-size:14px">Halaman admin lisensi hanya bisa dibuka dari komputer server.</p></div></body></html>';
+    exit;
+}
+
+session_set_cookie_params(['httponly' => true, 'samesite' => 'Lax']);
 session_start();
 
-$ADMIN_PASSWORD_HASH = '$2b$12$CnAvVa9sIveDwO2ha5ulJuCiTTHqIwD.fdVFOPo4sk5xaSrwt2F9.'; // password: 000000
+// Hash kata sandi bawaan. Setelah Anda mengganti kata sandi lewat tombol "Kata sandi" di panel,
+// hash baru disimpan di admin_auth.php dan hash bawaan ini tidak dipakai lagi.
+$ADMIN_PASSWORD_HASH = '$2b$12$CnAvVa9sIveDwO2ha5ulJuCiTTHqIwD.fdVFOPo4sk5xaSrwt2F9.';
 
 define('LICENSES_FILE', __DIR__ . '/licenses.json');
+define('AUTH_FILE',     __DIR__ . '/admin_auth.php');
+define('BACKUP_DIR',    __DIR__ . '/backup');
+define('BACKUP_KEEP',   10);   // jumlah cadangan terakhir yang disimpan
+define('HISTORY_KEEP',  100);  // jumlah catatan riwayat per lisensi
 
+// ----------------------------- DATA LISENSI -----------------------------
 function adm_default_shell() {
     return ['installations' => [], 'default' => [
         'status' => 'disabled', 'message' => '', 'contact' => '081234567890',
         'expired_date' => '-', 'menu_ai_soal' => false,
     ]];
 }
+
+/** Baca mentah licenses.json dengan kunci baca. null = berkas belum ada, false = gagal dibaca. */
+function adm_read_raw() {
+    for ($i = 0; $i < 6; $i++) {
+        $fh = @fopen(LICENSES_FILE, 'rb');
+        if ($fh) {
+            if (flock($fh, LOCK_SH)) {
+                $raw = stream_get_contents($fh);
+                flock($fh, LOCK_UN); fclose($fh);
+                return $raw === false ? '' : $raw;
+            }
+            fclose($fh);
+        } elseif (!is_file(LICENSES_FILE)) {
+            return null;
+        }
+        usleep(100000);
+    }
+    return false;
+}
+
 function adm_load() {
-    if (!is_file(LICENSES_FILE)) return adm_default_shell();
-    $data = json_decode(file_get_contents(LICENSES_FILE), true);
-    if (!is_array($data)) return adm_default_shell();
+    $raw = adm_read_raw();
+    if ($raw === null) return adm_default_shell();                 // belum ada berkas: instalasi baru
+    $data = ($raw === false) ? null : json_decode($raw, true);
+    if (!is_array($data)) {
+        // Berkas ada tetapi tidak terbaca / rusak: JANGAN dianggap kosong, supaya tidak menimpa data asli.
+        if ($raw === false || trim((string)$raw) !== '') $GLOBALS['ADM_LOAD_ERROR'] = true;
+        return adm_default_shell();
+    }
     $data['installations'] = $data['installations'] ?? [];
     $data['default']       = $data['default']       ?? adm_default_shell()['default'];
     return $data;
 }
-function adm_save($data) {
-    file_put_contents(LICENSES_FILE, json_encode($data, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES), LOCK_EX);
+
+/** Tulis licenses.json (terkunci). Return true bila berhasil. */
+function adm_write_file($data) {
+    $fh = @fopen(LICENSES_FILE, 'c+');
+    if (!$fh) return false;
+    if (!flock($fh, LOCK_EX)) { fclose($fh); return false; }
+    $json = json_encode($data, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
+    ftruncate($fh, 0); rewind($fh);
+    $ok = fwrite($fh, $json) !== false;
+    fflush($fh); flock($fh, LOCK_UN); fclose($fh);
+    return $ok;
 }
+
+// ----------------------------- CADANGAN OTOMATIS -----------------------------
+function adm_backup_prepare() {
+    if (!is_dir(BACKUP_DIR)) @mkdir(BACKUP_DIR, 0755, true);
+    if (!is_dir(BACKUP_DIR)) return false;
+    $ht = BACKUP_DIR . '/.htaccess';
+    if (!is_file($ht)) @file_put_contents($ht, "<IfModule mod_authz_core.c>\n    Require all denied\n</IfModule>\n<IfModule !mod_authz_core.c>\n    Order allow,deny\n    Deny from all\n</IfModule>\n");
+    if (!is_file(BACKUP_DIR . '/index.html')) @file_put_contents(BACKUP_DIR . '/index.html', '');
+    return true;
+}
+function adm_backup_key($path) {
+    if (preg_match('/licenses-(\d{8})-(\d{6})(?:-(\d+))?\.json$/', $path, $m)) return $m[1] . $m[2] . sprintf('%03d', (int)($m[3] ?? 0));
+    return '0';
+}
+/** Daftar berkas cadangan, terbaru dulu. */
+function adm_backup_files() {
+    $f = glob(BACKUP_DIR . '/licenses-*.json') ?: [];
+    usort($f, function ($a, $b) { return strcmp(adm_backup_key($b), adm_backup_key($a)); });
+    return $f;
+}
+/** Salin kondisi SEBELUM perubahan ke backup/. Data kosong tidak dicadangkan (supaya cadangan bagus tidak tergeser). */
+function adm_backup($raw) {
+    $raw = (string)$raw;
+    if (trim($raw) === '') return false;
+    $d = json_decode($raw, true);
+    if (!is_array($d) || empty($d['installations'])) return false;
+    if (!adm_backup_prepare()) return false;
+    $files = adm_backup_files();
+    if ($files && @file_get_contents($files[0]) === $raw) return false;   // sama dengan cadangan terbaru
+    $base = BACKUP_DIR . '/licenses-' . date('Ymd-His');
+    $name = $base . '.json'; $i = 1;
+    while (is_file($name)) { $i++; $name = $base . '-' . $i . '.json'; }
+    if (@file_put_contents($name, $raw) === false) return false;
+    foreach (array_slice(adm_backup_files(), BACKUP_KEEP) as $old) @unlink($old);
+    return true;
+}
+function adm_backup_label($path) {
+    if (preg_match('/licenses-(\d{4})(\d{2})(\d{2})-(\d{2})(\d{2})(\d{2})/', $path, $m)) return "$m[1]-$m[2]-$m[3] $m[4]:$m[5]:$m[6]";
+    return basename($path);
+}
+
+function adm_save($data) {
+    if (!empty($GLOBALS['ADM_LOAD_ERROR'])) return false;   // data asli tak terbaca: jangan menimpa
+    adm_backup(adm_read_raw());
+    return adm_write_file($data);
+}
+
+/** Tulis pengganti penuh dari JSON (impor / pulihkan). Return true atau string pesan galat. */
+function adm_install_json($json) {
+    $d = json_decode((string)$json, true);
+    if (!is_array($d) || !isset($d['installations']) || !is_array($d['installations'])) return 'Berkas bukan data lisensi yang valid.';
+    $d['default'] = $d['default'] ?? adm_default_shell()['default'];
+    adm_backup(adm_read_raw());
+    return adm_write_file($d) ? true : 'Gagal menulis licenses.json (cek izin folder).';
+}
+
+// ----------------------------- RIWAYAT -----------------------------
+function adm_log(&$data, $key, $event, $detail) {
+    if (!isset($data['installations'][$key])) return;
+    $h = $data['installations'][$key]['history'] ?? [];
+    $h[] = ['t' => date('Y-m-d H:i:s'), 'e' => $event, 'd' => $detail];
+    $data['installations'][$key]['history'] = array_slice($h, -HISTORY_KEEP);
+}
+function adm_js($v) { return json_encode($v, JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP | JSON_HEX_TAG | JSON_UNESCAPED_UNICODE); }
+
+// ----------------------------- MASA BERLAKU -----------------------------
+/** Sisa hari sampai tanggal expired (0 = hari ini hari terakhir, negatif = sudah lewat). null = tanpa batas. */
+function adm_days_left($exp) {
+    $exp = trim((string)$exp);
+    if ($exp === '' || $exp === '-') return null;
+    $t = strtotime($exp . ' 00:00:00');
+    if ($t === false) return null;
+    return (int)floor(($t - strtotime(date('Y-m-d') . ' 00:00:00')) / 86400);
+}
+function adm_effective_status($info) {
+    $s = $info['status'] ?? 'disabled';
+    if ($s === 'active') { $dl = adm_days_left($info['expired_date'] ?? '-'); if ($dl !== null && $dl < 0) return 'expired'; }
+    return $s;
+}
+/** Tambah N bulan ke tanggal (Y-m-d) tanpa meloncat bulan (31 Jan + 1 bln = 28/29 Feb). */
+function adm_add_months($date, $n) {
+    $d = new DateTime($date);
+    $day = (int)$d->format('j');
+    $d->modify('first day of this month')->modify('+' . (int)$n . ' month');
+    $d->setDate((int)$d->format('Y'), (int)$d->format('n'), min($day, (int)$d->format('t')));
+    return $d->format('Y-m-d');
+}
+
 function adm_generate_key() {
     $parts = [];
     for ($i = 0; $i < 4; $i++) $parts[] = strtoupper(bin2hex(random_bytes(2)));
     return 'GCBT-' . implode('-', $parts);
 }
 
+// ----------------------------- KATA SANDI -----------------------------
+function adm_pass_hash() {
+    global $ADMIN_PASSWORD_HASH;
+    if (is_file(AUTH_FILE)) {
+        if (function_exists('opcache_invalidate')) @opcache_invalidate(AUTH_FILE, true);
+        $h = @include AUTH_FILE;
+        if (is_string($h) && $h !== '') return $h;
+    }
+    return $ADMIN_PASSWORD_HASH;
+}
+function adm_pass_is_default() { return !is_file(AUTH_FILE); }
+function adm_pass_save($plain) {
+    $hash = password_hash($plain, PASSWORD_DEFAULT);
+    $ok = @file_put_contents(AUTH_FILE, "<?php\n// Dibuat otomatis oleh admin.php. Jangan dibagikan.\nreturn " . var_export($hash, true) . ";\n", LOCK_EX) !== false;
+    if (function_exists('opcache_invalidate')) @opcache_invalidate(AUTH_FILE, true);
+    return $ok;
+}
+
+// ----------------------------- PERLINDUNGAN FILE DATA -----------------------------
+// Cegah licenses.json, cadangan, dll. diunduh langsung lewat browser (http://.../key/licenses.json).
+if (!is_file(__DIR__ . '/.htaccess')) {
+    @file_put_contents(__DIR__ . '/.htaccess',
+        "# Dibuat otomatis oleh admin.php: lindungi data lisensi dari unduhan langsung\n"
+      . "Options -Indexes\n"
+      . "<FilesMatch \"\\.(json|log|bak|txt)$\">\n"
+      . "    <IfModule mod_authz_core.c>\n        Require all denied\n    </IfModule>\n"
+      . "    <IfModule !mod_authz_core.c>\n        Order allow,deny\n        Deny from all\n    </IfModule>\n"
+      . "</FilesMatch>\n");
+}
+
 // ----------------------------- LOGIN -----------------------------
+$loginError = '';
 if (isset($_POST['login_password'])) {
-    if (password_verify($_POST['login_password'], $ADMIN_PASSWORD_HASH)) {
+    $nowL = time();
+    if (($_SESSION['login_lock_until'] ?? 0) > $nowL) {
+        $loginError = 'Terlalu banyak percobaan. Coba lagi dalam ' . ($_SESSION['login_lock_until'] - $nowL) . ' detik.';
+    } elseif (password_verify($_POST['login_password'], adm_pass_hash())) {
+        session_regenerate_id(true);
         $_SESSION['ls_admin'] = true;
+        $_SESSION['login_fails'] = 0;
+        $_SESSION['csrf'] = bin2hex(random_bytes(16));
     } else {
+        sleep(1);
+        $_SESSION['login_fails'] = ($_SESSION['login_fails'] ?? 0) + 1;
+        if ($_SESSION['login_fails'] >= 5) { $_SESSION['login_lock_until'] = $nowL + 60; $_SESSION['login_fails'] = 0; }
         $loginError = 'Password salah.';
     }
 }
@@ -138,54 +333,114 @@ function adm_ago($ts, $now) {
     return date('Y-m-d', $ts);
 }
 
+// ----------------------------- EKSPOR (unduh licenses.json) -----------------------------
+if (isset($_GET['export'])) {
+    $rawExp = adm_read_raw();
+    if (!is_string($rawExp) || trim($rawExp) === '') { http_response_code(404); echo 'Belum ada data lisensi untuk diekspor.'; exit; }
+    header('Content-Type: application/json; charset=utf-8');
+    header('Content-Disposition: attachment; filename="licenses-' . date('Ymd-His') . '.json"');
+    header('Cache-Control: no-store');
+    echo $rawExp;
+    exit;
+}
+
 // ----------------------------- ACTIONS -----------------------------
+if (empty($_SESSION['csrf'])) $_SESSION['csrf'] = bin2hex(random_bytes(16));
 $data = adm_load();
 $notice = '';
 $newGeneratedKey = '';
 $editTarget = ''; // kalau abis save/generate, modal otomatis kebuka lagi
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
-    if ($_POST['action'] === 'save_installation') {
+    if (!hash_equals($_SESSION['csrf'], (string)($_POST['csrf'] ?? ''))) {
+        $notice = 'Sesi tidak valid. Muat ulang halaman lalu coba lagi.';
+    } elseif ($_POST['action'] === 'save_installation') {
         $key = trim($_POST['license_key'] ?? '');
         if ($key !== '') {
+            $isNew    = !isset($data['installations'][$key]);
             $existing = $data['installations'][$key] ?? [];
+            $pd       = trim($_POST['purchase_date'] ?? '');
             $data['installations'][$key] = array_merge($existing, [
-                'label'            => $_POST['label'] ?: ($existing['label'] ?? ''),
-                'domain'           => $_POST['domain'] ?: ($existing['domain'] ?? ''),
+                'label'            => ($_POST['label'] ?? '') ?: ($existing['label'] ?? ''),
+                'domain'           => ($_POST['domain'] ?? '') ?: ($existing['domain'] ?? ''),
                 'status'           => $_POST['status'] ?? 'disabled',
                 'message'          => $_POST['message'] ?? '',
                 'contact'          => $_POST['contact'] ?? '081234567890',
-                'expired_date'     => $_POST['expired_date'] ?: '-',
+                'expired_date'     => ($_POST['expired_date'] ?? '') ?: '-',
                 'menu_ai_soal'     => isset($_POST['menu_ai_soal']),
+                'school'           => substr(trim($_POST['school'] ?? ''), 0, 120),
+                'school_contact'   => substr(trim($_POST['school_contact'] ?? ''), 0, 80),
+                'purchase_date'    => ($pd !== '' && strtotime($pd) !== false) ? date('Y-m-d', strtotime($pd)) : '',
                 'last_seen_domain' => $existing['last_seen_domain'] ?? null,
                 'last_seen_at'     => $existing['last_seen_at'] ?? null,
             ]);
-            adm_save($data);
-            $notice = "Instalasi '$key' berhasil disimpan.";
+            adm_log($data, $key, $isNew ? 'created' : 'edited', $isNew ? 'Lisensi dibuat.' : 'Data lisensi diubah.');
+            $notice = adm_save($data) ? "Instalasi '$key' berhasil disimpan." : 'Gagal menyimpan: data lisensi tidak terbaca. Pulihkan dari Cadangan.';
         }
     } elseif ($_POST['action'] === 'delete_installation') {
         $key = $_POST['license_key'] ?? '';
         unset($data['installations'][$key]);
-        adm_save($data);
-        $notice = "Kode lisensi '$key' dihapus.";
+        $notice = adm_save($data) ? "Kode lisensi '$key' dihapus." : 'Gagal menyimpan: data lisensi tidak terbaca. Pulihkan dari Cadangan.';
     } elseif ($_POST['action'] === 'toggle_disable') {
         $key = $_POST['license_key'] ?? '';
         if (isset($data['installations'][$key])) {
             $current = $data['installations'][$key]['status'] ?? 'disabled';
             $data['installations'][$key]['status'] = ($current === 'disabled') ? 'active' : 'disabled';
-            adm_save($data);
-            $notice = ($current === 'disabled')
-                ? "Instalasi '$key' diaktifkan kembali."
-                : "Instalasi '$key' dinonaktifkan.";
+            adm_log($data, $key, $current === 'disabled' ? 'enabled' : 'disabled', $current === 'disabled' ? 'Diaktifkan kembali.' : 'Dinonaktifkan.');
+            $ok = adm_save($data);
+            $notice = !$ok ? 'Gagal menyimpan: data lisensi tidak terbaca.'
+                : (($current === 'disabled') ? "Instalasi '$key' diaktifkan kembali." : "Instalasi '$key' dinonaktifkan.");
         }
     } elseif ($_POST['action'] === 'reset_binding') {
         $key = $_POST['license_key'] ?? '';
         if (isset($data['installations'][$key])) {
-            foreach (['bound_mac','bound_macs','mac_changed_at','bound_host','bound_at','blocked_attempts','last_blocked_mac','last_blocked_host','last_blocked_ip','last_blocked_at','mac_mismatch_detected_at','previous_mac'] as $f) {
+            $oldMac = $data['installations'][$key]['bound_mac'] ?? '';
+            foreach (['bound_mac','bound_macs','mac_changed_at','bound_host','bound_at','blocked_attempts','last_blocked_mac','last_blocked_host','last_blocked_ip','last_blocked_at','mac_mismatch_detected_at','previous_mac','blocked_log_mac','blocked_log_ts'] as $f) {
                 unset($data['installations'][$key][$f]);
             }
-            adm_save($data);
-            $notice = "Ikatan perangkat untuk '$key' dilepas. Perangkat berikutnya yang mengecek akan terikat.";
+            adm_log($data, $key, 'unbind', 'Ikatan perangkat dilepas' . ($oldMac ? " (sebelumnya $oldMac)." : '.'));
+            $notice = adm_save($data) ? "Ikatan perangkat untuk '$key' dilepas. Perangkat berikutnya yang mengecek akan terikat." : 'Gagal menyimpan: data lisensi tidak terbaca.';
+        }
+    } elseif ($_POST['action'] === 'extend_license') {
+        $key = $_POST['license_key'] ?? '';
+        $months = (int)($_POST['months'] ?? 0);
+        if (isset($data['installations'][$key]) && in_array($months, [1, 12], true)) {
+            $inst = &$data['installations'][$key];
+            $cur  = $inst['expired_date'] ?? '-';
+            if (adm_days_left($cur) === null) {
+                $notice = "Lisensi '$key' tanpa batas waktu (tanggal expired kosong), tidak perlu diperpanjang.";
+            } else {
+                $today = date('Y-m-d');
+                $base  = (date('Y-m-d', strtotime($cur)) > $today) ? date('Y-m-d', strtotime($cur)) : $today; // sudah lewat: hitung dari hari ini
+                $inst['expired_date'] = adm_add_months($base, $months);
+                if (($inst['status'] ?? '') === 'expired') $inst['status'] = 'active';
+                $new = $inst['expired_date'];
+                unset($inst);
+                adm_log($data, $key, 'extended', 'Diperpanjang ' . ($months === 12 ? '1 tahun' : '1 bulan') . " (sampai $new).");
+                $notice = adm_save($data) ? "Masa berlaku '$key' diperpanjang sampai $new." : 'Gagal menyimpan: data lisensi tidak terbaca.';
+            }
+        }
+    } elseif ($_POST['action'] === 'change_password') {
+        $old = (string)($_POST['old_pass'] ?? ''); $n1 = (string)($_POST['new_pass'] ?? ''); $n2 = (string)($_POST['new_pass2'] ?? '');
+        if (!password_verify($old, adm_pass_hash()))      $notice = 'Kata sandi lama salah.';
+        elseif (strlen($n1) < 8)                          $notice = 'Kata sandi baru minimal 8 karakter.';
+        elseif ($n1 !== $n2)                              $notice = 'Ulangi kata sandi tidak sama.';
+        elseif ($n1 === '000000')                         $notice = 'Kata sandi baru tidak boleh sama dengan kata sandi bawaan.';
+        else $notice = adm_pass_save($n1) ? 'Kata sandi berhasil diganti.' : 'Gagal menyimpan kata sandi (cek izin tulis folder key).';
+    } elseif ($_POST['action'] === 'import_licenses') {
+        $f = $_FILES['import_file'] ?? null;
+        if (!$f || ($f['error'] ?? 1) !== UPLOAD_ERR_OK) $notice = 'Pilih berkas licenses.json terlebih dulu.';
+        elseif (($f['size'] ?? 0) > 2 * 1024 * 1024)       $notice = 'Berkas terlalu besar (maksimal 2 MB).';
+        else {
+            $r = adm_install_json(file_get_contents($f['tmp_name']));
+            $notice = ($r === true) ? 'Data lisensi berhasil diimpor. Kondisi sebelumnya tersimpan di cadangan.' : $r;
+        }
+    } elseif ($_POST['action'] === 'restore_backup') {
+        $fn = basename((string)($_POST['backup_file'] ?? ''));
+        if (!preg_match('/^licenses-\d{8}-\d{6}(-\d+)?\.json$/', $fn) || !is_file(BACKUP_DIR . '/' . $fn)) $notice = 'Cadangan tidak ditemukan.';
+        else {
+            $r = adm_install_json(file_get_contents(BACKUP_DIR . '/' . $fn));
+            $notice = ($r === true) ? 'Cadangan ' . adm_backup_label($fn) . ' dipulihkan. Kondisi sebelumnya tersimpan di cadangan.' : $r;
         }
     } elseif ($_POST['action'] === 'generate_key') {
         $newGeneratedKey = adm_generate_key();
@@ -193,12 +448,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
     $data = adm_load();
 }
 
-// Statistik ringkas
+// Statistik ringkas (status efektif: lisensi "active" yang tanggalnya lewat dihitung Expired)
 $total = count($data['installations']);
 $countByStatus = ['active' => 0, 'expired' => 0, 'disabled' => 0];
 $menuOnCount = 0;
 foreach ($data['installations'] as $info) {
-    $s = $info['status'] ?? 'disabled';
+    $s = adm_effective_status($info);
     if (isset($countByStatus[$s])) $countByStatus[$s]++;
     if (!empty($info['menu_ai_soal'])) $menuOnCount++;
 }
@@ -206,6 +461,13 @@ foreach ($data['installations'] as $info) {
 // Jumlah komputer yang sudah terikat ke sebuah kode lisensi
 $totalUsers = 0;
 foreach ($data['installations'] as $info) { if (!empty($info['bound_mac'])) $totalUsers++; }
+
+$backupList = [];
+foreach (adm_backup_files() as $bf) {
+    $bd = json_decode((string)@file_get_contents($bf), true);
+    $backupList[] = ['file' => basename($bf), 'label' => adm_backup_label($bf), 'count' => is_array($bd) ? count($bd['installations'] ?? []) : 0, 'size' => (int)@filesize($bf)];
+}
+$passIsDefault = adm_pass_is_default();
 ?>
 <!DOCTYPE html>
 <html lang="id">
@@ -594,6 +856,40 @@ foreach ($data['installations'] as $info) { if (!empty($info['bound_mac'])) $tot
     /* ===== Detail percobaan diblokir ===== */
     .blocked-detail{font-size:12px;color:var(--muted);line-height:1.5;margin-top:3px}
     :root[data-theme="light"] .blocked-detail{color:#8f0f47}
+
+    /* ===== Tambahan v4: masa berlaku, catatan, banner, riwayat, cadangan ===== */
+    .exp-note{font-size:11.5px;font-weight:700;margin-top:3px}
+    .exp-ok{color:var(--muted)} .exp-warn{color:#ffd84d} .exp-bad{color:#ff6b8b}
+    .ext-row{display:flex;gap:5px;margin-top:6px}
+    .chip-btn{border:1px solid var(--border);background:transparent;color:var(--accent);border-radius:999px;padding:2px 9px;font-size:11px;font-weight:700;cursor:pointer;font-family:inherit}
+    .chip-btn:hover{background:rgba(0,229,168,.1);border-color:var(--accent)}
+    .note-cell{font-size:12px;line-height:1.55;max-width:210px}
+    .note-school{font-weight:800;color:var(--text)}
+    .note-line{color:var(--muted)} .note-line i{width:14px;color:var(--accent2);font-size:10.5px}
+    .sec-title{margin:20px 0 4px;font-size:12px;font-weight:800;color:var(--accent);text-transform:uppercase;letter-spacing:.4px}
+    .sec-title i{margin-right:6px}
+    .hint{font-size:12.5px;color:var(--muted);line-height:1.6}
+    .hint code,.warn-banner code{background:var(--input-bg);padding:1px 6px;border-radius:5px;color:var(--accent)}
+    .warn-banner{display:flex;gap:12px;align-items:flex-start;padding:13px 16px;margin-bottom:14px;border-radius:12px;font-size:13px;line-height:1.55;background:rgba(255,216,77,.10);border:1px solid rgba(255,216,77,.35);color:#ffe28a}
+    .warn-banner.bad{background:rgba(255,79,154,.10);border-color:rgba(255,79,154,.4);color:#ffb3d0}
+    .warn-banner i{margin-top:3px}
+    .hist-key{font-size:12px;color:var(--accent);margin-bottom:12px}
+    .hist-list{display:flex;flex-direction:column;gap:8px;max-height:52vh;overflow-y:auto}
+    .hist-row{display:flex;gap:11px;align-items:flex-start;padding:10px 12px;border:1px solid var(--border);border-radius:10px;background:var(--input-bg)}
+    .hist-row>i{margin-top:3px;width:16px;text-align:center;color:var(--accent2)}
+    .hist-row.ev-blocked>i,.hist-row.ev-disabled>i{color:#ff6b8b}
+    .hist-row.ev-bind>i,.hist-row.ev-enabled>i,.hist-row.ev-extended>i{color:var(--accent)}
+    .hist-d{font-size:13px;font-weight:600;color:var(--text)} .hist-t{font-size:11px;color:var(--muted);margin-top:2px}
+    .bk-list{display:flex;flex-direction:column;gap:8px;max-height:260px;overflow-y:auto;margin-top:8px}
+    .bk-row{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:9px 12px;border:1px solid var(--border);border-radius:10px;background:var(--input-bg)}
+    .bk-name{font-size:12.5px;color:var(--text)} .bk-sub{font-size:11.5px;color:var(--muted)}
+    .file-in{padding:7px 10px !important}
+    input[type=password].pw-in{width:100%;padding:10px 12px;border-radius:9px;border:1px solid var(--border);background:var(--input-bg);color:var(--input-text);font-size:13px;font-family:inherit;outline:none}
+    input[type=password].pw-in:focus{border-color:var(--accent)}
+    input[type=file]{width:100%;border:1px solid var(--border);border-radius:9px;background:var(--input-bg);color:var(--input-text);font-size:12.5px;font-family:inherit}
+    :root[data-theme="light"] .exp-warn{color:#6b4600} :root[data-theme="light"] .exp-bad{color:#8f0f47}
+    :root[data-theme="light"] .warn-banner{background:#fbefc9;border-color:#e3c36a;color:#5b3d00}
+    :root[data-theme="light"] .warn-banner.bad{background:#f9dce8;border-color:#e08aab;color:#7a0b3d}
 </style>
 </head>
 <body>
@@ -625,9 +921,22 @@ foreach ($data['installations'] as $info) { if (!empty($info['bound_mac'])) $tot
             <div class="knob" id="themeKnob"><i class="fa-solid fa-moon" id="themeKnobIcon"></i></div>
         </div>
         <a class="btn-logout" href="?logout=1"><i class="fa-solid fa-right-from-bracket"></i> Logout</a>
+        <button class="btn btn-ghost" onclick="ovShow('backupOverlay')" title="Cadangan, ekspor, dan impor data lisensi"><i class="fa-solid fa-database"></i> Cadangan</button>
+        <button class="btn btn-ghost" onclick="ovShow('passOverlay')" title="Ganti kata sandi admin"><i class="fa-solid fa-key"></i> Kata sandi</button>
         <button class="btn btn-primary" onclick="openModal()"><i class="fa-solid fa-plus"></i> Instalasi Baru</button>
     </div>
 </div>
+
+<?php if (!empty($GLOBALS['ADM_LOAD_ERROR'])): ?>
+<div class="warn-banner bad"><i class="fa-solid fa-triangle-exclamation"></i>
+    <div><b>licenses.json tidak terbaca atau rusak.</b> Perubahan dinonaktifkan supaya data asli tidak tertimpa. Buka <b>Cadangan</b> lalu pulihkan salah satu cadangan, atau perbaiki berkas itu secara manual.</div></div>
+<?php endif; ?>
+<?php if ($passIsDefault): ?>
+<div class="warn-banner"><i class="fa-solid fa-key"></i>
+    <div><b>Kata sandi admin belum pernah diganti lewat panel ini</b> (masih memakai hash bawaan di <code>admin.php</code>). Ganti lewat tombol <b>Kata sandi</b> di kanan atas supaya tersimpan di <code>admin_auth.php</code>.</div></div>
+<?php endif; ?>
+<div class="warn-banner bad" id="exposeBanner" style="display:none"><i class="fa-solid fa-lock-open"></i>
+    <div><b>Data lisensi bisa diunduh langsung lewat browser</b> (<code>/key/licenses.json</code>). Pastikan berkas <code>.htaccess</code> di folder <code>key</code> aktif (Apache perlu <code>AllowOverride All</code>), lalu muat ulang halaman ini.</div></div>
 
 <div class="stats">
     <div class="stat-card c-total">
@@ -682,13 +991,19 @@ foreach ($data['installations'] as $info) { if (!empty($info['bound_mac'])) $tot
                 <th>Menu AI Soal</th>
                 <th>Expired</th>
                 <th>MAC Address</th>
+                <th>Catatan</th>
                 <th>Terakhir Aktif</th>
                 <th style="text-align:right">Aksi</th>
             </tr>
         </thead>
         <tbody>
-        <?php foreach ($data['installations'] as $key => $info): ?>
-            <tr data-search="<?= htmlspecialchars(strtolower($key.' '.($info['label']??'').' '.($info['last_seen_mac']??''))) ?>">
+        <?php foreach ($data['installations'] as $key => $info):
+            $eff = adm_effective_status($info);
+            $dl  = adm_days_left($info['expired_date'] ?? '-');
+            $hist = $info['history'] ?? [];
+            $infoEdit = array_diff_key($info, ['history' => 1]);
+        ?>
+            <tr data-search="<?= htmlspecialchars(strtolower($key.' '.($info['label']??'').' '.($info['last_seen_mac']??'').' '.($info['school']??'').' '.($info['school_contact']??''))) ?>">
                 <td>
                     <div class="keycell">
                         <code class="mono"><?= htmlspecialchars($key) ?></code>
@@ -697,10 +1012,10 @@ foreach ($data['installations'] as $info) { if (!empty($info['bound_mac'])) $tot
                         </button>
                     </div>
                 </td>
-                <td><?= htmlspecialchars($info['label'] ?: '-') ?></td>
+                <td><?= htmlspecialchars(($info['label'] ?? '') ?: '-') ?></td>
                 <td>
-                    <span class="badge <?= htmlspecialchars($info['status']) ?>">
-                        <i class="fa-solid fa-circle"></i> <?= htmlspecialchars($info['status']) ?>
+                    <span class="badge <?= htmlspecialchars($eff) ?>">
+                        <i class="fa-solid fa-circle"></i> <?= htmlspecialchars($eff) ?>
                     </span>
                 </td>
                 <td>
@@ -709,10 +1024,33 @@ foreach ($data['installations'] as $info) { if (!empty($info['bound_mac'])) $tot
                         <?= !empty($info['menu_ai_soal']) ? 'Tampil' : 'Sembunyi' ?>
                     </span>
                 </td>
-                <td class="mono" style="color:var(--muted)"><?= htmlspecialchars($info['expired_date'] ?? '-') ?></td>
+                <td>
+                    <div class="mono" style="color:var(--muted)"><?= htmlspecialchars($info['expired_date'] ?? '-') ?></div>
+                    <?php if ($dl === null): ?>
+                        <div class="exp-note exp-ok">tanpa batas</div>
+                    <?php elseif ($dl < 0): ?>
+                        <div class="exp-note exp-bad">lewat <?= abs($dl) ?> hari</div>
+                    <?php elseif ($dl === 0): ?>
+                        <div class="exp-note exp-bad">berakhir hari ini</div>
+                    <?php else: ?>
+                        <div class="exp-note <?= $dl <= 7 ? 'exp-bad' : ($dl <= 30 ? 'exp-warn' : 'exp-ok') ?>">sisa <?= $dl ?> hari</div>
+                    <?php endif; ?>
+                    <?php if ($dl !== null): ?>
+                    <div class="ext-row">
+                        <?php foreach ([1 => '+1 bln', 12 => '+1 thn'] as $mo => $lbl): ?>
+                        <form method="post" onsubmit="return confirm('Perpanjang <?= $mo === 12 ? '1 tahun' : '1 bulan' ?>?<?= $dl < 0 ? ' Lisensi sudah lewat, dihitung dari hari ini.' : '' ?>');" style="display:inline">
+                            <input type="hidden" name="action" value="extend_license">
+                            <input type="hidden" name="license_key" value="<?= htmlspecialchars($key) ?>">
+                            <input type="hidden" name="months" value="<?= $mo ?>">
+                            <button type="submit" class="chip-btn" title="Perpanjang <?= $mo === 12 ? '1 tahun' : '1 bulan' ?>"><?= $lbl ?></button>
+                        </form>
+                        <?php endforeach; ?>
+                    </div>
+                    <?php endif; ?>
+                </td>
                 <td>
                     <div style="font-size:11.5px;line-height:1.8">
-                        <div class="mono" style="color:var(--text)"><i class="fa-solid fa-ethernet" style="width:14px;color:var(--accent2)"></i> <?= htmlspecialchars($info['last_seen_mac'] ?: '-') ?></div>
+                        <div class="mono" style="color:var(--text)"><i class="fa-solid fa-ethernet" style="width:14px;color:var(--accent2)"></i> <?= htmlspecialchars(($info['last_seen_mac'] ?? '') ?: '-') ?></div>
                         <?php if (!empty($info['mac_mismatch_detected_at'])): ?>
                             <div class="badge expired" style="margin-top:4px" title="MAC sebelumnya: <?= htmlspecialchars($info['previous_mac'] ?? '-') ?>">
                                 <i class="fa-solid fa-triangle-exclamation"></i> MAC berubah!
@@ -728,11 +1066,25 @@ foreach ($data['installations'] as $info) { if (!empty($info['bound_mac'])) $tot
                                 <i class="fa-solid fa-triangle-exclamation"></i> <?= (int)$info['blocked_attempts'] ?>x percobaan perangkat lain diblokir
                             </div>
                             <div class="mono blocked-detail">
-                                <?= htmlspecialchars($info['last_blocked_mac'] ?: 'tanpa MAC') ?><br>
+                                <?= htmlspecialchars(($info['last_blocked_mac'] ?? '') ?: 'tanpa MAC') ?><br>
                                 <?= htmlspecialchars($info['last_blocked_at'] ?? '') ?>
                             </div>
                         <?php endif; ?>
                     </div>
+                </td>
+                <td>
+                    <?php
+                        $nSch = trim($info['school'] ?? ''); $nCon = trim($info['school_contact'] ?? ''); $nBuy = trim($info['purchase_date'] ?? '');
+                    ?>
+                    <?php if ($nSch === '' && $nCon === '' && $nBuy === ''): ?>
+                        <span style="color:var(--muted)">-</span>
+                    <?php else: ?>
+                    <div class="note-cell">
+                        <?php if ($nSch !== ''): ?><div class="note-school"><?= htmlspecialchars($nSch) ?></div><?php endif; ?>
+                        <?php if ($nCon !== ''): ?><div class="note-line"><i class="fa-solid fa-phone"></i> <?= htmlspecialchars($nCon) ?></div><?php endif; ?>
+                        <?php if ($nBuy !== ''): ?><div class="note-line"><i class="fa-solid fa-receipt"></i> Dibeli <?= htmlspecialchars(date('d M Y', strtotime($nBuy))) ?></div><?php endif; ?>
+                    </div>
+                    <?php endif; ?>
                 </td>
                 <?php
                     $seenTs   = adm_ts($info['last_seen_at'] ?? null);
@@ -764,7 +1116,10 @@ foreach ($data['installations'] as $info) { if (!empty($info['bound_mac'])) $tot
                                 <i class="fa-solid <?= $info['status']==='disabled' ? 'fa-power-off' : 'fa-ban' ?>"></i>
                             </button>
                         </form>
-                        <button class="icon-btn" title="Edit" onclick='editInstall(<?= json_encode($key) ?>, <?= json_encode($info) ?>)'>
+                        <button class="icon-btn" title="Riwayat aktivitas" onclick='showHistory(<?= adm_js($key) ?>, <?= adm_js($hist) ?>)'>
+                            <i class="fa-solid fa-clock-rotate-left"></i>
+                        </button>
+                        <button class="icon-btn" title="Edit" onclick='editInstall(<?= adm_js($key) ?>, <?= adm_js($infoEdit) ?>)'>
                             <i class="fa-solid fa-pen"></i>
                         </button>
                         <form method="post" onsubmit="return confirm('Hapus instalasi ini? Tindakan tidak bisa dibatalkan.');" style="display:inline">
@@ -821,6 +1176,14 @@ foreach ($data['installations'] as $info) { if (!empty($info['bound_mac'])) $tot
             <label>Kontak</label>
             <input type="text" name="contact" id="f_contact" value="081234567890">
 
+            <div class="sec-title"><i class="fa-solid fa-address-card"></i> Catatan lisensi</div>
+            <label>Nama sekolah</label>
+            <input type="text" name="school" id="f_school" placeholder="contoh: SDN 01 Pontianak">
+            <label>Kontak sekolah (nama / nomor)</label>
+            <input type="text" name="school_contact" id="f_school_contact" placeholder="contoh: Bu Rina 0812xxxxxxx">
+            <label>Tanggal beli</label>
+            <input type="text" name="purchase_date" id="f_purchase" placeholder="2026-11-02">
+
             <div class="check-field">
                 <input type="checkbox" name="menu_ai_soal" id="f_menu" checked>
                 <span><i class="fa-solid fa-wand-magic-sparkles"></i> Tampilkan menu "AI Soal" di sidebar klien</span>
@@ -828,6 +1191,87 @@ foreach ($data['installations'] as $info) { if (!empty($info['bound_mac'])) $tot
 
             <div class="modal-footer">
                 <button type="button" class="btn btn-ghost" onclick="closeModal()">Batal</button>
+                <button type="submit" class="btn btn-primary"><i class="fa-solid fa-floppy-disk"></i> Simpan</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+
+<!-- ===================== MODAL: RIWAYAT ===================== -->
+<div class="modal-overlay" id="histOverlay">
+    <div class="modal">
+        <div class="modal-head">
+            <h3><i class="fa-solid fa-clock-rotate-left" style="color:var(--accent);margin-right:7px"></i>Riwayat aktivitas</h3>
+            <button onclick="ovHide('histOverlay')"><i class="fa-solid fa-xmark"></i></button>
+        </div>
+        <div class="hist-key mono" id="histKey"></div>
+        <div id="histList" class="hist-list"></div>
+    </div>
+</div>
+
+<!-- ===================== MODAL: CADANGAN ===================== -->
+<div class="modal-overlay" id="backupOverlay">
+    <div class="modal" style="max-width:560px">
+        <div class="modal-head">
+            <h3><i class="fa-solid fa-database" style="color:var(--accent);margin-right:7px"></i>Cadangan data lisensi</h3>
+            <button onclick="ovHide('backupOverlay')"><i class="fa-solid fa-xmark"></i></button>
+        </div>
+        <p class="hint">Setiap kali ada perubahan dari panel ini (dan saat sebuah kode pertama kali terikat ke komputer), kondisi sebelumnya otomatis disalin ke folder <code>backup/</code>. Disimpan <?= BACKUP_KEEP ?> cadangan terakhir.</p>
+
+        <div class="sec-title"><i class="fa-solid fa-file-export"></i> Ekspor</div>
+        <a class="btn btn-ghost" href="?export=1" style="text-decoration:none;display:inline-flex"><i class="fa-solid fa-download"></i> Unduh licenses.json</a>
+
+        <div class="sec-title"><i class="fa-solid fa-file-import"></i> Impor</div>
+        <form method="post" enctype="multipart/form-data" onsubmit="return confirm('Impor akan MENGGANTI seluruh data lisensi saat ini. Kondisi sekarang tetap disimpan sebagai cadangan. Lanjutkan?');">
+            <input type="hidden" name="action" value="import_licenses">
+            <div class="genrow">
+                <input type="file" name="import_file" accept=".json,application/json" required class="file-in">
+                <button type="submit" class="btn btn-primary"><i class="fa-solid fa-upload"></i> Impor</button>
+            </div>
+        </form>
+
+        <div class="sec-title"><i class="fa-solid fa-clock-rotate-left"></i> Cadangan otomatis (<?= count($backupList) ?>)</div>
+        <?php if (!$backupList): ?>
+            <p class="hint">Belum ada cadangan. Cadangan pertama dibuat saat ada perubahan berikutnya.</p>
+        <?php else: ?>
+        <div class="bk-list">
+            <?php foreach ($backupList as $bk): ?>
+            <div class="bk-row">
+                <div>
+                    <div class="mono bk-name"><?= htmlspecialchars($bk['label']) ?></div>
+                    <div class="bk-sub"><?= (int)$bk['count'] ?> instalasi · <?= number_format($bk['size'] / 1024, 1) ?> KB</div>
+                </div>
+                <form method="post" onsubmit="return confirm('Pulihkan cadangan <?= htmlspecialchars($bk['label']) ?>? Data lisensi saat ini akan diganti (dan tetap disimpan sebagai cadangan).');">
+                    <input type="hidden" name="action" value="restore_backup">
+                    <input type="hidden" name="backup_file" value="<?= htmlspecialchars($bk['file']) ?>">
+                    <button type="submit" class="btn btn-ghost" style="padding:7px 12px"><i class="fa-solid fa-rotate-left"></i> Pulihkan</button>
+                </form>
+            </div>
+            <?php endforeach; ?>
+        </div>
+        <?php endif; ?>
+    </div>
+</div>
+
+<!-- ===================== MODAL: KATA SANDI ===================== -->
+<div class="modal-overlay" id="passOverlay">
+    <div class="modal" style="max-width:420px">
+        <div class="modal-head">
+            <h3><i class="fa-solid fa-key" style="color:var(--accent);margin-right:7px"></i>Ganti kata sandi</h3>
+            <button onclick="ovHide('passOverlay')"><i class="fa-solid fa-xmark"></i></button>
+        </div>
+        <form method="post" autocomplete="off">
+            <input type="hidden" name="action" value="change_password">
+            <label>Kata sandi lama</label>
+            <input type="password" name="old_pass" required class="pw-in">
+            <label>Kata sandi baru (minimal 8 karakter)</label>
+            <input type="password" name="new_pass" required minlength="8" class="pw-in">
+            <label>Ulangi kata sandi baru</label>
+            <input type="password" name="new_pass2" required minlength="8" class="pw-in">
+            <p class="hint" style="margin-top:12px">Halaman admin hanya bisa dibuka dari komputer server ini. Kata sandi disimpan sebagai hash di <code>admin_auth.php</code>.</p>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-ghost" onclick="ovHide('passOverlay')">Batal</button>
                 <button type="submit" class="btn btn-primary"><i class="fa-solid fa-floppy-disk"></i> Simpan</button>
             </div>
         </form>
@@ -875,8 +1319,43 @@ function editInstall(key, info){
     document.getElementById('f_message').value = info.message || '';
     document.getElementById('f_contact').value = info.contact || '081234567890';
     document.getElementById('f_menu').checked = !!info.menu_ai_soal;
+    document.getElementById('f_school').value = info.school || '';
+    document.getElementById('f_school_contact').value = info.school_contact || '';
+    document.getElementById('f_purchase').value = info.purchase_date || '';
     document.getElementById('modalOverlay').classList.add('show');
 }
+function ovShow(id){ document.getElementById(id).classList.add('show'); }
+function ovHide(id){ document.getElementById(id).classList.remove('show'); }
+function showHistory(key, list){
+    document.getElementById('histKey').textContent = key;
+    const box = document.getElementById('histList');
+    box.textContent = '';
+    const icons = {created:'fa-plus', edited:'fa-pen', enabled:'fa-power-off', disabled:'fa-ban', extended:'fa-calendar-plus', bind:'fa-link', unbind:'fa-link-slash', blocked:'fa-triangle-exclamation'};
+    if (!list || !list.length){
+        const p = document.createElement('p'); p.className = 'hint'; p.textContent = 'Belum ada catatan aktivitas.'; box.appendChild(p);
+    } else {
+        list.slice().reverse().forEach(ev => {
+            const row = document.createElement('div'); row.className = 'hist-row ev-' + (ev.e || '');
+            const ic = document.createElement('i'); ic.className = 'fa-solid ' + (icons[ev.e] || 'fa-circle');
+            const wrap = document.createElement('div');
+            const d = document.createElement('div'); d.className = 'hist-d'; d.textContent = ev.d || '';
+            const t = document.createElement('div'); t.className = 'hist-t mono'; t.textContent = ev.t || '';
+            wrap.appendChild(d); wrap.appendChild(t); row.appendChild(ic); row.appendChild(wrap); box.appendChild(row);
+        });
+    }
+    ovShow('histOverlay');
+}
+// token CSRF otomatis pada semua form POST
+(function(){
+    const tok = <?= json_encode($_SESSION['csrf']) ?>;
+    document.querySelectorAll('form[method="post"]').forEach(f => {
+        const i = document.createElement('input'); i.type = 'hidden'; i.name = 'csrf'; i.value = tok; f.appendChild(i);
+    });
+})();
+// peringatan bila data lisensi bisa diunduh langsung lewat browser
+fetch('licenses.json?_=' + Date.now(), {cache:'no-store'}).then(r => {
+    if (r.ok) document.getElementById('exposeBanner').style.display = 'flex';
+}).catch(() => {});
 function generateKey(){
     const parts = [];
     for (let i = 0; i < 4; i++){
@@ -941,6 +1420,9 @@ function filterTable(){
 })();
 document.getElementById('modalOverlay').addEventListener('click', function(e){
     if (e.target === this) closeModal();
+});
+['histOverlay','backupOverlay','passOverlay'].forEach(id => {
+    document.getElementById(id).addEventListener('click', function(e){ if (e.target === this) ovHide(id); });
 });
 <?php if ($newGeneratedKey): ?>
 openModal();

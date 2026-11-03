@@ -1,8 +1,8 @@
 {
-  "version": "1.2.46",
+  "version": "1.2.47",
   "released": "2026-11-03",
-  "url": "https://github.com/suekarn/Examly/releases/download/v1.2.46/update-1.2.46.zip",
-  "sha256": "5aae54ae292482355d29c727c6b985880b5db3e8d79866e23ae6c5df5730f0c5",
-  "notes": "Tambah folder system dan update .gitignore",
+  "url": "https://github.com/suekarn/Examly/releases/download/v1.2.47/update-1.2.47.zip",
+  "sha256": "8a315252d609b6736d41be34b2e125121d73d3d6d9bf38467365a299f000d0a9",
+  "notes": "Rilis manual",
   "apk_url": "https://github.com/suekarn/Examly/releases/download/v1.2.0/examly.apk"
 }

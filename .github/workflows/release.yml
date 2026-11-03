@@ -1,11 +1,11 @@
 name: Auto Release Update
 
 on:
+  workflow_dispatch:
   push:
     branches: [main]
     paths:
       - 'application/**'
-      - 'assets/**'
       - 'system/**'
       - 'index.php'
       - '.htaccess'
@@ -31,7 +31,7 @@ jobs:
         id: z
         run: |
           VER=${{ steps.v.outputs.version }}
-          zip -r update-$VER.zip application assets system index.php .htaccess \
+          zip -r update-$VER.zip application system index.php .htaccess \
             api_live_score.php ambil_skor.php live_score.php live_skor_api.php \
             -x "application/config/database.php" "application/config/config.php" \
                "application/cache/*" "application/logs/*"
@@ -49,6 +49,7 @@ jobs:
           SHA: ${{ steps.z.outputs.sha }}
           MSG: ${{ github.event.head_commit.message }}
         run: |
+          if [ -z "$MSG" ]; then MSG="Rilis manual"; fi
           jq --arg v "$VER" \
              --arg d "$(date +%F)" \
              --arg u "https://github.com/${{ github.repository }}/releases/download/v$VER/update-$VER.zip" \

@@ -35,9 +35,11 @@ class Aiimport extends CI_Controller
             // Belum berlisensi di komputer ini: deteksi MAC otomatis, lalu minta kode lisensi (aktivasi).
             $pesan_gagal = '';
             $kode_isi    = '';
+            $mac_isi     = '';
             if ($this->input->method() === 'post' && $this->input->post('lg_activate_code') !== null) {
                 $kode_isi = (string)$this->input->post('lg_activate_code', TRUE);
-                $hasil    = lg_activate($kode_isi);
+                $mac_isi  = (string)$this->input->post('lg_activate_mac', TRUE);
+                $hasil    = lg_activate($kode_isi, $mac_isi);
                 if (!empty($hasil['ok'])) {
                     redirect(site_url('aiimport'));   // aktivasi berhasil -> buka AI Soal
                     return;
@@ -46,11 +48,13 @@ class Aiimport extends CI_Controller
             }
             $ident = lg_ident();
             $err   = is_array($akses['error']) ? $akses['error'] : [];
-            $this->load->view('errors/html/license_activate', [
-                'title'      => $err['title']   ?? 'Aktifkan Lisensi',
-                'message'    => $err['message'] ?? 'Masukkan kode lisensi untuk mengaktifkan modul AI Soal di komputer ini.',
+            $this->load->view('aiimport/index', [
+                'lisensi_terkunci' => true,   // index.php menampilkan form aktivasi, bukan halaman AI Soal
+                'title'      => $err['title']   ?? 'Registrasi Lisensi',
+                'message'    => $err['message'] ?? 'Isi kode lisensi dan MAC address untuk mendaftarkan komputer ini.',
                 'contact'    => $err['contact'] ?? '081234567890',
-                'mac'        => $ident['mac'] ?? '',
+                'mac'        => lg_local_mac(),                 // hasil deteksi otomatis ('' bila gagal)
+                'mac_input'  => $mac_isi !== '' ? $mac_isi : (lg_manual_mac()),
                 'csrf_name'  => $this->security->get_csrf_token_name(),
                 'csrf_hash'  => $this->security->get_csrf_hash(),
                 'action'     => site_url('aiimport'),

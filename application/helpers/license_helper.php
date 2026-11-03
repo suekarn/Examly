@@ -1,6 +1,6 @@
 <?php
 defined('BASEPATH') OR exit('No direct script access allowed');
-// LG_HELPER_VERSION: 9
+// LG_HELPER_VERSION: 10
 
 /**
  * =====================================================================
@@ -39,8 +39,9 @@ if (!defined('LG_SEND_IP'))    define('LG_SEND_IP', false); // v6: kirim IP komp
 // v9: AKTIVASI OTOMATIS. Kode lisensi yang diketik di halaman AI Soal disimpan di berkas ini
 // (prioritas di atas license_key.php). Menu AI Soal tetap tampil supaya komputer baru bisa mengaktifkan.
 if (!defined('LG_ACTIVATION_FILE')) define('LG_ACTIVATION_FILE', APPPATH . 'config/license_activation.json');
-// Set true bila menu AI Soal harus DISEMBUNYIKAN di komputer yang belum berlisensi (aktivasi lewat alamat /aiimport).
-if (!defined('LG_MENU_HIDE_WHEN_LOCKED')) define('LG_MENU_HIDE_WHEN_LOCKED', false);
+// true (default sejak v10): menu AI Soal DISEMBUNYIKAN di komputer yang belum berlisensi; aktivasi lewat alamat /aiimport.
+// Set false bila menu harus tetap tampil di komputer yang belum berlisensi.
+if (!defined('LG_MENU_HIDE_WHEN_LOCKED')) define('LG_MENU_HIDE_WHEN_LOCKED', true);
 if (!defined('LG_DEBUG'))      define('LG_DEBUG', false);   // set true hanya saat perlu melacak masalah
 if (!defined('LG_DEBUG_FILE')) define('LG_DEBUG_FILE', APPPATH . 'cache/lg_license_debug.log');
 if (!defined('LG_CACHE_FILE'))  define('LG_CACHE_FILE', APPPATH . 'cache/lg_license_cache.json');
@@ -120,12 +121,85 @@ if (!function_exists('lg_server_url')) {
 }
 
 /**
- * Ambil MAC address fisik pertama dari mesin SERVER tempat aplikasi ini
- * berjalan (bukan mesin orang lain). Dipakai sebagai fingerprint
- * tambahan supaya kalau satu kode lisensi dipakai di komputer lain
- * (hardware beda), itu kelihatan di admin.php sebagai MAC yang berubah.
- * Butuh shell_exec aktif di server; kalau dimatikan hosting, akan
- * kembalikan string kosong (bukan error).
+ * v10: MAC yang diketik manual saat aktivasi (dipakai hanya bila deteksi otomatis gagal).
+ * Dibaca dari berkas aktivasi; kembalikan '' bila belum ada.
+ */
+if (!function_exists('lg_manual_mac')) {
+    function lg_manual_mac() {
+        if (!is_file(LG_ACTIVATION_FILE)) return '';
+        $act = json_decode((string)@file_get_contents(LG_ACTIVATION_FILE), true);
+        if (is_array($act) && !empty($act['mac_manual']) && is_string($act['mac_manual'])) {
+            return lg_normalize_mac($act['mac_manual']);
+        }
+        return '';
+    }
+}
+
+/** v10: ubah MAC ke bentuk baku AA-BB-CC-DD-EE-FF. Kembalikan '' kalau formatnya tidak valid. */
+if (!function_exists('lg_normalize_mac')) {
+    function lg_normalize_mac($mac) {
+        $hex = strtoupper(preg_replace('/[^0-9A-Fa-f]/', '', (string)$mac));
+        if (strlen($hex) !== 12) return '';
+        if ($hex === '000000000000' || $hex === 'FFFFFFFFFFFF') return '';
+        return implode('-', str_split($hex, 2));
+    }
+}
+
+/**
+ * v10: deteksi SEMUA MAC fisik laptop/PC ini (urut A-Z, adapter virtual / VPN / Bluetooth / acak dibuang).
+ * Mencoba beberapa cara berurutan sampai ada hasil, jadi tidak gagal hanya karena satu perintah bermasalah:
+ *   Windows: PowerShell Get-NetAdapter -> getmac -> ipconfig /all (juga untuk Windows berbahasa Indonesia)
+ *   Linux  : ip link -> ifconfig -> /sys/class/net
+ */
+if (!function_exists('lg_detect_macs')) {
+    function lg_detect_macs() {
+        static $res = null;
+        if ($res !== null) return $res;
+        $res = [];
+        if (!function_exists('shell_exec') || stripos((string)ini_get('disable_functions'), 'shell_exec') !== false) return $res;
+
+        $isWin   = stripos(PHP_OS, 'WIN') === 0;
+        $anyMac  = '/([0-9A-Fa-f]{2}([:-][0-9A-Fa-f]{2}){5})/';
+        // ipconfig /all memuat DUID yang mirip MAC, jadi hanya baca baris "Physical Address" / "Alamat Fisik".
+        $ipconfigMac = '/(?:Physical Address|Alamat Fisik)[ .]*:\s*([0-9A-Fa-f]{2}(?:-[0-9A-Fa-f]{2}){5})/i';
+        $steps = $isWin ? [
+            ['powershell -NoProfile -NonInteractive -Command "Get-NetAdapter -Physical | Where-Object { $_.InterfaceDescription -notmatch \'Bluetooth|Virtual|VPN|TAP|Hyper-V|VMware\' } | Select-Object -ExpandProperty MacAddress" 2>NUL', $anyMac],
+            ['getmac /NH /FO CSV 2>NUL', $anyMac],
+            ['ipconfig /all 2>NUL', $ipconfigMac],
+        ] : [
+            ['ip link show 2>/dev/null', $anyMac],
+            ['ifconfig -a 2>/dev/null', $anyMac],
+            ['cat /sys/class/net/*/address 2>/dev/null', $anyMac],
+        ];
+        // OUI adapter virtual: VirtualBox, VMware, Hyper-V, Parallels, dll.
+        $virtual = ['0A-00-27', '00-50-56', '00-0C-29', '00-05-69', '00-15-5D', '00-1C-14'];
+
+        foreach ($steps as $st) {
+            $out = @shell_exec($st[0]);
+            if (!$out || !preg_match_all($st[1], $out, $m)) continue;
+            $found = [];
+            foreach ($m[1] as $cand) {
+                $norm = strtoupper(str_replace(':', '-', $cand));
+                if ($norm === '00-00-00-00-00-00' || $norm === 'FF-FF-FF-FF-FF-FF') continue;
+                if (in_array(substr($norm, 0, 8), $virtual, true)) continue;
+                if (hexdec(substr($norm, 0, 2)) & 0x02) continue; // locally administered = MAC acak / virtual
+                $found[$norm] = true;
+            }
+            if ($found) {
+                $found = array_keys($found);
+                sort($found, SORT_STRING);
+                return $res = $found;
+            }
+        }
+        return $res;
+    }
+}
+
+/**
+ * MAC laptop/PC ini. Urutan pemilihan:
+ *  1) MAC yang dipakai saat aktivasi, kalau masih ada di komputer ini (stabil walau urutan adapter berubah);
+ *  2) MAC pertama hasil deteksi (urut A-Z);
+ *  3) kalau deteksi gagal sesaat: hasil terakhir yang tersimpan, lalu MAC yang diisi manual.
  */
 if (!function_exists('lg_local_mac')) {
     function lg_local_mac() {
@@ -133,31 +207,20 @@ if (!function_exists('lg_local_mac')) {
         if ($mac !== null) return $mac;
         $mac = '';
 
-        if (function_exists('shell_exec') && stripos(ini_get('disable_functions'), 'shell_exec') === false) {
-            $isWindows = stripos(PHP_OS, 'WIN') === 0;
-            $out = $isWindows
-                ? @shell_exec('getmac /NH /FO CSV 2>NUL')
-                : @shell_exec('ip link show 2>/dev/null || ifconfig -a 2>/dev/null');
-
-            if ($out && preg_match_all('/([0-9A-Fa-f]{2}([:-][0-9A-Fa-f]{2}){5})/', $out, $m)) {
-                // v6: kumpulkan semua MAC, buang yang nol / virtual / acak (locally administered,
-                // VirtualBox, VMware, Hyper-V), lalu URUTKAN. Dengan begitu hasilnya tidak
-                // bergantung pada urutan adapter yang bisa berubah (VPN, adapter virtual, dll).
-                $virtual = ['0A-00-27', '00-50-56', '00-0C-29', '00-05-69', '00-15-5D', '00-1C-14'];
-                $cands = [];
-                foreach ($m[1] as $candidate) {
-                    $norm = strtoupper(str_replace(':', '-', $candidate));
-                    if ($norm === '00-00-00-00-00-00' || $norm === 'FF-FF-FF-FF-FF-FF') continue;
-                    if (in_array(substr($norm, 0, 8), $virtual, true)) continue;
-                    $firstByte = hexdec(substr($norm, 0, 2));
-                    if ($firstByte & 0x02) continue; // locally administered = MAC acak / virtual
-                    $cands[$norm] = true;
-                }
-                $cands = array_keys($cands);
-                sort($cands, SORT_STRING);
-                if ($cands) $mac = $cands[0];
+        $cands = lg_detect_macs();
+        if ($cands) {
+            $pref = '';
+            if (is_file(LG_ACTIVATION_FILE)) {
+                $act = json_decode((string)@file_get_contents(LG_ACTIVATION_FILE), true);
+                if (is_array($act) && !empty($act['mac']) && is_string($act['mac'])) $pref = strtoupper(str_replace(':', '-', $act['mac']));
             }
+            $mac = ($pref !== '' && in_array($pref, $cands, true)) ? $pref : $cands[0];
         }
+        if ($mac === '' && is_file(LG_IDENT_FILE)) {
+            $old = json_decode((string)@file_get_contents(LG_IDENT_FILE), true);
+            if (is_array($old) && !empty($old['mac']) && is_string($old['mac'])) $mac = $old['mac'];
+        }
+        if ($mac === '') $mac = lg_manual_mac();
         return $mac;
     }
 }
@@ -309,14 +372,21 @@ if (!function_exists('lg_license_key')) {
  * Return ['ok' => bool, 'message' => string].
  */
 if (!function_exists('lg_activate')) {
-    function lg_activate($code) {
+    function lg_activate($code, $mac_manual = '') {
         $code = strtoupper(trim((string)$code));
         if (!preg_match('/^[A-Z0-9][A-Z0-9\-]{6,40}$/', $code)) {
             return ['ok' => false, 'message' => 'Format kode tidak sesuai. Contoh: GCBT-XXXX-XXXX-XXXX-XXXX.'];
         }
         $id = lg_ident(); // MAC dibaca otomatis dari komputer ini
+        $manual_dipakai = false;
         if (empty($id['mac'])) {
-            return ['ok' => false, 'message' => 'MAC address komputer ini tidak terbaca (fungsi shell_exec mungkin dimatikan). Hubungi developer.'];
+            // v10: deteksi otomatis gagal -> pakai MAC yang diketik pengguna (kalau formatnya benar).
+            $m = lg_normalize_mac($mac_manual);
+            if ($m === '') {
+                return ['ok' => false, 'message' => 'MAC address komputer ini tidak terbaca otomatis. Isi MAC address manual dengan format AA-BB-CC-DD-EE-FF (lihat lewat perintah getmac), atau hubungi developer.'];
+            }
+            $id['mac'] = $m;
+            $manual_dipakai = true;
         }
         $raw = lg_http_get(lg_server_url() . '?key=' . urlencode($code) . '&mac=' . urlencode($id['mac']));
         if ($raw === false || $raw === '') {
@@ -335,7 +405,7 @@ if (!function_exists('lg_activate')) {
             return ['ok' => false, 'message' => $msg];
         }
         // Diterima: simpan kode, buang cache lama, isi cache baru.
-        $saved = @file_put_contents(LG_ACTIVATION_FILE, json_encode(['key' => $code, 'activated_at' => date('Y-m-d H:i:s'), 'mac' => $id['mac']]), LOCK_EX);
+        $saved = @file_put_contents(LG_ACTIVATION_FILE, json_encode(['key' => $code, 'activated_at' => date('Y-m-d H:i:s'), 'mac' => $id['mac'], 'mac_manual' => $manual_dipakai ? $id['mac'] : '']), LOCK_EX);
         if ($saved === false) {
             return ['ok' => false, 'message' => 'Kode diterima server, tetapi tidak bisa disimpan. Beri izin tulis pada folder application/config lalu ulangi.'];
         }

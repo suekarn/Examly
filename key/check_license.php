@@ -239,12 +239,4 @@ if ($response === null) {   // data lisensi tidak terbaca: klien memakai cache +
 
 unset($response['_unreg']); // kode tak dikenal: cukup ditolak, tidak dicatat
 
-cl_reply($response);?? ''); });
-            $list = array_slice($list, -UNREG_MAX, null, true);
-        }
-        return ['data' => $list, 'value' => null];
-    }, []);
-    unset($response['_unreg']);
-}
-
 cl_reply($response);

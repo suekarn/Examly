@@ -1,0 +1,48 @@
+{
+    "installations": {
+        "GCBT-FC9E-79F2-A9BD-928B": {
+            "label": "localhost",
+            "domain": "",
+            "status": "active",
+            "message": "",
+            "contact": "081234567890",
+            "expired_date": "2027-12-31",
+            "menu_ai_soal": true,
+            "school": "",
+            "school_contact": "",
+            "purchase_date": "2026-11-03",
+            "last_seen_domain": "",
+            "last_seen_at": "2026-11-03 12:42:25",
+            "bound_mac": "48-D2-24-CE-F3-58",
+            "bound_macs": [
+                "48-D2-24-CE-F3-58",
+                "88-D7-F6-9E-DD-8E"
+            ],
+            "bound_at": "2026-11-03 12:41:23",
+            "bound_host": "didaftarkan admin",
+            "history": [
+                {
+                    "t": "2026-11-03 12:41:23",
+                    "e": "bind",
+                    "d": "MAC didaftarkan lewat panel admin: 48-D2-24-CE-F3-58, 88-D7-F6-9E-DD-8E."
+                },
+                {
+                    "t": "2026-11-03 12:41:23",
+                    "e": "created",
+                    "d": "Lisensi dibuat."
+                }
+            ],
+            "last_seen_mac": "48-D2-24-CE-F3-58",
+            "last_seen_hostname": "",
+            "last_seen_ip": "",
+            "last_seen_visitor_ip": "::1"
+        }
+    },
+    "default": {
+        "status": "disabled",
+        "message": "Kode lisensi tidak ditemukan / tidak terdaftar. Hubungi developer.",
+        "contact": "081234567890",
+        "expired_date": "-",
+        "menu_ai_soal": false
+    }
+}

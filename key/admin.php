@@ -186,6 +186,45 @@ function adm_add_months($date, $n) {
     return $d->format('Y-m-d');
 }
 
+// Normalisasi MAC ke AA-BB-CC-DD-EE-FF ('' bila tidak valid).
+function adm_norm_mac($mac) {
+    $hex = strtoupper(preg_replace('/[^0-9A-Fa-f]/', '', (string)$mac));
+    if (strlen($hex) !== 12 || $hex === '000000000000' || $hex === 'FFFFFFFFFFFF') return '';
+    return implode('-', str_split($hex, 2));
+}
+// Deteksi SEMUA MAC fisik komputer server ini (urut A-Z; virtual / VPN / Bluetooth / acak dibuang).
+// Logika sama dengan lg_detect_macs() di license_helper.php klien: PowerShell -> getmac -> ipconfig.
+function adm_detect_macs() {
+    if (!function_exists('shell_exec') || stripos((string)ini_get('disable_functions'), 'shell_exec') !== false) return [];
+    $isWin  = stripos(PHP_OS, 'WIN') === 0;
+    $anyMac = '/([0-9A-Fa-f]{2}([:-][0-9A-Fa-f]{2}){5})/';
+    $ipconfigMac = '/(?:Physical Address|Alamat Fisik)[ .]*:\s*([0-9A-Fa-f]{2}(?:-[0-9A-Fa-f]{2}){5})/i';
+    $steps = $isWin ? [
+        ['powershell -NoProfile -NonInteractive -Command "Get-NetAdapter -Physical | Where-Object { $_.InterfaceDescription -notmatch \'Bluetooth|Virtual|VPN|TAP|Hyper-V|VMware\' } | Select-Object -ExpandProperty MacAddress" 2>NUL', $anyMac],
+        ['getmac /NH /FO CSV 2>NUL', $anyMac],
+        ['ipconfig /all 2>NUL', $ipconfigMac],
+    ] : [
+        ['ip link show 2>/dev/null', $anyMac],
+        ['ifconfig -a 2>/dev/null', $anyMac],
+        ['cat /sys/class/net/*/address 2>/dev/null', $anyMac],
+    ];
+    $virtual = ['0A-00-27', '00-50-56', '00-0C-29', '00-05-69', '00-15-5D', '00-1C-14'];
+    foreach ($steps as $st) {
+        $out = @shell_exec($st[0]);
+        if (!$out || !preg_match_all($st[1], $out, $m)) continue;
+        $c = [];
+        foreach ($m[1] as $cand) {
+            $n = adm_norm_mac($cand);
+            if ($n === '') continue;
+            if (in_array(substr($n, 0, 8), $virtual, true)) continue;
+            if (hexdec(substr($n, 0, 2)) & 0x02) continue;
+            $c[$n] = true;
+        }
+        if ($c) { $c = array_keys($c); sort($c, SORT_STRING); return $c; }
+    }
+    return [];
+}
+
 function adm_generate_key() {
     $parts = [];
     for ($i = 0; $i < 4; $i++) $parts[] = strtoupper(bin2hex(random_bytes(2)));
@@ -344,6 +383,14 @@ if (isset($_GET['export'])) {
     exit;
 }
 
+// ----------------------------- DETEKSI MAC OTOMATIS (untuk form Instalasi) -----------------------------
+if (isset($_GET['detect_mac'])) {
+    header('Content-Type: application/json; charset=utf-8');
+    header('Cache-Control: no-store');
+    echo json_encode(['macs' => adm_detect_macs()]);
+    exit;
+}
+
 // ----------------------------- ACTIONS -----------------------------
 if (empty($_SESSION['csrf'])) $_SESSION['csrf'] = bin2hex(random_bytes(16));
 $data = adm_load();
@@ -364,18 +411,39 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
                 'label'            => ($_POST['label'] ?? '') ?: ($existing['label'] ?? ''),
                 'domain'           => ($_POST['domain'] ?? '') ?: ($existing['domain'] ?? ''),
                 'status'           => $_POST['status'] ?? 'disabled',
-                'message'          => $_POST['message'] ?? '',
-                'contact'          => $_POST['contact'] ?? '081234567890',
+                'message'          => $_POST['message'] ?? ($existing['message'] ?? ''),
+                'contact'          => $_POST['contact'] ?? ($existing['contact'] ?? '081234567890'),
                 'expired_date'     => ($_POST['expired_date'] ?? '') ?: '-',
                 'menu_ai_soal'     => isset($_POST['menu_ai_soal']),
-                'school'           => substr(trim($_POST['school'] ?? ''), 0, 120),
-                'school_contact'   => substr(trim($_POST['school_contact'] ?? ''), 0, 80),
-                'purchase_date'    => ($pd !== '' && strtotime($pd) !== false) ? date('Y-m-d', strtotime($pd)) : '',
+                'school'           => isset($_POST['school']) ? substr(trim($_POST['school']), 0, 120) : ($existing['school'] ?? ''),
+                'school_contact'   => isset($_POST['school_contact']) ? substr(trim($_POST['school_contact']), 0, 80) : ($existing['school_contact'] ?? ''),
+                'purchase_date'    => isset($_POST['purchase_date']) ? (($pd !== '' && strtotime($pd) !== false) ? date('Y-m-d', strtotime($pd)) : '') : ($existing['purchase_date'] ?? ($isNew ? date('Y-m-d') : '')),
                 'last_seen_domain' => $existing['last_seen_domain'] ?? null,
                 'last_seen_at'     => $existing['last_seen_at'] ?? null,
             ]);
+            // MAC komputer klien (opsional). Boleh beberapa, dipisah koma. Kosong = biarkan ikatan apa adanya.
+            $macWarn = '';
+            $macIn = trim((string)($_POST['bind_mac'] ?? ''));
+            if ($macIn !== '') {
+                $list = [];
+                foreach (preg_split('/[\s,;]+/', $macIn) as $mm) { $nn = adm_norm_mac($mm); if ($nn !== '') $list[$nn] = true; }
+                $list = array_keys($list); sort($list, SORT_STRING);
+                if ($list) {
+                    $cur  = $data['installations'][$key];
+                    $old  = $cur['bound_macs'] ?? (!empty($cur['bound_mac']) ? [$cur['bound_mac']] : []);
+                    $prim = (!empty($cur['bound_mac']) && in_array($cur['bound_mac'], $list, true)) ? $cur['bound_mac'] : $list[0];
+                    $data['installations'][$key]['bound_mac']  = $prim;
+                    $data['installations'][$key]['bound_macs'] = $list;
+                    if (empty($cur['bound_at']))   $data['installations'][$key]['bound_at']   = date('Y-m-d H:i:s');
+                    if (empty($cur['bound_host'])) $data['installations'][$key]['bound_host'] = 'didaftarkan admin';
+                    $oldSorted = $old; sort($oldSorted, SORT_STRING);
+                    if ($oldSorted !== $list) adm_log($data, $key, 'bind', 'MAC didaftarkan lewat panel admin: ' . implode(', ', $list) . '.');
+                } else {
+                    $macWarn = ' MAC yang diketik tidak valid dan diabaikan (format AA-BB-CC-DD-EE-FF).';
+                }
+            }
             adm_log($data, $key, $isNew ? 'created' : 'edited', $isNew ? 'Lisensi dibuat.' : 'Data lisensi diubah.');
-            $notice = adm_save($data) ? "Instalasi '$key' berhasil disimpan." : 'Gagal menyimpan: data lisensi tidak terbaca. Pulihkan dari Cadangan.';
+            $notice = adm_save($data) ? "Instalasi '$key' berhasil disimpan." . $macWarn : 'Gagal menyimpan: data lisensi tidak terbaca. Pulihkan dari Cadangan.';
         }
     } elseif ($_POST['action'] === 'delete_installation') {
         $key = $_POST['license_key'] ?? '';
@@ -921,8 +989,6 @@ $passIsDefault = adm_pass_is_default();
             <div class="knob" id="themeKnob"><i class="fa-solid fa-moon" id="themeKnobIcon"></i></div>
         </div>
         <a class="btn-logout" href="?logout=1"><i class="fa-solid fa-right-from-bracket"></i> Logout</a>
-        <button class="btn btn-ghost" onclick="ovShow('backupOverlay')" title="Cadangan, ekspor, dan impor data lisensi"><i class="fa-solid fa-database"></i> Cadangan</button>
-        <button class="btn btn-ghost" onclick="ovShow('passOverlay')" title="Ganti kata sandi admin"><i class="fa-solid fa-key"></i> Kata sandi</button>
         <button class="btn btn-primary" onclick="openModal()"><i class="fa-solid fa-plus"></i> Instalasi Baru</button>
     </div>
 </div>
@@ -930,10 +996,6 @@ $passIsDefault = adm_pass_is_default();
 <?php if (!empty($GLOBALS['ADM_LOAD_ERROR'])): ?>
 <div class="warn-banner bad"><i class="fa-solid fa-triangle-exclamation"></i>
     <div><b>licenses.json tidak terbaca atau rusak.</b> Perubahan dinonaktifkan supaya data asli tidak tertimpa. Buka <b>Cadangan</b> lalu pulihkan salah satu cadangan, atau perbaiki berkas itu secara manual.</div></div>
-<?php endif; ?>
-<?php if ($passIsDefault): ?>
-<div class="warn-banner"><i class="fa-solid fa-key"></i>
-    <div><b>Kata sandi admin belum pernah diganti lewat panel ini</b> (masih memakai hash bawaan di <code>admin.php</code>). Ganti lewat tombol <b>Kata sandi</b> di kanan atas supaya tersimpan di <code>admin_auth.php</code>.</div></div>
 <?php endif; ?>
 <div class="warn-banner bad" id="exposeBanner" style="display:none"><i class="fa-solid fa-lock-open"></i>
     <div><b>Data lisensi bisa diunduh langsung lewat browser</b> (<code>/key/licenses.json</code>). Pastikan berkas <code>.htaccess</code> di folder <code>key</code> aktif (Apache perlu <code>AllowOverride All</code>), lalu muat ulang halaman ini.</div></div>
@@ -1145,7 +1207,7 @@ $passIsDefault = adm_pass_is_default();
             <button onclick="closeModal()"><i class="fa-solid fa-xmark"></i></button>
         </div>
 
-        <form method="post" id="installForm">
+        <form method="post" id="installForm" autocomplete="off">
             <input type="hidden" name="action" value="save_installation">
 
             <label>Kode Lisensi</label>
@@ -1154,11 +1216,12 @@ $passIsDefault = adm_pass_is_default();
                 <button type="button" class="btn btn-ghost" onclick="generateKey()"><i class="fa-solid fa-dice"></i> Generate</button>
             </div>
 
+            <label>MAC komputer klien</label>
+            <input type="text" name="bind_mac" id="f_mac" placeholder="Mendeteksi MAC..." autocomplete="off" spellcheck="false" readonly>
+            <p class="hint" id="macNote" style="margin:6px 0 12px"></p>
+
             <label>Label (nama sekolah / klien)</label>
             <input type="text" name="label" id="f_label" placeholder="contoh: SMK Contoh Pontianak">
-
-            <label>Domain (catatan saja, tidak memengaruhi blokir)</label>
-            <input type="text" name="domain" id="f_domain" placeholder="localhost">
 
             <label>Status</label>
             <select name="status" id="f_status">
@@ -1172,17 +1235,6 @@ $passIsDefault = adm_pass_is_default();
 
             <label>Pesan kustom (opsional)</label>
             <textarea name="message" id="f_message" rows="2" placeholder="Masa berlaku lisensi telah habis..."></textarea>
-
-            <label>Kontak</label>
-            <input type="text" name="contact" id="f_contact" value="081234567890">
-
-            <div class="sec-title"><i class="fa-solid fa-address-card"></i> Catatan lisensi</div>
-            <label>Nama sekolah</label>
-            <input type="text" name="school" id="f_school" placeholder="contoh: SDN 01 Pontianak">
-            <label>Kontak sekolah (nama / nomor)</label>
-            <input type="text" name="school_contact" id="f_school_contact" placeholder="contoh: Bu Rina 0812xxxxxxx">
-            <label>Tanggal beli</label>
-            <input type="text" name="purchase_date" id="f_purchase" placeholder="2026-11-02">
 
             <div class="check-field">
                 <input type="checkbox" name="menu_ai_soal" id="f_menu" checked>
@@ -1305,6 +1357,8 @@ function openModal(){
     document.getElementById('installForm').reset();
     document.getElementById('f_menu').checked = true;
     document.getElementById('modalOverlay').classList.add('show');
+    document.getElementById('f_mac').value = '';
+    autoMac();
 }
 function closeModal(){
     document.getElementById('modalOverlay').classList.remove('show');
@@ -1313,15 +1367,14 @@ function editInstall(key, info){
     document.getElementById('modalTitle').innerHTML = '<i class="fa-solid fa-pen" style="color:var(--accent);margin-right:7px"></i>Edit Instalasi';
     document.getElementById('f_key').value = key;
     document.getElementById('f_label').value = info.label || '';
-    document.getElementById('f_domain').value = info.domain || '';
     document.getElementById('f_status').value = info.status || 'disabled';
     document.getElementById('f_expired').value = info.expired_date || '';
     document.getElementById('f_message').value = info.message || '';
-    document.getElementById('f_contact').value = info.contact || '081234567890';
     document.getElementById('f_menu').checked = !!info.menu_ai_soal;
-    document.getElementById('f_school').value = info.school || '';
-    document.getElementById('f_school_contact').value = info.school_contact || '';
-    document.getElementById('f_purchase').value = info.purchase_date || '';
+    const macVal = (info.bound_macs && info.bound_macs.length ? info.bound_macs.join(', ') : (info.bound_mac || ''));
+    document.getElementById('f_mac').value = macVal;
+    if (macVal) setMacLock(true, 'Sudah terkunci ke perangkat ini. Untuk memindahkan, pakai tombol reset binding di tabel.');
+    else autoMac();
     document.getElementById('modalOverlay').classList.add('show');
 }
 function ovShow(id){ document.getElementById(id).classList.add('show'); }
@@ -1356,6 +1409,36 @@ function showHistory(key, list){
 fetch('licenses.json?_=' + Date.now(), {cache:'no-store'}).then(r => {
     if (r.ok) document.getElementById('exposeBanner').style.display = 'flex';
 }).catch(() => {});
+// MAC dideteksi otomatis; kalau terbaca langsung dikunci (tidak bisa diketik).
+// Hanya kalau gagal terbaca, kolom dibuka supaya MAC bisa diketik manual.
+function setMacLock(lock, note){
+    const box = document.getElementById('f_mac');
+    box.readOnly = lock;
+    box.style.opacity = lock ? '.85' : '1';
+    box.style.cursor = lock ? 'not-allowed' : '';
+    if (note !== undefined) document.getElementById('macNote').textContent = note;
+}
+function autoMac(){
+    const box = document.getElementById('f_mac');
+    box.placeholder = 'Mendeteksi MAC...';
+    document.getElementById('macNote').textContent = 'Mendeteksi MAC komputer ini...';
+    fetch('admin.php?detect_mac=1', {cache:'no-store', credentials:'same-origin'})
+        .then(r => r.json())
+        .then(j => {
+            if (j.macs && j.macs.length){
+                box.value = j.macs.join(', ');
+                setMacLock(true, 'Terdeteksi otomatis dan terkunci ke komputer ini.');
+            } else {
+                box.value = '';
+                box.placeholder = 'AA-BB-CC-DD-EE-FF';
+                setMacLock(false, 'MAC tidak terbaca otomatis. Ketik manual: buka Command Prompt, jalankan getmac.');
+            }
+        })
+        .catch(() => {
+            box.placeholder = 'AA-BB-CC-DD-EE-FF';
+            setMacLock(false, 'Gagal mendeteksi MAC. Muat ulang halaman atau ketik manual.');
+        });
+}
 function generateKey(){
     const parts = [];
     for (let i = 0; i < 4; i++){

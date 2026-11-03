@@ -1,0 +1,37 @@
+{
+    "installations": {
+        "GCBT-8856-9E99-DD48-8E56": {
+            "label": "localhost",
+            "domain": "localhost",
+            "status": "active",
+            "message": "2027-12-31",
+            "contact": "081234567890",
+            "expired_date": "-",
+            "menu_ai_soal": true,
+            "school": "localhost",
+            "school_contact": "",
+            "purchase_date": "2026-02-21",
+            "last_seen_domain": null,
+            "last_seen_at": null,
+            "history": [
+                {
+                    "t": "2026-11-03 12:29:26",
+                    "e": "created",
+                    "d": "Lisensi dibuat."
+                },
+                {
+                    "t": "2026-11-03 12:29:39",
+                    "e": "edited",
+                    "d": "Data lisensi diubah."
+                }
+            ]
+        }
+    },
+    "default": {
+        "status": "disabled",
+        "message": "Kode lisensi tidak ditemukan / tidak terdaftar. Hubungi developer.",
+        "contact": "081234567890",
+        "expired_date": "-",
+        "menu_ai_soal": false
+    }
+}

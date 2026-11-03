@@ -51,8 +51,7 @@
 *.sql
 
 # --- File editor dan sistem ---
-.idea/
-*.iml
+ 
 .vscode/
 Thumbs.db
 desktop.ini

@@ -6,9 +6,16 @@
 
 # --- Folder yang tidak dibagikan ---
 /assets/
-
-/uploads/
 /backups/
+
+# --- uploads: hanya template format import yang dibagikan ---
+# Foto siswa, logo, file ujian, dan data lain TIDAK ikut.
+/uploads/*
+!/uploads/index.html
+!/uploads/import/
+/uploads/import/*
+!/uploads/import/index.html
+!/uploads/import/format/
 
 # --- Opsional: hapus tanda # di bawah jika tidak ingin dibagikan ---
 # /key/

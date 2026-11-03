@@ -12,7 +12,7 @@
 
 # --- Opsional: hapus tanda # di bawah jika tidak ingin dibagikan ---
 # /key/
-# /developer-tools/
+/developer-tools/
 # /installer/
 
 # --- Di dalam application/: file khusus tiap komputer (JANGAN dibagikan) ---
